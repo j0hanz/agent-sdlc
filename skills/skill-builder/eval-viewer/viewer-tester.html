@@ -24,7 +24,7 @@
     /* Shared typographic token: tiny uppercase section label. Replaces the old
        kicker / brand-eyebrow / sidebar-group-header / stat-label / sec-title /
        vs-tag rules — one source of truth, spacing/color via Bootstrap utilities. */
-    .eyebrow { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--bs-secondary-color); }
+    .eyebrow { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--bs-secondary-color); }
 
     /* ── Navbar: segmented tab control (no 1:1 Bootstrap component) ── */
     .seg-tabs { background: var(--bs-tertiary-bg); border-radius: 999px; padding: 3px; }
@@ -44,8 +44,12 @@
     #eval-list .list-group-item-action.active.is-baseline { border-left-color: var(--bs-warning); }
     .run-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .run-dot.v-good { background: var(--bs-success); }
-    .run-dot.v-bad  { background: var(--bs-danger); }
+    .run-dot.v-bad  { background: var(--bs-danger); border-radius: 2px; }
     .run-dot.v-none { border: 1.5px solid var(--bs-secondary-color); }
+
+    /* Touch target minimums — Apple HIG 44 pt / Material 48 dp */
+    #prev-btn, #next-btn { min-height: 44px; min-width: 44px; }
+    #eval-list .list-group-item-action { min-height: 44px; }
 
     /* ── Output files: collapsed long code ── */
     .output-collapsed { max-height: 16rem; overflow: hidden; }
@@ -55,6 +59,7 @@
     @media (min-width: 1200px) { .fb-rail { flex: 0 0 344px; border-left: 1px solid var(--bs-border-color); } }
     .fb-rail .offcanvas-body { display: block; }
     .save-status { min-height: 1.1rem; }
+    .navbar .container-fluid { min-height: 58px; }
 
     /* ── Benchmark: versus scorecards (2-up grid + subtle config tints) ── */
     .vs-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -67,7 +72,7 @@
 
   <!-- ============ Navbar: brand · tabs · progress · submit ============ -->
   <nav class="navbar bg-body-tertiary border-bottom flex-shrink-0 py-0">
-    <div class="container-fluid" style="min-height:58px">
+    <div class="container-fluid">
     <div class="d-flex align-items-center gap-2 me-auto">
       <button class="btn btn-link text-body p-1 d-lg-none" type="button"
               data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Toggle eval list">
