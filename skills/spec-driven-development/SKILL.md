@@ -50,13 +50,9 @@ Different skills for different situations:
 
 ## Prerequisites
 
-This skill orchestrates two sub-skills (`create-specs`, `create-plan`) that each bundle their own validators (`validate_spec.py`, `discover.mjs`, `validate_plan.py`, `generate_plan.py`) — there is nothing to install separately. Confirm they are discoverable before you start:
+This skill orchestrates two sub-skills (`create-specs`, `create-plan`) that each bundle their own validators (`validate_spec.py`, `discover.mjs`, `validate_plan.py`, `generate_plan.py`) — there is nothing to install separately.
 
-```bash
-python ${CLAUDE_SKILL_DIR}/scripts/diagnose_dependencies.py
-```
-
-If the check reports a missing sub-skill, confirm the `agent-dev` plugin is enabled and run `/reload-plugins`, then re-run. Do not substitute manual work for missing tooling — invoke the sub-skill by name so its own validators run.
+If a sub-skill fails to invoke, run `python ${CLAUDE_SKILL_DIR}/scripts/diagnose_dependencies.py` to check availability. If it reports a missing sub-skill, confirm the `agent-dev` plugin is enabled and run `/reload-plugins`. Do not substitute manual work for missing tooling — invoke the sub-skill by name so its own validators run.
 
 ## Required Sub-Skills
 
@@ -73,19 +69,23 @@ Invoke each sub-skill by name when you reach its gate. The sub-skill's own instr
 
 > **Escape hatch**: For small tasks (one-file changes, clear bug fixes), you can use **Sketch maturity** (see above) — a lightweight one-page spec that skips the create-specs and create-plan sub-skills. If the user prefers to code without a spec, note the decision and proceed, but recommend using SDD even for "simple" tasks since it prevents rework. Do not skip this check silently.
 
-### 0. Brainstorming Gate ← `brainstorming` required
+### 0. Brainstorming Gate
 
-**HARD-GATE: Do NOT proceed past this step until a design has been explored and the user has approved it via the `brainstorming` skill.**
+Before proceeding, ask: has the design space already been explored for this request?
 
-If you arrived here without running `brainstorming`, invoke it now. This is not optional.
+- **New request, no prior design discussion** → Invoke `brainstorming` now. Do not proceed to scope clarification until the brainstorming skill has finished.
+- **User provided a detailed description with explicit decisions already made** → Treat brainstorming as complete. Note it inline: "Treating description as brainstorming complete." Proceed to Step 1.
+- **User says "skip brainstorming"** → Note the decision inline and proceed to Step 1.
 
-**If brainstorming is already complete:** Skip Step 1 (Clarify Scope — brainstorming already covered goals, constraints, and scope) and proceed directly to Step 2 (Specification Gate).
-
-**Exception**: If the user explicitly provides a pre-approved spec or says "skip brainstorming," note the decision inline and proceed to Step 2.
+When in doubt, run a short brainstorm (5 min) rather than skipping — it often surfaces constraints that change the scope entirely.
 
 ### 1. Clarify Scope
 
 **MANDATORY — READ ENTIRE FILE**: `references/scope-interview.md` to conduct the scope interview, choose maturity level (Sketch/Contract/Blueprint), and complete the post-interview checklist before proceeding.
+
+Also check: does this feature depend on an interface owned by another team (API, schema, infrastructure)?
+
+If **yes** — identify the dependency owner before proceeding to Step 2. Find their spec if one exists. An unresolved external interface cannot be validated and will block spec completion. See [Multi-Team Specs](references/multi-team-specs.md).
 
 ### 2. Specification Gate ← `create-specs` required
 
@@ -147,6 +147,18 @@ This phase covers:
 - The Incremental Loop (executing the remaining tasks, each via `test-driven-development`)
 - Handling validation failures and spec drift
 
+**If implementation reveals a scope gap** — apply this sequence immediately:
+
+1. Stop coding
+2. `git commit -m "WIP: partial implementation of [spec-name]"` (checkpoint)
+3. Classify: **minor** (1–2 new ACs, no architecture change) or **major** (3+ ACs, or new DB table / API endpoint / external service)
+4. Update `spec-*.md` with new REQ/AC/VAL items
+5. Run `python validate_spec.py spec-*.md` — hard gate: 0 errors before resuming
+6. If **major**: `python generate_plan.py spec-*.md > plan-*.md && python validate_plan.py plan-*.md`
+7. Evaluate: are previously completed tasks still valid? If yes, resume from first new task. If not, `git reset --hard HEAD~1` and restart from the new plan.
+
+Full recovery reference: [Spec Recovery](references/spec-recovery.md)
+
 ### 5. Acceptance Validation
 
 After all tasks complete, verify the full spec is satisfied:
@@ -163,12 +175,14 @@ Ask: _"Does the system now do what the spec says it must do?"_ If yes: done. If 
 
 ```
 [ ] Scope clarified: goal, in/out-of-scope, constraints, maturity level
+[ ] External dependencies identified (multi-team interfaces resolved before spec is finalized)
 [ ] Spec validated: validate_spec.py = 0 errors, self-check passed
 [ ] Plan validated: validate_plan.py = 0 errors, all paths verified by discover.mjs
 [ ] Tasks executed in dependency order (Depends on: respected)
 [ ] Each task's Validate command run and Expected result confirmed before next task
 [ ] Spec changes (if any) propagated: spec → plan → code (in that order, never reversed)
 [ ] All AC-### from spec confirmed as observable in the final system
+[ ] verification-before-completion invoked before declaring the feature done
 ```
 
 ## Refining the Spec After Validation

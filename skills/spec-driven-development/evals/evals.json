@@ -1,0 +1,109 @@
+{
+  "skill_name": "spec-driven-development",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to build a user notification system for our web app. When events happen (new message, friend request, post like), users should receive email and in-app notifications. They should also be able to configure their preferences per notification type.",
+      "expected_output": "The skill should invoke brainstorming first, then conduct a full scope interview (goal, boundaries, constraints, success criteria, maturity level). It should identify this as a multi-file feature requiring Contract maturity. It should NOT start writing code or designing the implementation yet.",
+      "files": [],
+      "expectations": [
+        "Response invokes or references the brainstorming step before anything else",
+        "Response conducts or references a scope interview (asking about goal, in-scope, out-of-scope, constraints, success criteria)",
+        "Response identifies Contract maturity as appropriate for this multi-file feature",
+        "Response references the create-specs sub-skill as the next step after scope clarification",
+        "Response does NOT jump directly to writing code or designing the implementation"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Hey can you just quickly add a 'remember me' checkbox to our login form? It's a tiny change, shouldn't take more than 5 minutes.",
+      "expected_output": "The skill should acknowledge the quick nature of the request but still apply SDD. It should identify this as a candidate for Sketch maturity (one-file change, clear bug fix). It should offer to write a lightweight one-page spec (15-30 min) and NOT skip the spec process entirely. It should explain why even small changes benefit from a spec.",
+      "files": [],
+      "expectations": [
+        "Response acknowledges the small scope but still invokes or references the spec-driven development workflow",
+        "Response identifies Sketch maturity as appropriate for this small change",
+        "Response offers to create a lightweight spec (using the sketch template) before implementing",
+        "Response does NOT immediately start writing the implementation code",
+        "Response explains or implies why specs help even for small changes (preventing rework, misunderstanding)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our app is slow and users are complaining about performance. We need to make it faster. Can you help fix this?",
+      "expected_output": "The skill should recognize this as a vague request and conduct the scope interview to narrow it down. It should ask: What specific behavior is slow? Which metrics matter? What are the constraints? It should NOT jump to optimization strategies without clarifying scope first.",
+      "files": [],
+      "expectations": [
+        "Response identifies the request as too vague to proceed without clarification",
+        "Response asks specific clarifying questions about which part of the app is slow, which metrics matter, and what constitutes success",
+        "Response references the scope interview process to gather requirements",
+        "Response does NOT immediately suggest specific optimization strategies without first clarifying scope",
+        "Response mentions or implies that vague goals ('improve X') are a red flag per the scope interview guidance"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "We have a half-built admin dashboard - it has the basic layout and navigation, but all the data shown is hardcoded mock data. The tables and charts need to pull from our real database. Can you help complete it?",
+      "expected_output": "The skill should reference the starting-with-existing-code guidance. It should assess the existing code state (partial implementation, core structure correct). It should choose Path 1 (incremental), create a spec only for remaining work, and NOT retrofit a spec from the existing code.",
+      "files": [],
+      "expectations": [
+        "Response references or applies the 'starting with existing code' guidance",
+        "Response assesses the existing code state and determines it's mostly correct (Path 1 scenario)",
+        "Response recommends creating a spec for remaining work only (not a full spec of everything)",
+        "Response explicitly states or implies that retrofitting a spec from existing code should be avoided",
+        "Response identifies what the new spec should cover (data integration, real DB queries, etc.)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "We need to migrate our entire deployment from a single VM to Kubernetes. This affects all our microservices, the CI/CD pipeline, monitoring, and the database connection pooling.",
+      "expected_output": "The skill should identify this as a platform/infrastructure change requiring Blueprint maturity. It should mention the need for architecture documentation, ops runbooks, monitoring plans, and rollback procedures. It should NOT try to jump straight to a simple Contract spec.",
+      "files": [],
+      "expectations": [
+        "Response identifies Blueprint maturity as appropriate for this platform/infrastructure change",
+        "Response mentions or references the need for architecture documentation as part of Blueprint maturity",
+        "Response acknowledges the high complexity and multi-team nature of this change",
+        "Response mentions ops runbooks, monitoring, or rollback plans as Blueprint maturity components",
+        "Response recommends the architecture sub-skill or similar comprehensive planning before SDD cycles"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "We're halfway through implementing login rate limiting per our spec. The security team just said we also need to lock accounts after 10 failed attempts (across all IPs) and send email notifications on lockout. The spec doesn't mention any of this. What do we do now?",
+      "expected_output": "The skill should apply the spec recovery process. It should assess whether this is a minor or major change (likely major since it involves new state and new external service - email). It should instruct: commit WIP first, update the spec with new REQs/ACs, re-validate with validate_spec.py, regenerate the plan, then resume implementation.",
+      "files": [],
+      "expectations": [
+        "Response references the spec recovery process and instructs the user not to just patch the code",
+        "Response instructs committing WIP work as a checkpoint before making spec changes",
+        "Response assesses whether this is a minor or major change and explains the criteria",
+        "Response instructs updating the spec with the new requirements before resuming implementation",
+        "Response mentions re-running validate_spec.py and/or regenerating the plan after spec updates"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I need to build a real-time analytics dashboard for our marketing team. It needs to pull data from our Snowflake data warehouse. Problem is, the data team owns the Snowflake queries and schemas but hasn't documented what they'll expose yet. How should we approach this?",
+      "expected_output": "The skill should apply multi-team coordination guidance. It should recommend finding the data team's spec before finalizing, document the dependency explicitly in the plan, model the timeline risk, and avoid finalizing the SDD spec until the interface is stable.",
+      "files": [],
+      "expectations": [
+        "Response references or applies multi-team coordination guidance",
+        "Response recommends finding or requesting a spec from the data team before finalizing this spec",
+        "Response advises modeling the dependency explicitly in the plan (e.g., TASK blocked until data team ships their spec)",
+        "Response identifies the timeline risk of the external dependency",
+        "Response does NOT suggest proceeding with a finalized spec before the interface is defined"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Skip all the spec stuff, my manager says we don't have time for documentation. Just build a file upload feature - users should be able to upload profile photos (JPG/PNG, max 5MB, stored in S3). I need this done today.",
+      "expected_output": "The skill should acknowledge the time pressure but NOT simply comply and start coding. It should offer the Sketch maturity escape hatch as a lightweight alternative (15-30 minutes) rather than skipping specs entirely. It should explain the time cost tradeoff: skipping specs risks rework that costs more time, while a Sketch spec takes 15 min and prevents it.",
+      "files": [],
+      "expectations": [
+        "Response acknowledges the time constraint without dismissing it",
+        "Response offers the Sketch maturity path as a lightweight alternative, not a full spec process",
+        "Response explains the risk/cost of skipping specs (rework, misunderstanding scope)",
+        "Response offers to write a Sketch spec in 15-30 minutes before coding",
+        "Response does NOT immediately start writing the implementation code without any spec"
+      ]
+    }
+  ]
+}
