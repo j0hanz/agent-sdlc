@@ -53,6 +53,39 @@
         "Output contains a 'Diagnosis Summary' section with Root Cause field",
         "Output contains a 'Post-Mortem' section with Prevention field"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I have a caching module that works fine in unit tests but randomly fails in integration tests — about 30% failure rate under concurrent access. The test fails with assertions like 'Expected cache value 42 but got None' or returns stale values.\n\nThe file is at C:\\agent-dev\\skills\\diagnose-workspace\\iteration-1\\eval-4-flaky-cache\\input\\cache.py\n\nPlease diagnose and fix this bug.",
+      "expected_output": "Agent follows 6-phase methodology: builds a concurrent stress harness to reliably reproduce the flakiness, identifies the missing lock as root cause, generates 3+ hypotheses, instruments with tagged logs, writes a concurrency regression test, and outputs Diagnosis Summary + Post-Mortem.",
+      "files": [
+        "C:\\agent-dev\\skills\\diagnose-workspace\\iteration-1\\eval-4-flaky-cache\\input\\cache.py"
+      ],
+      "expectations": [
+        "Agent builds a stress harness that reliably reproduces the intermittent failure (50%+ repro rate)",
+        "Agent generates at least 3 explicitly stated hypotheses before testing",
+        "Agent uses [DEBUG-XXXX] prefixed log statements for instrumentation",
+        "Agent correctly identifies root cause: missing lock on cache read-check-write",
+        "Agent writes a concurrency regression test before or as part of fixing",
+        "Output contains a 'Diagnosis Summary' section with Root Cause field",
+        "Output contains a 'Post-Mortem' section with Prevention field"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "My Node.js user service throws a TypeError in production: 'Cannot read properties of undefined (reading \\'toUpperCase\\')'. It started happening after I added a profile endpoint last sprint.\n\nThe file is at C:\\agent-dev\\skills\\diagnose-workspace\\iteration-1\\eval-5-js-async-bug\\input\\userService.js\n\nPlease diagnose and fix this bug.",
+      "expected_output": "Agent follows 6-phase methodology: builds a Node.js test harness, reproduces the TypeError, generates 3+ hypotheses, identifies the missing await as root cause, writes a regression test, and outputs Diagnosis Summary + Post-Mortem.",
+      "files": [
+        "C:\\agent-dev\\skills\\diagnose-workspace\\iteration-1\\eval-5-js-async-bug\\input\\userService.js"
+      ],
+      "expectations": [
+        "Agent creates a Node.js test harness that reproduces the TypeError",
+        "Agent generates at least 3 explicitly stated hypotheses before testing",
+        "Agent correctly identifies root cause: missing await causes user to be a Promise object",
+        "Agent writes a regression test before or as part of applying the fix",
+        "Output contains a 'Diagnosis Summary' section with Root Cause field",
+        "Output contains a 'Post-Mortem' section with Prevention field"
+      ]
     }
   ]
 }

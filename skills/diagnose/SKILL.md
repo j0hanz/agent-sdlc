@@ -7,16 +7,9 @@ disable-model-invocation: false
 
 # Skill: diagnose
 
-## Hard Gate
-
-**Do NOT propose any fix until you have:**
-1. Created a deterministic reproduction (Phases 1–2 complete)
-2. Root cause confirmed by dynamic instrumentation AND documented in writing (Phases 3–4 complete)
-3. A failing regression test ready (Phase 5 requirement)
-
-Proposing a fix before these are done means you are patching symptoms. That is a debugging failure.
-
 ## Red Flags
+
+The value of this methodology is that it forces you to know — not guess — before you act. Every shortcut below hides the real issue.
 
 | Thought | Reality |
 |---------|---------|
@@ -37,7 +30,7 @@ Proposing a fix before these are done means you are patching symptoms. That is a
 
 - **Rule 1:** Execute phases in strict sequence.
 - **Rule 2:** NEVER skip Phase 1.
-- **Rule 3:** NEVER modify the original source file directly. Create a working copy before making any changes.
+- **Rule 3:** NEVER modify the original source file directly. Create a working copy (e.g., `orders_fixed.py`) before making any changes.
 
 ## Phases
 
@@ -51,26 +44,35 @@ Proposing a fix before these are done means you are patching symptoms. That is a
 - **Metric_Signal:** Assert exact symptom.
 - **Metric_Determinism:** Pin time, seed RNG, isolate filesystem.
 
+**If you cannot run code** (no environment access, only logs or a description provided): Stop here. Ask the user for one of: (1) environment or shell access, (2) captured artifacts (logs, core dumps, traces), or (3) permission to add production telemetry. Do not proceed to Phase 2 without a runnable feedback loop.
+
 ### Phase 2: Reproduce
 
 - **Goal:** Confirm bug matches user report.
 - **Checklist_1:** Loop reproduces exact failure.
-- **Checklist_2:** High reproduction rate achieved.
+- **Checklist_2:** High reproduction rate achieved. If rate is below 50%, go back to Phase 1 — add stress, concurrency, or timing control until the bug reproduces reliably before continuing.
 - **Checklist_3:** Captured precise symptom (error, timing, state).
+
+**Gate:** Before moving to Phase 3, confirm your loop reproduces the exact failure the user described. If it does not, return to Phase 1.
 
 ### Phase 3: Hypothesize
 
 - **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
-- **Format:** "If [X] is the cause, then [Y] will change."
+- **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses and present to user.
+- **Action:** Rank hypotheses and present to user before testing any of them.
+
+**Example hypotheses for a KeyError crash:**
+- H1: The key is genuinely absent in some inputs (most likely — recent data model change). *Falsify:* add a log before the access; check whether the key appears in the failing case.
+- H2: The key is present but under a different name due to a serialization mismatch. *Falsify:* log `dict.keys()` at the crash site.
+- H3: A race condition clears the dict between check and access. *Falsify:* run a single-threaded replay; if it reproduces, concurrency is not the cause.
 
 ### Phase 4: Instrument
 
 **MANDATORY — READ ENTIRE FILE**: `references/phases.md` for instrumentation patterns and decision trees.
 
 - **Constraint:** ABSOLUTE REQUIREMENT. You MUST instrument code dynamically. Do NOT rely solely on static inspection, even if the bug appears obvious.
-- **Tagging_Rule:** MANDATORY. Prefix ALL temporary logs with a unique tag (e.g., `[DEBUG-a4f2]`).
+- **Tagging_Rule:** MANDATORY. Prefix ALL temporary logs with a unique tag (e.g., `[DEBUG-a4f2]`). The tag makes cleanup a single `grep -r "[DEBUG-a4f2]"` — no manual hunting.
 - **Preference_1:** Debugger/REPL.
 - **Preference_2:** Targeted logs at decision boundaries.
 - **Anti_Pattern:** Never "log everything". Use targeted probes.
@@ -78,19 +80,26 @@ Proposing a fix before these are done means you are patching symptoms. That is a
 
 ### Phase 5: Fix + Regression Test
 
-- **Seam_Rule:** Write regression test at the correct depth BEFORE fixing (if possible). Invoke `test-driven-development` for this step — it defines the red-green-refactor loop to follow.
-- **Seam Examples:**
-  - Logic / data bug → unit test at the function boundary
-  - Race condition → concurrent stress test (N threads × M iterations, assert final state)
-  - Performance regression → timing assertion (`assert elapsed_ms < threshold`)
-- **Actions:** Watch test fail -> Apply fix -> Watch test pass -> Re-run Phase 1 loop.
+Write the regression test at the correct seam **before** applying the fix. This is the RED→GREEN cycle:
+
+1. **Write the test** targeting the exact failure. Choose the right depth:
+   - Logic / data bug → unit test at the function boundary
+   - Race condition → concurrent stress test (N threads × M iterations, assert final state)
+   - Performance regression → timing assertion (`assert elapsed_ms < threshold`)
+2. **Run it — confirm it FAILS (RED).** If it passes immediately, the test is wrong — it is not targeting the actual bug.
+3. **Apply the fix** to your working copy.
+4. **Run it again — confirm it PASSES (GREEN).**
+5. **Re-run Phase 1 loop** — confirm the original symptom is gone end-to-end.
 
 ### Phase 6: Cleanup + Post-Mortem
 
-- **Checklist_1:** All `[DEBUG-XXXX]` logs removed via grep.
-- **Checklist_2:** Throwaway scripts deleted OR explicitly promoted to the test suite. No orphaned debug scripts left behind.
-- **Checklist_3:** Original bug is verified gone.
-- **Requirement:** MANDATORY FINAL STEP. Output Diagnosis Summary and Post-Mortem.
+Work through this checklist completely before closing:
+
+- [ ] All `[DEBUG-XXXX]` tags removed — run `grep -r "[DEBUG-" .` to confirm zero matches.
+- [ ] Throwaway reproduction scripts deleted OR explicitly promoted into the test suite. No orphaned debug scripts left behind.
+- [ ] Working copy is the canonical fixed file. Original untouched source preserved if needed for diff.
+- [ ] Original bug is verified gone via Phase 1 loop.
+- [ ] Output the Diagnosis Summary and Post-Mortem below.
 
 ## Required Final Output Format
 
