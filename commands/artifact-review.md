@@ -62,3 +62,6 @@ Structural check for naming, file presence, and syntax validity.
 - `lint hooks` — hooks.json valid JSON, all referenced script paths exist
 
 Invoke `agents-maintainer` scan tools.
+
+<!-- Usage: /artifact-review audit brainstorming -->
+<!-- Usage: /artifact-review lint hooks -->

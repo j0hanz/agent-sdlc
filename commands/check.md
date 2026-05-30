@@ -32,3 +32,6 @@ If Python is not found or dependencies are missing, ensure the virtual environme
 # macOS / Linux
 source .venv/bin/activate
 ```
+
+<!-- Usage: /check -->
+<!-- Usage: /check skills -->

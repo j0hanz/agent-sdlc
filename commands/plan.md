@@ -20,3 +20,5 @@ Run these skills in sequence — complete each fully before starting the next:
 3. **Invoke `create-plan`** using the spec — produce a step-by-step implementation plan
 
 Do not skip steps. Do not jump to `create-plan` without a spec.
+
+<!-- Usage: /plan Add authentication to the plugin -->

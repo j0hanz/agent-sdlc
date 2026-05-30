@@ -66,3 +66,6 @@ PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/skill-builder" \
 ```
 
 Omit `--out` to print findings to stdout, or use `--out report.json` for machine-readable output.
+
+<!-- Usage: /eval run explorer -->
+<!-- Usage: /eval audit brainstorming -->
