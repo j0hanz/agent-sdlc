@@ -6,8 +6,12 @@ description: >-
   to extend, or hard to test. Also trigger proactively when you spot obvious
   structural problems while working on something else: long functions,
   copy-pasted logic, god classes, magic numbers, tangled conditionals, or
-  misleading names. Use for targeted, behavior-preserving improvements to
-  existing code. Not for full rewrites.
+  misleading names. ALSO use when: the user asks to change a public API or
+  exported function signature; you discover a pre-existing bug while working on
+  structural changes; the code has no tests and a structural change is being
+  considered; the user's request is vague ("make it better", "clean this up")
+  and clarification would prevent wasted effort. Use for targeted,
+  behavior-preserving improvements to existing code. Not for full rewrites.
 disable-model-invocation: false
 ---
 
@@ -32,9 +36,11 @@ Don't refactor on a quick scan. Code that looks messy sometimes has hidden invar
 
 ## Step 2: Name the Pain Point
 
-If the request is vague ("clean this up", "make it better"), ask one question:
+If the request is vague ("clean this up", "make it better", "improve this"), ask one question before touching anything:
 
 > **What's the hardest thing about working with this code right now?**
+
+This question matters because refactoring toward readability, testability, and extensibility often requires different changes. Spending time on the wrong axis wastes both of your time.
 
 Map the answer to the right fix:
 
@@ -88,9 +94,26 @@ One change at a time. After each change:
 
 Announce non-trivial changes before making them. If tests fail after a step, stop and diagnose before continuing.
 
-**Hidden Bug Protocol:** If you uncover a pre-existing bug during refactoring: STOP. NEVER silently fix it within the refactoring step. Mixing structural changes with behavioral changes makes regressions impossible to untangle. Document it or fix it in an isolated, separate step.
+**Hidden Bug Protocol:** If you uncover a pre-existing bug during refactoring: STOP.
 
-**Automated Tooling First:** Before making manual stylistic changes, check if an ecosystem tool (`eslint --fix`, `prettier --write`, `go fmt`, `cargo fmt`) can do the heavy lifting safely and automatically.
+1. Surface the bug clearly — describe what it is, what triggers it, and what the correct behavior should be.
+2. Do **not** fix it — not in this turn, not in a "separate section," not even in a clearly labeled step. Leave the buggy line intact in any refactored code you produce.
+3. Ask the user how to proceed: "I found a bug. Want me to fix it in a dedicated step after the refactor, or separately?"
+
+Why: mixing structural and behavioral changes makes regressions undiagnosable. If a test fails after the refactor, you need to know whether the refactor broke it or the bug fix broke it. That is only possible when they are in separate changes.
+
+**Automated Tooling First:** Before making manual stylistic changes, check if an ecosystem tool can do the heavy lifting safely and automatically.
+
+| Language | Tool | Command |
+| --- | --- | --- |
+| JS/TS | Prettier | `prettier --write <file>` |
+| JS/TS | ESLint | `eslint --fix <file>` |
+| Python | Ruff | `ruff format <file>` |
+| Python | Black | `black <file>` |
+| Go | gofmt | `go fmt ./...` |
+| Rust | rustfmt | `cargo fmt` |
+
+Suggest running the tool first and only proceed to manual changes for things the tool can't fix (naming, structure, duplication).
 
 ### The right tool for each operation
 
@@ -158,6 +181,18 @@ Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
 
 - **NEVER mix behavior changes with structural changes:** Do not add features or fix bugs in the same step as a refactor. If a test fails, you won't know if the refactor broke it or the "fix" broke it.
 - **NEVER extract based solely on structural similarity (Incidental Duplication):** Two blocks of code that _look_ identical but represent different business concepts should NOT be merged. They will evolve differently and force you to add awkward boolean flags later.
+
+  **How to tell the difference — reason both sides before deciding:**
+
+  Before extracting, explicitly argue the case *against* merging, not just the case for it. State at least one concrete future scenario in which the two blocks would need to diverge. If you cannot construct one, say so and explain why. A one-sided conclusion ("these are clearly the same thing") is a smell — ambiguous cases deserve ambiguous answers.
+
+  Signals that concepts are different despite structural similarity:
+  - Different domain labels in error messages or variable names (`billing` vs `shipping`, `invoice` vs `receipt`)
+  - Different regulatory or compliance contexts (billing often has VAT, fiscal codes, IBAN; shipping does not)
+  - Different ownership — one is owned by Finance, one by Logistics
+  - One has already diverged slightly (e.g., has an extra field) — that extra field is a preview of future divergence
+
+  If you conclude extraction is correct after thinking both ways, state the condition that makes it safe: *"These can be merged as long as [specific invariant]. If that changes, split them back."*
 - **NEVER apply high-risk patterns without test coverage:** If there are no tests for complex logic, NEVER apply structural patterns like Strategy or Observer. Limit yourself to safe, mechanical renames or variable extractions unless you write characterization tests first.
 
 ---
