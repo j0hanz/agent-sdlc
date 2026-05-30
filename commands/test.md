@@ -1,6 +1,6 @@
 ---
 description: |
-  Author, audit, update, lint, or run evaluations for plugin skills. Modes: create (author new suite), audit (review existing suite), update (refine suite), lint (check suite structure), run (execute evals with or without a baseline).
+  Run the plugin test suite. Scopes: all (full suite via npm test), node (hook handler unit tests), python (skill script tests via pytest), integration (hooks fire + skills load end-to-end).
 argument-hint: [all|node|python|integration|create|audit|update|lint|run] [skill-name]
 ---
 

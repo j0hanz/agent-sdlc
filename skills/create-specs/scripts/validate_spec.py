@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 # Add lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "lib"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
 from spec_parser import parse_spec
 
 VAGUE_ADJECTIVES = [
