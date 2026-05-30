@@ -69,7 +69,7 @@ model: opus     use-when: root-cause analysis, deep security boundaries, adversa
 Sanity check:
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/recommend.py path/to/your/agent.md
+python <skill-dir>/scripts/recommend.py path/to/your/agent.md
 ```
 
 ### 1.2 Read Grounding
@@ -86,7 +86,7 @@ python ${CLAUDE_SKILL_DIR}/scripts/recommend.py path/to/your/agent.md
 ### 1.3 Discover & Pin Composable Skills
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/recommend-skills.py path/to/your/agent.md --json
+python <skill-dir>/scripts/recommend-skills.py path/to/your/agent.md --json
 ```
 
 Review top candidates. For each accepted, pin an exact version (NEVER `latest`). See [`references/skill-composition.md`](references/skill-composition.md).
@@ -111,9 +111,9 @@ Default to least-privilege.
 Validation gate (run in order, fail fast):
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/validate.sh path/to/your/agent.md
-python ${CLAUDE_SKILL_DIR}/scripts/audit.py path/to/your/agent.md
-python ${CLAUDE_SKILL_DIR}/scripts/compile.py path/to/your/agent.md
+<skill-dir>/scripts/validate.sh path/to/your/agent.md
+python <skill-dir>/scripts/audit.py path/to/your/agent.md
+python <skill-dir>/scripts/compile.py path/to/your/agent.md
 ```
 
 | Code                       | Severity     | Action                                                 |
@@ -145,7 +145,7 @@ Pick the patterns that match your agent's risk profile. Each pattern's "See also
 ## Phase 4: Estimate Cost
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/cost.py path/to/your/agent.md --runs 3
+python <skill-dir>/scripts/cost.py path/to/your/agent.md --runs 3
 ```
 
 Heuristic only — skill bodies and hook prompt/agent invocations aren't counted. See [`references/pricing.md`](references/pricing.md).
@@ -160,7 +160,7 @@ Quick reference (share this with the user):
 
 ```
 Layer A — Deterministic (hook-based assertions):
-  python ${CLAUDE_SKILL_DIR}/scripts/simulate.py path/to/agent.md tests/cases.yaml --runs 3 --sandbox
+  python <skill-dir>/scripts/simulate.py path/to/agent.md tests/cases.yaml --runs 3 --sandbox
   ↳ checks: Tool(arg-glob) assertions in cases.yaml
   ↳ reports: flakiness score, p95 latency, cost per run
   ↳ --sandbox is REQUIRED for agents with side effects (writes, deploys, DB changes)
@@ -179,7 +179,7 @@ Default: run both layers. Write `cases.yaml` first (eval-first), then build the 
 Before any update (Managed Agent, plugin manifest, subagent rename, hooks.json change):
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/diff.py path/to/prod path/to/proposed --json
+python <skill-dir>/scripts/diff.py path/to/prod path/to/proposed --json
 ```
 
 Exit code `2` means the update will **silently delete** something (Managed Agent wholesale replacement, removed hook, removed plugin component). Explicitly acknowledge each deletion before proceeding.
@@ -187,7 +187,7 @@ Exit code `2` means the update will **silently delete** something (Managed Agent
 For visual review (PR comments, architecture diff):
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/diagram.py path/to/your/agent.md --include-hooks hooks/hooks.json --format mermaid
+python <skill-dir>/scripts/diagram.py path/to/your/agent.md --include-hooks hooks/hooks.json --format mermaid
 ```
 
 The Mermaid output is a starting point. **For diagram refinement, hand off to the `diagrams` skill** (`diagrams/scripts/preview_diagram.js` for visualization).

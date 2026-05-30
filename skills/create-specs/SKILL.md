@@ -226,14 +226,14 @@ Document answers as you gather them. If the user can't answer something, mark it
 
 Use these scripts to automate spec creation and validation:
 
-- **`python ${CLAUDE_SKILL_DIR}/scripts/scaffold_spec.py [--level sketch|contract|blueprint] [--domain api|cli] [--goal "Goal sentence"]`**: Generates a standardized spec template with smart defaults.
-- **`python ${CLAUDE_SKILL_DIR}/scripts/validate_spec.py <spec.md>`**: Validates structural integrity, requirement atomicity, active voice, and traceability (REQ -> AC -> VAL).
+- **`python <skill-dir>/scripts/scaffold_spec.py [--level sketch|contract|blueprint] [--domain api|cli] [--goal "Goal sentence"]`**: Generates a standardized spec template with smart defaults.
+- **`python <skill-dir>/scripts/validate_spec.py <spec.md>`**: Validates structural integrity, requirement atomicity, active voice, and traceability (REQ -> AC -> VAL).
 
 ## Workflow: From Spec to Plan
 
-1. **Scaffold the spec** using `${CLAUDE_SKILL_DIR}/scripts/scaffold_spec.py` to get the correct structure and domain snippets.
+1. **Scaffold the spec** using `<skill-dir>/scripts/scaffold_spec.py` to get the correct structure and domain snippets.
 2. **Write the spec** following the generated template.
-3. **MANDATORY - VALIDATE**: Run `python ${CLAUDE_SKILL_DIR}/scripts/validate_spec.py <your_spec.md>`.
+3. **MANDATORY - VALIDATE**: Run `python <skill-dir>/scripts/validate_spec.py <your_spec.md>`.
    > **GATEKEEPER**: Implementation planning MUST NOT begin until `validate_spec.py` returns 0 errors. You MUST resolve all **ERRORS** before proceeding. Address **WARNINGS** where possible to improve quality.
    >
    > **Parser note**: The validator requires at least one line of body text directly under each `##` section heading before any `###` sub-headings. If `## 4. Interfaces` is followed immediately by `### POST /endpoint` with no intervening text, the parser will report a false "Missing mandatory section: Interfaces" error. Fix by adding one introductory sentence (e.g., "The system exposes the following endpoints:") before the first sub-heading.

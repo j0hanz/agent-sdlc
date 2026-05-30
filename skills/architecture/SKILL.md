@@ -76,8 +76,8 @@ Architectural refactoring fails when it adds indirection without adding depth. *
 
 Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files.
 
-- **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node ${CLAUDE_SKILL_DIR}/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node ${CLAUDE_SKILL_DIR}/scripts/check-locality.mjs src`
-- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node ${CLAUDE_SKILL_DIR}/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Example: `node ${CLAUDE_SKILL_DIR}/scripts/detect-bleed.mjs src/domain express,prisma,typeorm`
+- **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node <skill-dir>/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node <skill-dir>/scripts/check-locality.mjs src`
+- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Example: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm`
 
 **After both scripts complete — spawn the `architecture-scanner` subagent** (`agents/architecture-scanner.md`):
 

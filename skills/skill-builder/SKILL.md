@@ -260,19 +260,23 @@ Once all runs are done:
 
 4. **Launch the viewer** with both qualitative outputs and quantitative data:
 
+   > **Path substitution:** Replace `<skill-builder-dir>` with the base directory of this skill shown at the top of your context (e.g. `C:\Users\PC\.claude\skills\skill-builder` or `/Users/you/.claude/skills/skill-builder`). Do NOT use `$CLAUDE_SKILL_DIR` — that shell variable is not set in the bash environment and will expand to an empty string, silently breaking the command.
+
    ```bash
-   python ${CLAUDE_SKILL_DIR}/eval-viewer/generate_review.py \
-     <workspace>/iteration-N \
+   python -u "<skill-builder-dir>/eval-viewer/generate_review.py" \
+     "<workspace>/iteration-N" \
      --skill-name "my-skill" \
-     --benchmark <workspace>/iteration-N/benchmark.json \
+     --benchmark "<workspace>/iteration-N/benchmark.json" \
      > /tmp/viewer.log 2>&1 &
    VIEWER_PID=$!
-   sleep 1 && grep -m1 "URL:" /tmp/viewer.log
+   sleep 2 && grep -m1 "URL:" /tmp/viewer.log
    ```
 
-   For iteration 2+, also pass `--previous-workspace <workspace>/iteration-<N-1>`.
+   The `-u` flag disables Python output buffering so the URL appears in the log immediately.
 
-   Capture the `URL:` line from the log to get `http://localhost:{port}` — you'll give this to the user in step 5.
+   For iteration 2+, also pass `--previous-workspace "<workspace>/iteration-<N-1>"`.
+
+   Capture the `URL:` line from the log to get `http://localhost:{port}` — you'll give this to the user in step 5. If the grep returns nothing (server failed to start), check `/tmp/viewer.log` for the error and fix the path before continuing — do not give the user a URL that doesn't work.
 
    **Cowork / headless environments:** See `references/cowork.md` for adapted instructions (`--static` flag, feedback download, etc.).
 

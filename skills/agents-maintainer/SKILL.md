@@ -35,9 +35,9 @@ If the project environment is already well-understood (e.g., standard Node.js/Ty
 Run the analysis subcommands to instantly discover the project structure, tooling, and conventions.
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/run.py analyze-env .
-python ${CLAUDE_SKILL_DIR}/scripts/run.py find-dependencies .
-python ${CLAUDE_SKILL_DIR}/scripts/run.py scan-structure . --max-depth 2
+python <skill-dir>/scripts/run.py analyze-env .
+python <skill-dir>/scripts/run.py find-dependencies .
+python <skill-dir>/scripts/run.py scan-structure . --max-depth 2
 ```
 
 **What each subcommand does:**
@@ -97,7 +97,7 @@ Validation happens in **two passes**: automated checks, then manual review.
 Run this first:
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/run.py lint-agents-md <path/to/AGENTS.md>
+python <skill-dir>/scripts/run.py lint-agents-md <path/to/AGENTS.md>
 ```
 
 The linter checks:
@@ -140,7 +140,7 @@ If any checklist item fails, go back to Phase 2 and refine.
 
 **MANDATORY — READ ENTIRE FILE:** `references/guide.md` to finish wiring.
 
-Use the `python ${CLAUDE_SKILL_DIR}/scripts/run.py wire-agents AGENTS.md CLAUDE.md GEMINI.md` command. This script will safely attempt to create symlinks, and will automatically fall back to hardlinks or file copies if symlinks are not supported by the environment (e.g., on Windows without Developer Mode).
+Use the `python <skill-dir>/scripts/run.py wire-agents AGENTS.md CLAUDE.md GEMINI.md` command. This script will safely attempt to create symlinks, and will automatically fall back to hardlinks or file copies if symlinks are not supported by the environment (e.g., on Windows without Developer Mode).
 
 As a final gut-check: would any section be embarrassing on a code review for being obvious or vague? If yes, cut it.
 

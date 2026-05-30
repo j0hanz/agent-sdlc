@@ -113,7 +113,7 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
 #### 4. Validate before claiming done
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/lint.py .github/workflows/<file>.yml
+python <skill-dir>/scripts/lint.py .github/workflows/<file>.yml
 ```
 
 `lint.py` is the cross-platform linter. It prefers `actionlint` when installed, otherwise performs built-in Python-based checks for expression injection, SHA pinning, and permissions.
@@ -149,15 +149,15 @@ The agent evaluates 7 semantic dimensions: OIDC trust scope, `pull_request_targe
 Resolves every `uses: org/repo@<ref>` in a workflow to a full commit SHA, rewrites in place, appends the original tag as a comment. Requires `gh` authenticated or `git` installed. Idempotent.
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/pin_actions.py .github/workflows/ci.yml
-python ${CLAUDE_SKILL_DIR}/scripts/pin_actions.py .github/workflows/   # whole directory
+python <skill-dir>/scripts/pin_actions.py .github/workflows/ci.yml
+python <skill-dir>/scripts/pin_actions.py .github/workflows/   # whole directory
 ```
 
 #### `scripts/lint.py` (Preferred over `lint.sh`)
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/lint.py .github/workflows/ci.yml
-python ${CLAUDE_SKILL_DIR}/scripts/lint.py .github/workflows/   # whole directory
+python <skill-dir>/scripts/lint.py .github/workflows/ci.yml
+python <skill-dir>/scripts/lint.py .github/workflows/   # whole directory
 ```
 
 Cross-platform linter. Tries: `actionlint` → `yamllint` → built-in Python check.
@@ -231,7 +231,7 @@ If the automation needs organization-level or multi-repo access:
 **Do NOT load** this reference if the automation only targets the current repo context.
 
 For PR triage and failing Actions log extraction, use `scripts/inspect_pr_checks.py`:
-`MANDATORY: run python ${CLAUDE_SKILL_DIR}/scripts/inspect_pr_checks.py --help` before using it.
+`MANDATORY: run python <skill-dir>/scripts/inspect_pr_checks.py --help` before using it.
 
 ### Machine-readable output patterns
 

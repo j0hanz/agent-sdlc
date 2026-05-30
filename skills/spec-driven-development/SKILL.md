@@ -58,7 +58,7 @@ Different skills for different situations:
 
 This skill orchestrates two sub-skills (`create-specs`, `create-plan`) that each bundle their own validators (`validate_spec.py`, `discover.mjs`, `validate_plan.py`, `generate_plan.py`) — there is nothing to install separately.
 
-If a sub-skill fails to invoke, run `python ${CLAUDE_SKILL_DIR}/scripts/diagnose_dependencies.py` to check availability. If it reports a missing sub-skill, confirm the `agent-dev` plugin is enabled and run `/reload-plugins`. Do not substitute manual work for missing tooling — invoke the sub-skill by name so its own validators run.
+If a sub-skill fails to invoke, run `python <skill-dir>/scripts/diagnose_dependencies.py` to check availability. If it reports a missing sub-skill, confirm the `agent-dev` plugin is enabled and run `/reload-plugins`. Do not substitute manual work for missing tooling — invoke the sub-skill by name so its own validators run.
 
 ## Required Sub-Skills
 

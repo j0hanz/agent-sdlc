@@ -107,18 +107,18 @@ You MUST validate your architectures using these scripts. **Show the command and
 
 ### Validation Step
 ```bash
-node ${CLAUDE_SKILL_DIR}/scripts/lint_diagram.js <file.mmd>
+node <skill-dir>/scripts/lint_diagram.js <file.mmd>
 ```
 **Action**: Run this on every generated Mermaid file. If errors appear, fix them inline and re-validate before presenting to user. Show the command and output in your response.
 
 ### Preview Step
 ```bash
-node ${CLAUDE_SKILL_DIR}/scripts/preview_diagram.js <file.mmd>
+node <skill-dir>/scripts/preview_diagram.js <file.mmd>
 ```
 **Action**: Run this to generate an HTML preview. Provide the user with the file path so they can view it in a browser.
 
 ### Scaffolding (Optional)
 ```bash
-node ${CLAUDE_SKILL_DIR}/scripts/scaffold_c4.js <project-dir>
+node <skill-dir>/scripts/scaffold_c4.js <project-dir>
 ```
 **Action**: Use this when the user asks to "diagram this existing repo" or "analyze this codebase's architecture". It auto-generates a C4 scaffold from file structure.

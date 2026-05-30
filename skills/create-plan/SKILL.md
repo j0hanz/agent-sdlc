@@ -261,7 +261,7 @@ For effort estimation tables by task type, see [references/decomposition.md](ref
 Before marking plan complete, run the validation script:
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+python <skill-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 ```
 
 This checks **all of these automatically**:
@@ -277,7 +277,7 @@ This checks **all of these automatically**:
 ### Example Validation
 
 ```bash
-$ python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+$ python <skill-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 
 Validating plan-feature-auth-middleware-1.md...
 ✓ 27 tasks
