@@ -1,10 +1,12 @@
 """Shared JSON utilities for skill-builder scripts."""
+
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
 
 def load_json(path: Path) -> Any:
     """Safely load JSON from a file, logging errors."""
@@ -17,6 +19,7 @@ def load_json(path: Path) -> Any:
     except OSError as e:
         logger.error(f"Failed to read file {path}: {e}")
         raise
+
 
 def save_json(path: Path, data: Any, indent: int = 2) -> None:
     """Safely save JSON to a file."""

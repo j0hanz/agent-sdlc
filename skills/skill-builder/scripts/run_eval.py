@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import json
 import os
@@ -12,12 +13,14 @@ from scripts.utils import parse_skill_md
 
 _TRIGGER_TOOLS = frozenset({"Skill", "Read"})
 
+
 def find_project_root() -> Path:
     current = Path.cwd()
     for parent in [current, *current.parents]:
         if (parent / ".claude").is_dir():
             return parent
     return current
+
 
 async def run_single_query(
     query: str,
@@ -131,6 +134,7 @@ async def run_single_query(
         if command_file.exists():
             command_file.unlink()
 
+
 async def run_eval(
     eval_set: list[dict],
     skill_name: str,
@@ -161,7 +165,7 @@ async def run_eval(
             tasks.append(sem_run_single(item, 0))
 
     results_data = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     query_triggers = {}
     idx = 0
     for item in eval_set:
@@ -181,15 +185,21 @@ async def run_eval(
         triggers = query_triggers[query]
         trigger_rate = sum(triggers) / len(triggers)
         should_trigger = item["should_trigger"]
-        did_pass = (trigger_rate >= trigger_threshold) if should_trigger else (trigger_rate < trigger_threshold)
-        results.append({
-            "query": query,
-            "should_trigger": should_trigger,
-            "trigger_rate": trigger_rate,
-            "triggers": sum(triggers),
-            "runs": len(triggers),
-            "pass": did_pass,
-        })
+        did_pass = (
+            (trigger_rate >= trigger_threshold)
+            if should_trigger
+            else (trigger_rate < trigger_threshold)
+        )
+        results.append(
+            {
+                "query": query,
+                "should_trigger": should_trigger,
+                "trigger_rate": trigger_rate,
+                "triggers": sum(triggers),
+                "runs": len(triggers),
+                "pass": did_pass,
+            }
+        )
 
     passed = sum(1 for r in results if r["pass"])
     total = len(results)
@@ -205,22 +215,37 @@ async def run_eval(
         },
     }
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Run trigger evaluation for a skill description")
+    parser = argparse.ArgumentParser(
+        description="Run trigger evaluation for a skill description"
+    )
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON file")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
-    parser.add_argument("--description", default=None, help="Override description to test")
-    parser.add_argument("--num-workers", type=int, default=10, help="Number of parallel workers")
-    parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
-    parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
-    parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
+    parser.add_argument(
+        "--description", default=None, help="Override description to test"
+    )
+    parser.add_argument(
+        "--num-workers", type=int, default=10, help="Number of parallel workers"
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=30, help="Timeout per query in seconds"
+    )
+    parser.add_argument(
+        "--runs-per-query", type=int, default=3, help="Number of runs per query"
+    )
+    parser.add_argument(
+        "--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold"
+    )
     parser.add_argument("--model", default=None, help="Model to use")
-    parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print progress to stderr"
+    )
     args = parser.parse_args()
 
     eval_set = load_json(Path(args.eval_set))
     skill_path = Path(args.skill_path)
-    
+
     if not (skill_path / "SKILL.md").exists():
         print(f"Error: No SKILL.md found at {skill_path}", file=sys.stderr)
         sys.exit(1)
@@ -229,19 +254,22 @@ def main():
     description = args.description or original_description
     project_root = find_project_root()
 
-    output = asyncio.run(run_eval(
-        eval_set=eval_set,
-        skill_name=name,
-        description=description,
-        num_workers=args.num_workers,
-        timeout=args.timeout,
-        project_root=project_root,
-        runs_per_query=args.runs_per_query,
-        trigger_threshold=args.trigger_threshold,
-        model=args.model,
-    ))
+    output = asyncio.run(
+        run_eval(
+            eval_set=eval_set,
+            skill_name=name,
+            description=description,
+            num_workers=args.num_workers,
+            timeout=args.timeout,
+            project_root=project_root,
+            runs_per_query=args.runs_per_query,
+            trigger_threshold=args.trigger_threshold,
+            model=args.model,
+        )
+    )
 
     print(json.dumps(output, indent=2))
+
 
 if __name__ == "__main__":
     main()

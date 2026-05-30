@@ -6,6 +6,9 @@ description: |
   library/framework API help, modern code examples, Context7 setup, or skill management.
   Trigger on queries like "how do I use React hooks", "find the latest AWS SDK docs",
   "install a Context7 skill", "set up ctx7", or any mention of Context7 / ctx7.
+  For ctx7 skills commands (install, search, suggest, generate, list, remove) and
+  Context7 setup/authentication, this skill is required — do not guess CLI commands
+  from memory, as the correct syntax is in the reference files.
 disable-model-invocation: false
 ---
 
@@ -16,7 +19,6 @@ This skill is the authoritative workflow for developer research tasks. It should
 ## What this skill covers
 
 - **Documentation lookup** — find current API references, library docs, and code examples using Context7.
-  MANDATORY — READ ENTIRE FILE: `references/docs.md` before querying. Understands library resolution, query quality, and authentication.
 - **Skills management** — search, install, suggest, list, remove, or generate Context7 skills.
   MANDATORY — READ ENTIRE FILE: `references/skills.md` before managing skills. Covers all CLI commands and installation targets.
 - **Context7 setup** — configure MCP or CLI access and authenticate for Context7.
@@ -24,7 +26,7 @@ This skill is the authoritative workflow for developer research tasks. It should
 
 ## 1. Documentation Lookup
 
-Always prefer Context7 for library and SDK documentation. Do not answer from training data unless all Context7 workflows fail.
+Always prefer Context7 for library and SDK documentation. If Context7 is unavailable (both MCP and CLI fail), fall back to training data and disclose it — a transparent training-data answer is better than leaving the user with nothing.
 
 ### Preferred workflow: MCP tools
 
@@ -32,9 +34,9 @@ If `mcp__context7__resolve-library-id` and `mcp__context7__query-docs` are avail
 
 1. If the user already supplied a Context7 ID in `/owner/project` or `/owner/project/version` format, use it directly.
 2. Otherwise resolve the library with `mcp__context7__resolve-library-id`.
-3. Query the docs with `mcp__context7__query-docs` and the user’s full intent.
+3. Query the docs with `mcp__context7__query-docs` and the user's full intent.
 
-Always include the library name and the user’s target platform/problem in the query.
+Always include the library name and the user's target platform/problem in the query.
 
 ### Fallback workflow: ctx7 CLI
 
@@ -46,18 +48,30 @@ If MCP tools are unavailable, use `ctx7` CLI.
    `ctx7 docs <libraryId> "<user query>"`
 3. If `ctx7` is not installed, tell the user how to install it or ask them to run the setup command.
 
+### When all Context7 workflows fail
+
+If both MCP tools return an error (permission denied, not found) AND the ctx7 CLI is not installed or returns an error, fall back to training data. Tell the user: "Context7 was unavailable in this environment; answering from training data." Then provide the best answer you can. Do not leave the user with a non-answer.
+
 ### Query quality
 
-The query is the most important factor. Use the user’s full question; do not reduce it to a single noun.
+The query is the most important factor. Use the user's full question; do not reduce it to a single noun.
 
 | Quality | Example                                                             |
 | ------- | ------------------------------------------------------------------- |
 | Good    | `"How do I clean up useEffect when using async fetch in React 18?"` |
 | Bad     | `"react"`                                                           |
 
+### Multi-library queries
+
+When the user mentions two or more libraries, resolve and query each one separately. If you're rate-limited, prioritize the most specific or niche library first (the one least likely to be covered by training data).
+
+### Response format
+
+After retrieving docs, present results in a focused, readable form. Summarize the relevant sections and show code examples that address the user's specific question. If Context7 returns more than needed, extract and highlight the parts that directly answer the query — don't reproduce raw docs verbatim.
+
 ## 2. Skills Management
 
-Use `ctx7 skills` only when the user asks specifically about installing, listing, removing, or generating Context7 skills.
+Use `ctx7 skills` only when the user asks specifically about installing, listing, removing, or generating Context7 skills. Read `references/skills.md` before answering — CLI syntax and flags are not reliably in training data.
 
 ```bash
 ctx7 skills search <keywords>
@@ -72,7 +86,7 @@ If the user wants a skill recommendation for a project, prefer `ctx7 skills sugg
 
 ## 3. Context7 Setup & Authentication
 
-Use this workflow only when the user asks about configuring Context7 or fixing auth issues. Refer to `references/setup.md` for exact commands.
+Use this workflow only when the user asks about configuring Context7 or fixing auth issues. Read `references/setup.md` for exact commands — do not guess syntax from memory.
 
 For non-interactive guidance, explain the difference between:
 
@@ -100,12 +114,17 @@ Handle these scenarios gracefully:
 
 **Symptom**: `Rate limit exceeded. Try again in 60 seconds.`
 
-**Recovery**:
+**Recovery**: Unauthenticated users have a much lower quota — each retry immediately exhausts the new window. Authenticating is the durable fix.
 
 ```bash
 ctx7 login              # Authenticate to unlock higher limits
 # Wait 60 seconds, then retry
 ctx7 docs /react "how to use hooks"
+```
+
+Or set an API key directly:
+```bash
+export CONTEXT7_API_KEY=your_key
 ```
 
 ### Authentication required
@@ -144,18 +163,10 @@ ctx7 docs /facebook/react "your question"
 ## Best practices
 
 - Resolve before querying. Always resolve library names before calling docs.
-- Prefer the user’s exact intent. Include version, runtime, or framework details in the query.
-- If Context7 returns no results, do not invent answers. Ask the user to clarify the library name or version.
+- Prefer the user's exact intent. Include version, runtime, or framework details in the query.
+- If Context7 returns no results, try rephrasing the query before asking the user to clarify.
 - If a quota or auth error occurs, tell the user and suggest `ctx7 login` or `CONTEXT7_API_KEY`.
 - Use the right tool for the task:
   - docs lookup → MCP tools or `ctx7 docs`
-  - skill management → `ctx7 skills`
-  - setup/auth → `ctx7 setup` / `ctx7 login`
-
-## NEVER do these things
-
-- **NEVER** use library names without a `/` prefix when a Context7 ID is expected.
-- **NEVER** query docs without resolving the library first.
-- **NEVER** use single-word, vague queries like `"hooks"`.
-- **NEVER** include secrets or credentials in a query.
-- **NEVER** silently fall back to training data when Context7 is available.
+  - skill management → `ctx7 skills` (read `references/skills.md` first)
+  - setup/auth → `ctx7 setup` / `ctx7 login` (read `references/setup.md` first)
