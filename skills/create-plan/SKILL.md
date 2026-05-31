@@ -3,7 +3,7 @@ name: create-plan
 description: |
   Creates a structured implementation plan for a specific technical task. Use when you already have a validated spec (from `create-specs`) or are handed a well-scoped task and need an executable plan. ROUTING: if the user is starting a feature from scratch with no spec yet, invoke `spec-driven-development` first — this skill is its Step 3 sub-skill, not a replacement for the full workflow. Triggers directly on: 'create a plan', 'write a plan for', 'plan this out', 'what are the steps to', or when `spec-driven-development` reaches its Planning Gate. Also use standalone for: refactoring a known component, upgrading a dependency, migrating infrastructure — tasks where scope is already clear. Offers quick-start flags (--quick for simple features, --compact for overviews, --assume-paths for multi-repo). Do NOT skip this for multi-step technical work.
 disable-model-invocation: false
-user-invocable: false
+user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
 argument-hint: |
   [--atomic (default) | --compact (executive) | --narrative (runbook)]
@@ -49,23 +49,23 @@ Perfect for implementation teams. Produces **15-40 atomic tasks** with exact cod
 ```markdown
 # Task 1: Set Up JWT Utilities
 
-**Files**: [src/utils/jwt.ts](src/utils/jwt.ts)  
-**Symbols**: [generateToken](src/utils/jwt.ts#L15)  
-**Action**: Create JWT generation function with error handling  
-**Validate**: `npm test -- src/tests/jwt.test.ts`  
+**Files**: [src/utils/jwt.ts](src/utils/jwt.ts)
+**Symbols**: [generateToken](src/utils/jwt.ts#L15)
+**Action**: Create JWT generation function with error handling
+**Validate**: `npm test -- src/tests/jwt.test.ts`
 **Expected result**: All 8 tests pass, 0 skipped
 
 # Task 2: Create Authentication Middleware
 
-**Files**: [src/middleware/auth.ts](src/middleware/auth.ts)  
-**Depends on**: Task 1  
-**Action**: Implement middleware that validates JWT in Authorization header  
-**Validate**: `npm test -- src/tests/middleware.test.ts`  
+**Files**: [src/middleware/auth.ts](src/middleware/auth.ts)
+**Depends on**: Task 1
+**Action**: Implement middleware that validates JWT in Authorization header
+**Validate**: `npm test -- src/tests/middleware.test.ts`
 **Expected result**: All 6 tests pass
 ```
 
-**Use when**: Building features, refactoring code, creating something new  
-**Effort**: 1-2 hours per 5 tasks  
+**Use when**: Building features, refactoring code, creating something new
+**Effort**: 1-2 hours per 5 tasks
 **Best for**: Developers, CI/CD pipelines, agent execution
 
 ---
@@ -92,12 +92,12 @@ Perfect for stakeholder approval. Produces **6-8 phases** with timeline:
 - [ ] Write integration tests
 - [ ] Verify security best practices
 
-**Total Effort**: 7-10 hours  
+**Total Effort**: 7-10 hours
 **Timeline**: 1-2 days with full team
 ```
 
-**Use when**: Need executive approval, stakeholder reviews, quick go/no-go decisions  
-**Effort**: Estimated upfront (no task breakdown)  
+**Use when**: Need executive approval, stakeholder reviews, quick go/no-go decisions
+**Effort**: Estimated upfront (no task breakdown)
 **Best for**: Managers, stakeholders, budget planning
 
 ---
@@ -133,8 +133,8 @@ If tests fail with "Cannot find module jsonwebtoken":
 - [ ] Verify: `npm ls jsonwebtoken`
 ```
 
-**Use when**: Ops/infrastructure work, team training, operational handoff  
-**Includes**: Step-by-step procedures, troubleshooting, team training  
+**Use when**: Ops/infrastructure work, team training, operational handoff
+**Includes**: Step-by-step procedures, troubleshooting, team training
 **Best for**: Operations teams, SREs, knowledge transfer
 
 ---
@@ -180,10 +180,10 @@ Ask yourself:
 **Your task**: "Add JWT auth to Express API"
 
 - ✅ Clear scope? YES — add JWT generation and middleware
-- ✅ Single repo? YES  
+- ✅ Single repo? YES
 - ✅ Known structure? YES — standard Express layout
 
-**Result**: ✅ READY  
+**Result**: ✅ READY
 **Command**: `/create-plan --atomic "Add JWT auth to Express API"`
 
 ---
@@ -200,7 +200,14 @@ Ask yourself:
 | 4    | **Author**: Fill plan template with verified content                         | No placeholders; all paths are markdown links                   |
 | 5    | **Validate**: Verify links and structure                                     | Plan passes validation; UNVERIFIED markers resolved or accepted |
 
-**For SDD integration**: If coming from `spec-driven-development` with a validated spec, copy the **Goals** and **Requirements** sections from your spec as input here.
+**For SDD integration**: If coming from `spec-driven-development` with a validated spec, generate a plan skeleton with `generate_plan.py` before Step 4:
+
+```bash
+python ${CLAUDE_SKILL_DIR}/scripts/generate_plan.py \
+  spec.md --purpose <purpose> --component <component>
+```
+
+This produces a task scaffold with UNVERIFIED markers; fill in verified paths and symbols during Steps 2 and 4. See [references/scripts.md](references/scripts.md) for full syntax.
 
 ---
 
@@ -230,7 +237,6 @@ For detailed guidance on:
 ## Output Files
 
 - **plan-[purpose]-[component]-[version].md** — Main plan (saved to `/plan/` or user-specified directory)
-- **transcript.md** — Planning session record (shows reasoning, decisions)
 - Optional: **README.md**, **validation-output.txt** (if `--verbose`)
 
 ---
@@ -261,7 +267,7 @@ For effort estimation tables by task type, see [references/decomposition.md](ref
 Before marking plan complete, run the validation script:
 
 ```bash
-python <skill-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 ```
 
 This checks **all of these automatically**:
@@ -277,7 +283,7 @@ This checks **all of these automatically**:
 ### Example Validation
 
 ```bash
-$ python <skill-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+$ python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 
 Validating plan-feature-auth-middleware-1.md...
 ✓ 27 tasks
@@ -301,16 +307,14 @@ FIX: See lines 52-55 in plan-feature-auth-middleware-1.md
 
 **Don't skip validation.** A plan that passes validation is ready for agent execution; a plan that doesn't will fail partway through.
 
-**After `validate_plan.py` returns READY FOR EXECUTION — spawn the `plan-quality-reviewer` subagent** (`agents/plan-quality-reviewer.md`) for semantic quality review that structural validation cannot catch:
+**After `validate_plan.py` returns READY FOR EXECUTION — use the Agent tool** to spawn a quality review subagent for semantic checks that structural validation cannot catch. First read `agents/reviewer.md`, then call the Agent tool:
 
-```
-Agent(
-  description: "Semantic quality review of [plan filename]",
-  prompt: |
-    plan_path: [absolute path to the plan file]
-    project_root: [project root, if available]
-)
-```
+- **description**: `"Semantic quality review of [plan filename]"`
+- **prompt**: Paste the full contents of `agents/reviewer.md`, then append:
+  ```
+  plan_path: [absolute path to the plan file]
+  project_root: [project root, if available]
+  ```
 
 The agent samples tasks and scores four dimensions: atomicity (one observable outcome per task), validation runability (commands that can execute verbatim), dependency order correctness, and effort estimate realism. Check the output:
 - `ready_for_execution: false` → resolve `blocking_issues` before handing the plan to an executor
