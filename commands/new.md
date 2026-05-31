@@ -25,7 +25,7 @@ If arguments are missing or the type is not one of the three, ask:
 | ------- | --------------------------------------------------------------------------------- |
 | `skill` | Invoke the `skill-builder` skill with the name as context                         |
 | `agent` | Invoke the `skill-builder` skill with the name as context (it handles agents too) |
-| `hook`  | Invoke the `hook-development` skill with the name as context                      |
+| `hook`  | Invoke the `create-hook` skill with the name as context                           |
 
 <!-- Usage: /new skill my-feature -->
 <!-- Usage: /new hook my-hook -->

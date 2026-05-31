@@ -39,10 +39,10 @@ Compose first; build only where no sibling skill exists. The workspace has 20 si
 trigger: API-callable from external code          primitive: Managed Agent
 trigger: spawned by Claude during a session       primitive: Claude Code subagent
 trigger: long-running parallel workers            primitive: Agent team (/background, TeamCreate)
-trigger: behavior shaping only (no new context)   primitive: Skill + hooks → use hook-development skill
+trigger: behavior shaping only (no new context)   primitive: Skill + hooks → use create-hook skill
 ```
 
-When the primitive is **Skill + hooks**, hand off to the **`hook-development`** skill for design, linting, and testing. This skill covers agent-specific hook patterns only (Phase 3 below).
+When the primitive is **Skill + hooks**, hand off to the **`create-hook`** skill for design, linting, and testing. This skill covers agent-specific hook patterns only (Phase 3 below).
 
 For the deep comparison (cost, observability, migration paths), read [`references/primitives.md`](references/primitives.md).
 
@@ -106,7 +106,7 @@ Default to least-privilege.
 | Managed Agent        | [`templates/managed-agent.md`](references/templates/managed-agent.md)                | `audit.py` + `compile.py`                     |
 | Claude Code subagent | [`templates/claude-code-subagent.md`](references/templates/claude-code-subagent.md)  | `audit.py` + `compile.py` (auto-detects kind) |
 | Agent team           | same subagent template per teammate; parent spawns with `--bg` flag; results via `Monitor` tool or shared output file | `audit.py` per teammate |
-| Skill + hooks        | [`templates/hooks.json`](references/templates/hooks.json) + `hook-development` skill | `hook-development/scripts/hook-linter.sh`     |
+| Skill + hooks        | [`templates/hooks.json`](references/templates/hooks.json) + `create-hook` skill | `create-hook/scripts/test_hook.py`            |
 
 Validation gate (run in order, fail fast):
 
@@ -125,7 +125,7 @@ python <skill-dir>/scripts/compile.py path/to/your/agent.md
 
 ## Phase 3: Add Safety Nets via Hooks
 
-For general hook design, use the **`hook-development`** skill. This phase covers agent-specific patterns only.
+For general hook design, use the **`create-hook`** skill. This phase covers agent-specific patterns only.
 
 **MANDATORY — READ ENTIRE FILE:** [`references/agent-hook-patterns.md`](references/agent-hook-patterns.md). Six patterns:
 
@@ -138,7 +138,7 @@ For general hook design, use the **`hook-development`** skill. This phase covers
 | Agent identity reload after compaction               | advanced                                  |
 | MCP elicitation auto-handler for headless agents     | advanced                                  |
 
-Pick the patterns that match your agent's risk profile. Each pattern's "See also" footer links to `hook-development/references/patterns.md` for mechanics.
+Pick the patterns that match your agent's risk profile. Each pattern's "See also" footer links to `create-hook/references/events.md` for mechanics.
 
 ---
 
@@ -198,5 +198,5 @@ The Mermaid output is a starting point. **For diagram refinement, hand off to th
 
 | Skill              | Purpose                                      |
 | ------------------ | -------------------------------------------- |
-| `hook-development` | general hook design mechanics                |
+| `create-hook`      | general hook design mechanics                |
 | `diagrams`         | Mermaid rendering and architectural diagrams |

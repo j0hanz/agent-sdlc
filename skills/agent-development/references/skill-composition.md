@@ -81,7 +81,7 @@ For subagents running in Claude Code sessions:
 Common skills available in this workspace:
 
 - **code-review:** Automated code review and quality assessment
-- **hook-development:** Hooks design and pattern guidance
+- **create-hook:** Hooks design and pattern guidance
 - **diagrams:** Mermaid rendering and visualization
 - **github-automation:** GitHub Actions workflows and CLI API integration
 - **security-auditor:** Security vulnerability scanning

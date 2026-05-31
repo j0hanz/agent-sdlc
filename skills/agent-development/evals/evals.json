@@ -36,7 +36,7 @@
         "Correctly identifies this as a Skill+hooks use case (behavior shaping only) rather than an agent",
         "Recommends a hook (PostToolUse or similar) rather than building a full agent",
         "Does NOT recommend building a Managed Agent or Claude Code subagent for this use case",
-        "Mentions the hook-development skill for implementation details"
+        "Mentions the create-hook skill for implementation details"
       ]
     },
     {

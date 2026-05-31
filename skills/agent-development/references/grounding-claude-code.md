@@ -113,7 +113,7 @@ Claude Code hooks organize into 4 lifecycle classes:
   - Exit 2: defer (non-interactive mode only; blocked in web)
 - `prompt` (decision): Ask user for approval (interactive mode only; blocked in -p)
 
-Refer to the `hook-development` skill for deep design guidance, hook performance tuning, and advanced patterns.
+Refer to the `create-hook` skill for deep design guidance, hook performance tuning, and advanced patterns.
 
 ## Agent Teams Essentials
 

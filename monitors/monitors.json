@@ -3,13 +3,13 @@
     "name": "telemetry-watcher",
     "command": "tail -F \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\"",
     "description": "Hook execution telemetry — surfaces errors and slow hooks in real time",
-    "when": "on-skill-invoke:hook-development"
+    "when": "on-skill-invoke:create-hook"
   },
   {
     "name": "node-test-watcher",
     "command": "node --test --watch \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/*.test.mjs\"",
     "description": "Hook handler unit tests — live feedback during hook development",
-    "when": "on-skill-invoke:hook-development"
+    "when": "on-skill-invoke:create-hook"
   },
   {
     "name": "python-test-watcher",

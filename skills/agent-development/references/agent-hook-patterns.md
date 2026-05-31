@@ -38,7 +38,7 @@ When you need visibility into subagent execution: transcripts, tool calls, timin
 ⚠️ **Field naming:** The hook environment provides `agent_transcript_path` (subagent's isolated transcript), NOT `transcript_path`. Using the wrong variable name silently fails to capture transcripts.
 
 ### See also
-For advanced hook patterns and event lifecycle, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For advanced hook patterns and event lifecycle, see [create-hook/references/events.md](../../../create-hook/references/events.md).
 
 ---
 
@@ -93,7 +93,7 @@ max_duration_s: 120
 ⚠️ **Exit codes:** Observer hooks MUST exit 0 even if a tool call is unexpected. Exit 2 (defer) or exit 1 (deny) changes agent behavior under test and invalidates the test. Observers record only; they do not gate.
 
 ### See also
-For event filtering and advanced hook observability patterns, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For event filtering and advanced hook observability patterns, see [create-hook/references/events.md](../../../create-hook/references/events.md).
 
 ---
 
@@ -149,7 +149,7 @@ sys.exit(0)  # Allow
 ⚠️ **Main-session calls:** `agent_type` is absent when the agent is running in the main session (no subagent). Your hook must handle the `agent_type == None` case. Define a sensible default policy for main-session runs.
 
 ### See also
-For comprehensive permission model documentation and advanced scoping, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For comprehensive permission model documentation and advanced scoping, see [create-hook/references/events.md](../../../create-hook/references/events.md).
 
 ---
 
@@ -203,7 +203,7 @@ exit 0
 ⚠️ **Infinite loops:** Always check the `stop_hook_active` environment variable. If your Stop hook tries to fix the problem (e.g., by running git commit), and the check still fails, you create an infinite loop. Stop hooks should be read-only observers, or they should exit decisively without retriggering themselves.
 
 ### See also
-For event sequencing and post-stop handling, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For event sequencing and post-stop handling, see [create-hook/references/events.md](../../../create-hook/references/events.md).
 
 ---
 
@@ -251,7 +251,7 @@ Autonomous code reviewer. Mandate: find critical bugs in PRs, especially securit
 ⚠️ **Full prompt re-injection:** Do NOT re-inject the complete system prompt or full agent definition. That defeats the purpose of compaction (saving tokens). Only re-inject the immutable, agent-specific invariants (role, key constraints, critical state). Everything else should be re-derived by the model.
 
 ### See also
-For context management and lifecycle hooks, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For context management and lifecycle hooks, see [create-hook/references/events.md](../../../create-hook/references/events.md).
 
 ---
 
@@ -291,4 +291,4 @@ export GITHUB_OWNER="example-org"
 ⚠️ **Trust boundary:** Only use agent-backed elicitation for trusted MCPs (GitHub, Slack, internal APIs you control). Never auto-fill credentials for untrusted external services. Allowlist by `mcp_server_name` to prevent schema injection.
 
 ### See also
-For MCP integration patterns and advanced hook composition, see [hook-development/references/patterns.md](../../../hook-development/references/patterns.md).
+For MCP integration patterns and advanced hook composition, see [create-hook/references/events.md](../../../create-hook/references/events.md).
