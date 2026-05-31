@@ -13,9 +13,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
-
-# --- Configuration & Constants ---
+from typing import IO, Any
 
 
 class Config:
@@ -64,6 +62,11 @@ class Config:
         ".DS_Store",
     }
 
+    SKILL_REQUIRED_KEYS: tuple[str, ...] = (
+        "name",
+        "description",
+        "disable-model-invocation",
+    )
     MAX_DIR_SCAN_COUNT = 10000
     MAX_SKILL_LINES = 150
     MAX_AGENTS_MD_LINES = 100
@@ -123,7 +126,8 @@ class DependencyInfo:
     name: str
     type: str
     path: str
-    size_mb: float | str
+    size_mb: float
+    size_truncated: bool = False
 
 
 @dataclass
@@ -147,16 +151,11 @@ class AuditResults:
     )
 
 
-# --- Utility Functions ---
-
-
-def safe_print(text: str, file: Any = sys.stdout) -> None:
+def safe_print(text: str, file: IO[str] = sys.stdout) -> None:
     """Print text safely, handling encoding issues."""
     try:
         print(text, file=file)
     except UnicodeEncodeError:
-        # Fallback to ascii or replacement characters if needed
-        # We can also try to re-encode the string with 'replace' or 'ignore'
         encoded = text.encode(getattr(file, "encoding", "utf-8") or "utf-8", "replace")
         print(encoded.decode(getattr(file, "encoding", "utf-8") or "utf-8"), file=file)
 
@@ -164,19 +163,14 @@ def safe_print(text: str, file: Any = sys.stdout) -> None:
 def load_gitignore(target_dir: Path) -> set[str]:
     """Load ignore patterns from .gitignore file."""
     patterns: set[str] = set()
-    gitignore_file = target_dir / ".gitignore"
-
-    if gitignore_file.exists():
-        try:
-            content = gitignore_file.read_text(encoding="utf-8")
-            for line in content.splitlines():
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    patterns.add(line.rstrip("/"))
-        except (OSError, UnicodeDecodeError):
-            # Log specific error if needed, but don't crash
-            pass
-
+    try:
+        content = (target_dir / ".gitignore").read_text(encoding="utf-8")
+        for line in content.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                patterns.add(line.rstrip("/"))
+    except (OSError, UnicodeDecodeError):
+        pass
     return patterns
 
 
@@ -214,9 +208,6 @@ def _parse_frontmatter(content: str) -> dict[str, str]:
             key, _, value = line.partition(":")
             result[key.strip()] = value.strip()
     return result
-
-
-# --- Core Logic (Discovery/Analysis) ---
 
 
 def get_tree_lines(
@@ -337,9 +328,8 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                         name=entry.name,
                         type=Config.DEPENDENCY_DIRS[entry.name],
                         path=str(entry.relative_to(target_dir)),
-                        size_mb=round(size_mb, 1)
-                        if count <= Config.MAX_DIR_SCAN_COUNT
-                        else f">{round(size_mb, 1)}",
+                        size_mb=round(size_mb, 1),
+                        size_truncated=count > Config.MAX_DIR_SCAN_COUNT,
                     )
                 )
             except (PermissionError, OSError):
@@ -348,7 +338,8 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                         name=entry.name,
                         type=Config.DEPENDENCY_DIRS[entry.name],
                         path=str(entry.relative_to(target_dir)),
-                        size_mb="unknown",
+                        size_mb=0.0,
+                        size_truncated=True,
                     )
                 )
 
@@ -369,10 +360,9 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
         )
 
     issues: list[ValidationIssue] = []
-    REQUIRED_KEYS = ("name", "description", "disable-model-invocation")
 
     try:
-        skill_dirs = sorted([d for d in skills_dir.iterdir() if d.is_dir()])
+        skill_dirs = sorted(d for d in skills_dir.iterdir() if d.is_dir())
     except (PermissionError, OSError) as e:
         return ValidationResult(
             success=False,
@@ -398,7 +388,7 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
             content = skill_file.read_text(encoding="utf-8")
             fm = _parse_frontmatter(content)
 
-            for key in REQUIRED_KEYS:
+            for key in Config.SKILL_REQUIRED_KEYS:
                 if key not in fm:
                     issues.append(
                         ValidationIssue(
@@ -424,6 +414,18 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
     )
+
+
+_FILLER_RE = re.compile(
+    r"(welcome to|this document explains|you should)", re.IGNORECASE
+)
+_AUTO_DISCOVERY_RE = re.compile(
+    r"(\d+\s+(tools|resources|prompts)|MCP server)", re.IGNORECASE
+)
+_GENERIC_ADVICE_RE = re.compile(
+    r"\b(always|be sure|remember|carefully|thoroughly|best practice|make sure|important|test thoroughly|be careful)\b",
+    re.IGNORECASE,
+)
 
 
 def validate_agents_md_file(file_path: Path) -> ValidationResult:
@@ -458,20 +460,9 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 )
             )
 
-        filler_regex = re.compile(
-            r"(welcome to|this document explains|you should)", re.IGNORECASE
-        )
-        auto_discovery_regex = re.compile(
-            r"(\d+\s+(tools|resources|prompts)|MCP server)", re.IGNORECASE
-        )
-        generic_advice_regex = re.compile(
-            r"\b(always|be sure|remember|carefully|thoroughly|best practice|make sure|important|test thoroughly|be careful)\b",
-            re.IGNORECASE,
-        )
-
         for index, line in enumerate(lines):
             line_num = index + 1
-            if filler_regex.search(line):
+            if _FILLER_RE.search(line):
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.FAIL,
@@ -479,7 +470,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                         line_number=line_num,
                     )
                 )
-            if auto_discovery_regex.search(line):
+            if _AUTO_DISCOVERY_RE.search(line):
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.FAIL,
@@ -487,7 +478,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                         line_number=line_num,
                     )
                 )
-            if generic_advice_regex.search(line):
+            if _GENERIC_ADVICE_RE.search(line):
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.WARN,
@@ -612,8 +603,7 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
     issues: list[ValidationIssue] = []
     try:
         data = json.loads(manifest_file.read_text(encoding="utf-8"))
-        required = ["name", "version", "description"]
-        for key in required:
+        for key in ("name", "version", "description"):
             if key not in data:
                 issues.append(
                     ValidationIssue(
@@ -631,9 +621,6 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
     )
-
-
-# --- Reporting ---
 
 
 def print_validation_issues(result: ValidationResult) -> None:
@@ -662,11 +649,8 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
     safe_print("### Installed Dependencies")
     if results.dependencies:
         for dep in results.dependencies:
-            size_str = (
-                f"{dep.size_mb} MB"
-                if isinstance(dep.size_mb, (int, float))
-                else dep.size_mb
-            )
+            prefix = ">" if dep.size_truncated else ""
+            size_str = f"{prefix}{dep.size_mb} MB"
             safe_print(
                 f"- **{dep.name}** ({dep.type}) \u2192 `{dep.path}` [{size_str}]"
             )
@@ -674,7 +658,6 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         safe_print("- None detected in root directory.")
     safe_print("")
 
-    # Skill validation
     safe_print(f"### Validating Skills in {root_dir / 'skills'}")
     if results.skills.success and not results.skills.issues:
         safe_print("PASS: All skills have valid frontmatter.")
@@ -682,7 +665,6 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         print_validation_issues(results.skills)
     safe_print("")
 
-    # AGENTS.md validation
     safe_print(f"### Linting {root_dir / 'AGENTS.md'}")
     if results.agents_md.success and not results.agents_md.issues:
         safe_print(f"PASS: {root_dir / 'AGENTS.md'} looks correct.")
@@ -690,7 +672,6 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         print_validation_issues(results.agents_md)
     safe_print("")
 
-    # Hooks validation
     safe_print(f"### Validating Hooks in {root_dir / 'hooks' / 'hooks.json'}")
     if results.hooks.success and not results.hooks.issues:
         safe_print("PASS: Hook configuration and handlers are valid.")
@@ -698,7 +679,6 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         print_validation_issues(results.hooks)
     safe_print("")
 
-    # Manifest validation
     safe_print(
         f"### Validating Manifest in {root_dir / '.claude-plugin' / 'plugin.json'}"
     )
@@ -708,14 +688,8 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         print_validation_issues(results.manifest)
 
     safe_print("\n## Audit Summary")
-    if any(
-        [
-            results.skills.has_errors,
-            results.agents_md.has_errors,
-            results.hooks.has_errors,
-            results.manifest.has_errors,
-        ]
-    ):
+    checks = (results.skills, results.agents_md, results.hooks, results.manifest)
+    if any(r.has_errors for r in checks):
         safe_print("FAIL: Audit failed with one or more errors.")
         return 1
     safe_print("PASS: Audit passed. Plugin is healthy.")
