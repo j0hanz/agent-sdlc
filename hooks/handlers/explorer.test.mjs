@@ -6,7 +6,9 @@ import path from 'node:path';
 
 const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'explorer-test-'));
 process.env.CLAUDE_PLUGIN_DATA = tmpDir;
+process.env.CLAUDE_PROJECT_DIR = tmpDir; // Need to set this so getBreadcrumbLogPath has a predictable hash
 
+const { getBreadcrumbLogPath } = await import('../utils.mjs');
 const { breadcrumb } = await import('./explorer-search.mjs');
 const { compactFlush, compactRestore } = await import('./explorer-compact.mjs');
 const { cwdWatch, fileChanged } = await import('./explorer-prompt.mjs');
@@ -23,7 +25,7 @@ test('breadcrumb: logs to pluginDataDir and returns null', async () => {
   });
   assert.strictEqual(result, null);
   // Assert written to pluginDataDir (the shared path compactFlush reads from)
-  const logPath = path.join(tmpDir, 'explorer-breadcrumbs.log');
+  const logPath = getBreadcrumbLogPath();
   const content = readFileSync(logPath, 'utf8');
   assert.match(content, /\[Grep\] authMiddleware/);
 });
@@ -42,7 +44,7 @@ test('breadcrumbBatch: logs all tool calls from batch input and returns null', a
     ],
   });
   assert.strictEqual(result, null);
-  const logPath = path.join(tmpDir, 'explorer-breadcrumbs.log');
+  const logPath = getBreadcrumbLogPath();
   const content = readFileSync(logPath, 'utf8');
   assert.match(content, /batchPattern1/);
   assert.match(content, /\*\*\/\*\.ts/);

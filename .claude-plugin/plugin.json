@@ -16,12 +16,6 @@
     "monitors": "./monitors/monitors.json"
   },
   "userConfig": {
-    "format_on_save": {
-      "type": "boolean",
-      "title": "Format on save",
-      "description": "Auto-format files after Write/Edit hooks (runs Prettier, Black, or ruff depending on file type)",
-      "default": true
-    },
     "brainstorm_nudge": {
       "type": "boolean",
       "title": "Brainstorm nudge",

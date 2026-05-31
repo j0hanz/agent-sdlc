@@ -1,9 +1,16 @@
 import os from 'os';
 import { execSync } from 'child_process';
 import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 export const getProjectDir = () => process.env.CLAUDE_PROJECT_DIR || process.cwd();
 export const getPluginDataDir = () => process.env.CLAUDE_PLUGIN_DATA || os.tmpdir();
+
+export function getBreadcrumbLogPath() {
+  const hash = crypto.createHash('sha256').update(getProjectDir()).digest('hex').slice(0, 12);
+  return path.join(getPluginDataDir(), `explorer-breadcrumbs-${hash}.log`);
+}
 
 export function runCmd(cmd, cwd = getProjectDir(), timeout = 5000) {
   try {

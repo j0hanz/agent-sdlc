@@ -126,9 +126,16 @@ export async function end() {
   const claudeDir = path.join(proj, '.claude');
   const statusPath = path.join(claudeDir, 'status.md');
   const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+  const branch = runCmd('git rev-parse --abbrev-ref HEAD', proj) || 'unknown';
+  const status = runCmd('git status -s', proj) || 'No uncommitted changes';
+
   try {
     await fs.mkdir(claudeDir, { recursive: true });
-    await fs.writeFile(statusPath, `Session ended: ${ts}\n`);
+    let content = `Session ended: ${ts}\n\n`;
+    content += `## Branch: ${branch}\n\n`;
+    content += `## Uncommitted Changes\n\`\`\`\n${status}\n\`\`\`\n`;
+    await fs.writeFile(statusPath, content);
   } catch (e) {
     // Non-fatal — status write failure should not error the hook
   }

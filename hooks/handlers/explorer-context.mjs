@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getProjectDir, getPluginDataDir, createSessionStart } from '../utils.mjs';
+import { getProjectDir, getBreadcrumbLogPath, createSessionStart } from '../utils.mjs';
 
 const EXCLUDE = new Set([
   'node_modules',
@@ -184,8 +184,7 @@ export async function sessionEnd() {
 
 export async function subagentStart(input) {
   const type = input?.agent_type || 'unknown';
-  const logDir = getPluginDataDir();
-  const logPath = path.join(logDir, 'explorer-breadcrumbs.log');
+  const logPath = getBreadcrumbLogPath();
 
   let content;
   try {

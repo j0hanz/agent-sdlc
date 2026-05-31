@@ -1,11 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { getPluginDataDir } from '../utils.mjs';
+import { getPluginDataDir, getBreadcrumbLogPath } from '../utils.mjs';
 
 export async function compactFlush(input) {
   const sessionId = input?.session_id || 'unknown';
   const logDir = getPluginDataDir();
-  const breadcrumbLog = path.join(logDir, 'explorer-breadcrumbs.log');
+  const breadcrumbLog = getBreadcrumbLogPath();
   const sessionFile = path.join(logDir, `explorer-session-${sessionId}.json`);
 
   let content;

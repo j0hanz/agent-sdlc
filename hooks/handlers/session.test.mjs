@@ -53,6 +53,8 @@ test('session: end writes summary to .claude/status.md', async () => {
   assert.ok(existsSync(statusPath), '.claude/status.md should exist after session.end()');
   const content = readFileSync(statusPath, 'utf8');
   assert.match(content, /session ended/i);
+  assert.match(content, /## Branch:/i);
+  assert.match(content, /## Uncommitted Changes/i);
 });
 
 test('session: contextRefresh returns session context', async () => {

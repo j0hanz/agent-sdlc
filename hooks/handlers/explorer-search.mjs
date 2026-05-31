@@ -1,15 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { getProjectDir, getPluginDataDir, createPreToolUse } from '../utils.mjs';
+import { getProjectDir, getBreadcrumbLogPath, createPreToolUse } from '../utils.mjs';
 
 export async function breadcrumb(input) {
   const tool = input?.tool_name || 'unknown';
   const pattern = input?.tool_input?.pattern || input?.tool_input?.query || '?';
-  const logDir = getPluginDataDir();
-  await fs.mkdir(logDir, { recursive: true });
+  const logPath = getBreadcrumbLogPath();
   const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   await fs.appendFile(
-    path.join(logDir, 'explorer-breadcrumbs.log'),
+    logPath,
     `${ts} [${tool}] ${pattern}\n`,
   );
   return null;
@@ -23,14 +22,13 @@ export async function breadcrumbBatch(input) {
   const relevant = calls.filter((c) => SEARCH_TOOLS.has(c?.tool_name));
   if (!relevant.length) return null;
 
-  const logDir = getPluginDataDir();
-  await fs.mkdir(logDir, { recursive: true });
+  const logPath = getBreadcrumbLogPath();
   const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   const lines = relevant.map((c) => {
     const pattern = c.tool_input?.pattern || c.tool_input?.query || c.tool_input?.path || '?';
     return `${ts} [${c.tool_name}] ${pattern}`;
   });
-  await fs.appendFile(path.join(logDir, 'explorer-breadcrumbs.log'), `${lines.join('\n')}\n`);
+  await fs.appendFile(logPath, `${lines.join('\n')}\n`);
   return null;
 }
 
