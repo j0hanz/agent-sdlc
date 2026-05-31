@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-import os
+from pathlib import Path
 
 
-def validate_plan(plan_path):
-    with open(plan_path, "r", encoding="utf-8") as f:
-        content = f.read()
-        lines = content.splitlines()
+def validate_plan(plan_path: str | Path) -> tuple[list[str], list[str]]:
+    content = Path(plan_path).read_text(encoding="utf-8")
+    lines = content.splitlines()
 
     errors = []
     warnings = []
@@ -89,12 +88,12 @@ def validate_plan(plan_path):
     return errors, warnings
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Validate an implementation plan.")
     parser.add_argument("plan", help="Path to the plan.md file")
     args = parser.parse_args()
 
-    if not os.path.exists(args.plan):
+    if not Path(args.plan).exists():
         print(f"Error: Plan file {args.plan} not found.")
         sys.exit(1)
 

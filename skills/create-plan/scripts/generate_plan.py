@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-import os
 from pathlib import Path
 
 # Add lib to path
@@ -9,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
 from spec_parser import parse_spec
 
 
-def generate_plan(spec, purpose, component):
+def generate_plan(spec: object, purpose: str, component: str) -> str:
     plan_lines = []
 
     # 1. Header
@@ -40,7 +39,7 @@ def generate_plan(spec, purpose, component):
     plan_lines.append("## PHASE-001: Core Implementation")
 
     task_count = 1
-    for req in sorted(list(spec.reqs)):
+    for req in sorted(spec.reqs):
         plan_lines.append(f"### TASK-{task_count:03}: Implement {req}")
         plan_lines.append("Depends on: TASK-000")
         plan_lines.append("Files: [UNVERIFIED: path/to/file.ts](path/to/file.ts)")
@@ -61,12 +60,12 @@ def generate_plan(spec, purpose, component):
     plan_lines.append("Symbols: none")
 
     # Map ACs to validation
-    ac_list = "\n".join([f"- {ac}" for ac in sorted(list(spec.acs))])
+    ac_list = "\n".join(f"- {ac}" for ac in sorted(spec.acs))
     plan_lines.append(f"Action: Verify the following Acceptance Criteria:\n{ac_list}")
 
     val_cmd = "Manual check"
     if spec.vals:
-        val_cmd = "; ".join(sorted(list(spec.vals)))
+        val_cmd = "; ".join(sorted(spec.vals))
 
     plan_lines.append(f"Validate: {val_cmd}")
     plan_lines.append("Expected result: All acceptance criteria are met.")
@@ -75,7 +74,7 @@ def generate_plan(spec, purpose, component):
     return "\n".join(plan_lines)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate a plan skeleton from a specification."
     )
@@ -88,21 +87,19 @@ def main():
     )
     args = parser.parse_args()
 
-    if not os.path.exists(args.spec):
+    if not Path(args.spec).exists():
         print(f"Error: Spec file {args.spec} not found.")
         sys.exit(1)
 
     try:
         spec = parse_spec(args.spec)
         plan_content = generate_plan(spec, args.purpose, args.component)
-
-        filename = f"{args.purpose}-{args.component}-1.md"
-        print(f"--- GENERATED PLAN: {filename} ---")
-        print(plan_content)
-
     except Exception as e:
-        print(f"An error occurred during plan generation: {e}")
-        sys.exit(1)
+        raise RuntimeError(f"Plan generation failed for '{args.spec}'") from e
+
+    filename = f"{args.purpose}-{args.component}-1.md"
+    print(f"--- GENERATED PLAN: {filename} ---")
+    print(plan_content)
 
 
 if __name__ == "__main__":

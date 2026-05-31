@@ -20,21 +20,62 @@ from typing import Any, Iterator
 VERSION = "1.0.0"
 MAX_FILE_BYTES = 2_000_000
 
-IGNORED_DIRS: frozenset[str] = frozenset({
-    "node_modules", "dist", "build", "out", ".nuxt", ".turbo", ".cache",
-    ".venv", "venv", "__pycache__", "coverage", ".pytest_cache",
-    "target", "bin", "obj",
-})
+IGNORED_DIRS: frozenset[str] = frozenset(
+    {
+        "node_modules",
+        "dist",
+        "build",
+        "out",
+        ".nuxt",
+        ".turbo",
+        ".cache",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "coverage",
+        ".pytest_cache",
+        "target",
+        "bin",
+        "obj",
+    }
+)
 
-BINARY_EXT: frozenset[str] = frozenset({
-    "png", "jpg", "jpeg", "gif", "webp", "ico", "pdf", "zip", "tar", "gz",
-    "exe", "dll", "so", "dylib", "wasm", "woff", "woff2", "ttf", "otf",
-    "mp3", "mp4", "mov", "avi", "wav", "ogg", "bin",
-})
+BINARY_EXT: frozenset[str] = frozenset(
+    {
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "webp",
+        "ico",
+        "pdf",
+        "zip",
+        "tar",
+        "gz",
+        "exe",
+        "dll",
+        "so",
+        "dylib",
+        "wasm",
+        "woff",
+        "woff2",
+        "ttf",
+        "otf",
+        "mp3",
+        "mp4",
+        "mov",
+        "avi",
+        "wav",
+        "ogg",
+        "bin",
+    }
+)
 
 # Heuristic declaration patterns for JS/TS, Python, Go, Rust, Java/C#/Kotlin.
 DECL_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"\b(?:export\s+(?:default\s+)?(?:async\s+)?)?(?:function|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)"),
+    re.compile(
+        r"\b(?:export\s+(?:default\s+)?(?:async\s+)?)?(?:function|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)"
+    ),
     re.compile(r"\b(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[:=]"),
     re.compile(r"^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)", re.MULTILINE),
     re.compile(r"^\s*class\s+([A-Za-z_]\w*)", re.MULTILINE),
@@ -42,7 +83,9 @@ DECL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\btype\s+([A-Za-z_]\w*)\s+(?:struct|interface)"),
     re.compile(r"\bfn\s+([A-Za-z_]\w*)"),
     re.compile(r"\b(?:struct|enum|trait|impl)\s+([A-Za-z_]\w*)"),
-    re.compile(r"\b(?:public|private|protected|internal|static|final|abstract)\s+[\w<>\[\],\s]*?\s+([A-Za-z_]\w*)\s*\("),
+    re.compile(
+        r"\b(?:public|private|protected|internal|static|final|abstract)\s+[\w<>\[\],\s]*?\s+([A-Za-z_]\w*)\s*\("
+    ),
 ]
 
 HELP = """\
@@ -80,26 +123,29 @@ Notes:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
+
 def split_list(s: str | None) -> list[str]:
     """Split comma-separated values, preserving commas inside brace groups."""
     if not s:
         return []
     out: list[str] = []
     depth = 0
-    buf = ""
+    buf: list[str] = []
     for ch in s:
         if ch == "{":
             depth += 1
         elif ch == "}":
             depth = max(0, depth - 1)
         if ch == "," and depth == 0:
-            if buf.strip():
-                out.append(buf.strip())
-            buf = ""
+            token = "".join(buf).strip()
+            if token:
+                out.append(token)
+            buf = []
         else:
-            buf += ch
-    if buf.strip():
-        out.append(buf.strip())
+            buf.append(ch)
+    token = "".join(buf).strip()
+    if token:
+        out.append(token)
     return out
 
 
@@ -133,6 +179,7 @@ def parse_cli_args(raw: list[str]) -> argparse.Namespace:
 
 # ── Path / file filtering ─────────────────────────────────────────────────────
 
+
 def expand_braces(pattern: str) -> list[str]:
     """Expand {a,b} brace groups into separate glob patterns."""
     start = pattern.find("{")
@@ -142,9 +189,9 @@ def expand_braces(pattern: str) -> list[str]:
     if end == -1:
         return [pattern]
     prefix = pattern[:start]
-    suffix = pattern[end + 1:]
+    suffix = pattern[end + 1 :]
     result: list[str] = []
-    for alt in pattern[start + 1:end].split(","):
+    for alt in pattern[start + 1 : end].split(","):
         result.extend(expand_braces(prefix + alt + suffix))
     return result
 
@@ -209,6 +256,7 @@ def walk_glob_files(
 
 # ── Symbol detection ──────────────────────────────────────────────────────────
 
+
 def find_decl_names_on_line(line: str) -> list[str]:
     names: list[str] = []
     for pattern in DECL_PATTERNS:
@@ -233,7 +281,9 @@ def find_symbols(
             continue
         for pat in matching:
             if any(pat.search(n) for n in decl_names):
-                hits.append({"file": file_path, "line": i + 1, "match": line.strip()[:200]})
+                hits.append(
+                    {"file": file_path, "line": i + 1, "match": line.strip()[:200]}
+                )
     return hits
 
 
@@ -243,6 +293,7 @@ def extract_name(line: str) -> str | None:
 
 
 # ── Collection ────────────────────────────────────────────────────────────────
+
 
 def collect_matched_files(
     root: Path,
@@ -296,6 +347,7 @@ def collect_matched_symbols(
 
 # ── Rendering ─────────────────────────────────────────────────────────────────
 
+
 def render_markdown(
     matched_files: list[str],
     matched_symbols: list[dict[str, Any]],
@@ -319,6 +371,7 @@ def render_markdown(
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+
 def main() -> int:
     args = parse_cli_args(sys.argv[1:])
 
@@ -337,18 +390,25 @@ def main() -> int:
     with_lines = not args.no_lines
 
     if not file_patterns and not names:
-        print("Provide at least one of --files or --names. Use --help for usage.", file=sys.stderr)
+        print(
+            "Provide at least one of --files or --names. Use --help for usage.",
+            file=sys.stderr,
+        )
         return 2
 
     name_patterns = [compile_name_pattern(n) for n in names]
     matched_files = collect_matched_files(root, file_patterns, ext_filter, max_results)
-    matched_symbols = collect_matched_symbols(root, name_patterns, ext_filter, max_results)
+    matched_symbols = collect_matched_symbols(
+        root, name_patterns, ext_filter, max_results
+    )
 
     matched_files.sort()
     matched_symbols.sort(key=lambda s: (s["file"], s["line"]))
 
     if args.json_out:
-        print(json.dumps({"files": matched_files, "symbols": matched_symbols}, indent=2))
+        print(
+            json.dumps({"files": matched_files, "symbols": matched_symbols}, indent=2)
+        )
         return 0
 
     print(render_markdown(matched_files, matched_symbols, with_lines), end="")

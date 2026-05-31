@@ -91,7 +91,7 @@ Different skills for different situations:
 
 ## Prerequisites
 
-This skill orchestrates two sub-skills (`create-specs`, `create-plan`) that each bundle their own validators (`validate_spec.py`, `discover.mjs`, `validate_plan.py`, `generate_plan.py`) — there is nothing to install separately.
+This skill orchestrates two sub-skills (`create-specs`, `create-plan`) that each bundle their own validators (`validate_spec.py`, `validate_plan.py`, `generate_plan.py`) — there is nothing to install separately.
 
 If a sub-skill fails to invoke, run `python <skill-dir>/scripts/diagnose_dependencies.py` to check availability. If it reports a missing sub-skill, confirm the `agent-dev` plugin is enabled and run `/reload-plugins`. Do not substitute manual work for missing tooling — invoke the sub-skill by name so its own validators run.
 
@@ -202,12 +202,12 @@ If the `create-plan` skill is not available:
 The `create-plan` skill will:
 
 - Run `generate_plan.py <spec.md>` to scaffold tasks from REQ → Task mappings
-- Verify all file paths and code symbols via `discover.mjs`
+- Verify all file paths and code symbols via `discover.py`
 - Produce an executable `plan-*.md` with phases, tasks, and validation commands
 - Run `validate_plan.py` to confirm the plan has no structural errors
 
 **Gate**: Do not begin implementation until the plan passes `validate_plan.py` with 0 errors.
-_Failure mode_: If validation fails, or if `discover.mjs` reports missing symbols, fix the plan tasks to match reality. If reality contradicts the spec, loop back to Step 2.
+_Failure mode_: If validation fails, or if `discover.py` reports missing symbols, fix the plan tasks to match reality. If reality contradicts the spec, loop back to Step 2.
 
 ### 4. Implementation Governance
 
@@ -251,7 +251,7 @@ Ask: _"Does the system now do what the spec says it must do?"_ If yes: done. If 
 [ ] Scope clarified: goal, in/out-of-scope, constraints, maturity level
 [ ] External dependencies identified (multi-team interfaces resolved before spec is finalized)
 [ ] Spec validated: validate_spec.py = 0 errors, self-check passed
-[ ] Plan validated: validate_plan.py = 0 errors, all paths verified by discover.mjs
+[ ] Plan validated: validate_plan.py = 0 errors, all paths verified by discover.py
 [ ] Tasks executed in dependency order (Depends on: respected)
 [ ] Each task's Validate command run and Expected result confirmed before next task
 [ ] Spec changes (if any) propagated: spec → plan → code (in that order, never reversed)
