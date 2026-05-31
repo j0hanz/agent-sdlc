@@ -52,7 +52,9 @@ Write it as `This agent <verb + object> so that <main-thread benefit>`. Examples
 - "This agent reviews a diff for security issues so review runs in an isolated, role-focused context."
 - "This agent runs the test suite and fixes failures autonomously so the user isn't blocked."
 
-A good job statement is **narrow**. "An agent that helps with code" is not a job; "an agent that audits TypeScript for unsafe `any` usage" is. Narrow jobs produce sharp system prompts, tight tool lists, and testable behavior. If the job has two unrelated halves, that is two agents.
+A good job statement is **narrow**. "An agent that helps with code" is not a job; "an agent that audits TypeScript for unsafe `any` usage" is. Narrow jobs produce sharp system prompts, tight tool lists, and testable behavior.
+
+**Split check — run before proceeding:** If the job statement contains `AND` connecting two unrelated verbs (e.g., "review AND fix", "analyze AND deploy", "scan AND commit"), **stop and split**. Write two job statements. Two jobs = two agents. Do not combine them — propose the split to the user and produce separate definitions unless they explicitly confirm a combined design is intentional. A reviewer with write access is a misconfigured agent, not a combined agent.
 
 ---
 
@@ -90,6 +92,7 @@ The system prompt **is** the agent — for a subagent it *replaces* the default 
 - **Imperative, not aspirational.** "Read the file before editing" — not "you should try to read files."
 - **Design the handoff.** State exactly what the agent returns, because that final message is the *only* thing the parent keeps. Tool calls and intermediate reasoning are discarded.
 - **One job, fenced.** Boundaries prevent the classic failure: an agent asked to review code that starts rewriting it.
+- **No angle brackets in `description`.** The `description` field must not contain `<` or `>` — use plain words instead of `<example>` tags or `<field-name>` placeholders. `validate_agent.py` warns on `DESC003`; avoid triggering it.
 
 ---
 
@@ -113,6 +116,14 @@ Default to **least privilege**. Start read-only; add write/execute only when the
 - **Never inline secrets** in an agent config — configs land in logs, diffs, and API responses. Use env-var references.
 
 For Managed Agents, default `agent_toolset` to `always_ask`; reserve `always_allow` for a single, pinned, fully-trusted MCP server.
+
+**Mandatory safety challenges — trigger these before producing the definition:**
+
+| Request contains | Required action before proceeding |
+| :--- | :--- |
+| `bypassPermissions` | (1) State what it unlocks: writes to `.git/`, `.claude/`, `.vscode/` with no prompts. (2) Ask: "What specific capability requires bypass that `acceptEdits` doesn't cover?" (3) Present `acceptEdits` as the default recommendation. Only produce `bypassPermissions` after the user provides a concrete, scoped justification. |
+| Auto-commit (`git commit`, `Bash` staging, push) | (1) Warn: "Autonomous commit means no human review before git history changes." (2) Ask whether `--no-commit` (report findings instead) would suffice. (3) If proceeding, the system prompt **must** include an explicit boundary: "Do not force-commit. Stop and report if a pre-commit hook fails." |
+| Two unrelated jobs (`AND` in the job from Step 1) | Already caught in Step 1. If you reach here with a dual-job definition, go back and split it. |
 
 ---
 
@@ -171,6 +182,8 @@ The full eval-first method — deterministic checks vs. LLM-as-judge, baseline-v
 
 ## Output format when delivering an agent
 
+Before producing the definition, state the job in the `This agent <verb + object> so that <benefit>` form — one sentence, visible to the user. This makes the single-job check auditable and catches misaligned scope before tool choices are locked in.
+
 When you produce an agent for the user, always give:
 
 1. **The agent definition** — complete frontmatter + system prompt, no placeholders, ready to save. State the file path (`.claude/agents/<name>.md` for project scope, `~/.claude/agents/` for all projects).
@@ -178,7 +191,7 @@ When you produce an agent for the user, always give:
 3. **How to invoke it** — the natural-language trigger, the `@agent-<name>` mention, or the `--agent`/API call.
 4. **One test** — a concrete prompt to run it against, and what a correct final message looks like.
 
-Run `validate_agent.py` on the definition before presenting it, and note any warnings you accepted and why.
+**Mandatory pre-delivery:** Run `validate_agent.py` on the definition. Do not present it until you have run it and confirmed zero ERRORs. Report the exact `[OK]` / `[FAIL]` result inline. If warnings exist, note each one and whether it was accepted and why.
 
 ---
 
