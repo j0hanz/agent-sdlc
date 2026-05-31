@@ -11,52 +11,99 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any
 
-# --- Constants & Configuration ---
-DEPENDENCY_DIRS: dict[str, str] = {
-    "node_modules": "Node.js (npm/pnpm/yarn/bun)",
-    "venv": "Python (virtualenv)",
-    ".venv": "Python (virtualenv)",
-    "env": "Python (virtualenv)",
-    ".env": "Python (virtualenv)",
-    "__pypackages__": "Python (PEP 582)",
-    ".direnv": "direnv",
-    ".conda": "Conda environment",
-    "vendor": "PHP (Composer) / Go (vendoring)",
-    "Pods": "iOS (CocoaPods)",
-    "target": "Rust (Cargo)",
-    "dist": "Build output",
-    "build": "Build output",
-    ".next": "Next.js build",
-    "out": "Build output",
-    "bin": "Executables / scripts",
-    "lib": "Shared libraries / dependencies",
-    "extern": "External dependencies",
-}
+# --- Configuration & Constants ---
 
-PACKAGE_MANAGERS: dict[str, str] = {
-    "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn",
-    "package-lock.json": "npm",
-    "bun.lockb": "bun",
-    "uv.lock": "uv",
-    "poetry.lock": "poetry",
-    "Cargo.lock": "cargo",
-    "go.sum": "go",
-}
 
-DEFAULT_IGNORE_PATTERNS: set[str] = {
-    ".git",
-    ".vscode",
-    ".idea",
-    ".env",
-    "*.log",
-    "__pycache__",
-    ".pytest_cache",
-    ".DS_Store",
-}
+class Config:
+    """Central configuration for plugin audit utilities."""
+
+    DEPENDENCY_DIRS: dict[str, str] = {
+        "node_modules": "Node.js (npm/pnpm/yarn/bun)",
+        "venv": "Python (virtualenv)",
+        ".venv": "Python (virtualenv)",
+        "env": "Python (virtualenv)",
+        ".env": "Python (virtualenv)",
+        "__pypackages__": "Python (PEP 582)",
+        ".direnv": "direnv",
+        ".conda": "Conda environment",
+        "vendor": "PHP (Composer) / Go (vendoring)",
+        "Pods": "iOS (CocoaPods)",
+        "target": "Rust (Cargo)",
+        "dist": "Build output",
+        "build": "Build output",
+        ".next": "Next.js build",
+        "out": "Build output",
+        "bin": "Executables / scripts",
+        "lib": "Shared libraries / dependencies",
+        "extern": "External dependencies",
+    }
+
+    PACKAGE_MANAGERS: dict[str, str] = {
+        "pnpm-lock.yaml": "pnpm",
+        "yarn.lock": "yarn",
+        "package-lock.json": "npm",
+        "bun.lockb": "bun",
+        "uv.lock": "uv",
+        "poetry.lock": "poetry",
+        "Cargo.lock": "cargo",
+        "go.sum": "go",
+    }
+
+    DEFAULT_IGNORE_PATTERNS: set[str] = {
+        ".git",
+        ".vscode",
+        ".idea",
+        ".env",
+        "*.log",
+        "__pycache__",
+        ".pytest_cache",
+        ".DS_Store",
+    }
+
+    MAX_DIR_SCAN_COUNT = 10000
+    MAX_SKILL_LINES = 150
+    MAX_AGENTS_MD_LINES = 100
+
+
+class IssueLevel(Enum):
+    """Levels for validation issues."""
+
+    INFO = auto()
+    WARN = auto()
+    FAIL = auto()
+
+
+@dataclass
+class ValidationIssue:
+    """Represents a single validation issue or warning."""
+
+    level: IssueLevel
+    message: str
+    line_number: int | None = None
+
+    def __str__(self) -> str:
+        line_info = f" (line {self.line_number})" if self.line_number else ""
+        return f"{self.message}{line_info}"
+
+
+@dataclass
+class ValidationResult:
+    """Consolidated result of a validation check."""
+
+    success: bool
+    issues: list[ValidationIssue] = field(default_factory=list)
+
+    @property
+    def has_errors(self) -> bool:
+        return any(issue.level == IssueLevel.FAIL for issue in self.issues)
+
+    @property
+    def has_warnings(self) -> bool:
+        return any(issue.level == IssueLevel.WARN for issue in self.issues)
 
 
 @dataclass
@@ -86,17 +133,32 @@ class AuditResults:
     structure: list[str] = field(default_factory=list)
     env: ProjectEnvironment = field(default_factory=ProjectEnvironment)
     dependencies: list[DependencyInfo] = field(default_factory=list)
-    skills_valid: bool = True
-    skills_errors: list[str] = field(default_factory=list)
-    agents_md_valid: bool = True
-    agents_md_errors: list[str] = field(default_factory=list)
-    hooks_valid: bool = True
-    hooks_errors: list[str] = field(default_factory=list)
-    manifest_valid: bool = True
-    manifest_errors: list[str] = field(default_factory=list)
+    skills: ValidationResult = field(
+        default_factory=lambda: ValidationResult(success=True)
+    )
+    agents_md: ValidationResult = field(
+        default_factory=lambda: ValidationResult(success=True)
+    )
+    hooks: ValidationResult = field(
+        default_factory=lambda: ValidationResult(success=True)
+    )
+    manifest: ValidationResult = field(
+        default_factory=lambda: ValidationResult(success=True)
+    )
 
 
 # --- Utility Functions ---
+
+
+def safe_print(text: str, file: Any = sys.stdout) -> None:
+    """Print text safely, handling encoding issues."""
+    try:
+        print(text, file=file)
+    except UnicodeEncodeError:
+        # Fallback to ascii or replacement characters if needed
+        # We can also try to re-encode the string with 'replace' or 'ignore'
+        encoded = text.encode(getattr(file, "encoding", "utf-8") or "utf-8", "replace")
+        print(encoded.decode(getattr(file, "encoding", "utf-8") or "utf-8"), file=file)
 
 
 def load_gitignore(target_dir: Path) -> set[str]:
@@ -206,11 +268,11 @@ def analyze_project_env(target_dir: Path) -> ProjectEnvironment:
     """Analyze the project environment files."""
     env = ProjectEnvironment()
     try:
-        files = [entry.name for entry in target_dir.iterdir() if entry.is_file()]
+        files = {entry.name for entry in target_dir.iterdir() if entry.is_file()}
     except (PermissionError, OSError):
         return env
 
-    for lockfile, pm in PACKAGE_MANAGERS.items():
+    for lockfile, pm in Config.PACKAGE_MANAGERS.items():
         if lockfile in files:
             env.package_manager = pm
             break
@@ -258,7 +320,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
         return found
 
     for entry in dirs:
-        if entry.name in DEPENDENCY_DIRS:
+        if entry.name in Config.DEPENDENCY_DIRS:
             try:
                 size_mb = 0.0
                 count = 0
@@ -266,17 +328,17 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                     if f.is_file():
                         size_mb += f.stat().st_size
                         count += 1
-                        if count > 10000:
+                        if count > Config.MAX_DIR_SCAN_COUNT:
                             break
                 size_mb /= 1024 * 1024
 
                 found.append(
                     DependencyInfo(
                         name=entry.name,
-                        type=DEPENDENCY_DIRS[entry.name],
+                        type=Config.DEPENDENCY_DIRS[entry.name],
                         path=str(entry.relative_to(target_dir)),
                         size_mb=round(size_mb, 1)
-                        if count <= 10000
+                        if count <= Config.MAX_DIR_SCAN_COUNT
                         else f">{round(size_mb, 1)}",
                     )
                 )
@@ -284,7 +346,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                 found.append(
                     DependencyInfo(
                         name=entry.name,
-                        type=DEPENDENCY_DIRS[entry.name],
+                        type=Config.DEPENDENCY_DIRS[entry.name],
                         path=str(entry.relative_to(target_dir)),
                         size_mb="unknown",
                     )
@@ -293,23 +355,43 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
     return found
 
 
-def validate_skill_files(skills_dir: Path) -> tuple[bool, list[str]]:
+def validate_skill_files(skills_dir: Path) -> ValidationResult:
     """Validate all SKILL.md files in the skills directory."""
     if not skills_dir.exists():
-        return False, [f"Skills directory not found: {skills_dir}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Skills directory not found: {skills_dir}",
+                )
+            ],
+        )
 
-    errors: list[str] = []
+    issues: list[ValidationIssue] = []
     REQUIRED_KEYS = ("name", "description", "disable-model-invocation")
 
     try:
-        skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir()]
+        skill_dirs = sorted([d for d in skills_dir.iterdir() if d.is_dir()])
     except (PermissionError, OSError) as e:
-        return False, [f"Failed to list skills directory: {e}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Failed to list skills directory: {e}",
+                )
+            ],
+        )
 
-    for skill_dir in sorted(skill_dirs):
+    for skill_dir in skill_dirs:
         skill_file = skill_dir / "SKILL.md"
         if not skill_file.exists():
-            errors.append(f"{skill_dir.name}/ has no SKILL.md")
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL, message=f"{skill_dir.name}/ has no SKILL.md"
+                )
+            )
             continue
 
         try:
@@ -318,34 +400,63 @@ def validate_skill_files(skills_dir: Path) -> tuple[bool, list[str]]:
 
             for key in REQUIRED_KEYS:
                 if key not in fm:
-                    errors.append(
-                        f"{skill_dir.name}/SKILL.md missing frontmatter key: '{key}'"
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.FAIL,
+                            message=f"{skill_dir.name}/SKILL.md missing frontmatter key: '{key}'",
+                        )
                     )
 
-            if len(content.splitlines()) > 150:
-                # Using a pseudo-error/warn list
-                errors.append(f"WARN: {skill_dir.name}/SKILL.md is long (>150 lines)")
+            if len(content.splitlines()) > Config.MAX_SKILL_LINES:
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.WARN,
+                        message=f"{skill_dir.name}/SKILL.md is long (>{Config.MAX_SKILL_LINES} lines)",
+                    )
+                )
         except (OSError, UnicodeDecodeError) as e:
-            errors.append(f"Failed to read {skill_file}: {e}")
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL, message=f"Failed to read {skill_file}: {e}"
+                )
+            )
 
-    return len([e for e in errors if not e.startswith("WARN")]) == 0, errors
+    return ValidationResult(
+        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
+    )
 
 
-def validate_agents_md_file(file_path: Path) -> tuple[bool, list[str]]:
+def validate_agents_md_file(file_path: Path) -> ValidationResult:
     """Validate the AGENTS.md file."""
     if not file_path.exists():
-        return False, [f"File not found at {file_path}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL, message=f"File not found at {file_path}"
+                )
+            ],
+        )
 
-    errors: list[str] = []
+    issues: list[ValidationIssue] = []
     try:
         content = file_path.read_text(encoding="utf-8")
         lines = content.splitlines()
 
-        if len(lines) > 100:
-            errors.append(f"File is {len(lines)} lines. Must be under 100.")
+        if len(lines) > Config.MAX_AGENTS_MD_LINES:
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"File is {len(lines)} lines. Must be under {Config.MAX_AGENTS_MD_LINES}.",
+                )
+            )
 
         if not lines or not lines[0].startswith("# "):
-            errors.append("File must start with an H1 header.")
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL, message="File must start with an H1 header."
+                )
+            )
 
         filler_regex = re.compile(
             r"(welcome to|this document explains|you should)", re.IGNORECASE
@@ -359,43 +470,87 @@ def validate_agents_md_file(file_path: Path) -> tuple[bool, list[str]]:
         )
 
         for index, line in enumerate(lines):
+            line_num = index + 1
             if filler_regex.search(line):
-                errors.append(
-                    f'Line {index + 1} contains filler text: "{line.strip()}"'
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f'Filler text detected: "{line.strip()}"',
+                        line_number=line_num,
+                    )
                 )
             if auto_discovery_regex.search(line):
-                errors.append(
-                    f'Line {index + 1} lists auto-discovered tools: "{line.strip()}"'
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f'Auto-discovered list detected: "{line.strip()}"',
+                        line_number=line_num,
+                    )
                 )
             if generic_advice_regex.search(line):
-                errors.append(
-                    f'WARN: Line {index + 1} contains generic advice: "{line.strip()}"'
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.WARN,
+                        message=f'Generic advice detected: "{line.strip()}"',
+                        line_number=line_num,
+                    )
                 )
 
         if "Co-Authored-By:" not in content:
-            errors.append('Missing "Co-Authored-By:" attribution.')
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message='Missing "Co-Authored-By:" attribution.',
+                )
+            )
 
         if (
             "## File-scoped commands" not in content
             and "| Tool | File | Command |" not in content
         ):
-            errors.append('Missing mandatory "File-scoped commands" table.')
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message='Missing mandatory "File-scoped commands" table.',
+                )
+            )
     except (OSError, UnicodeDecodeError) as e:
-        errors.append(f"Failed to read {file_path}: {e}")
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL, message=f"Failed to read {file_path}: {e}"
+            )
+        )
 
-    return len([e for e in errors if not e.startswith("WARN")]) == 0, errors
+    return ValidationResult(
+        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
+    )
 
 
-def validate_hooks_config(hooks_file: Path) -> tuple[bool, list[str]]:
+def validate_hooks_config(hooks_file: Path) -> ValidationResult:
     """Validate hooks.json and existence of handlers."""
     if not hooks_file.exists():
-        return False, [f"hooks.json not found at {hooks_file}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"hooks.json not found at {hooks_file}",
+                )
+            ],
+        )
 
-    errors: list[str] = []
+    issues: list[ValidationIssue] = []
     try:
         hooks_data = json.loads(hooks_file.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
-        return False, [f"Failed to parse hooks.json: {e}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL, message=f"Failed to parse hooks.json: {e}"
+                )
+            ],
+        )
 
     plugin_root = hooks_file.parent.parent
 
@@ -415,8 +570,11 @@ def validate_hooks_config(hooks_file: Path) -> tuple[bool, list[str]]:
                             plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
                         )
                         if not handler_path.exists():
-                            errors.append(
-                                f"Missing handler for hook '{event}': {handler_path}"
+                            issues.append(
+                                ValidationIssue(
+                                    level=IssueLevel.FAIL,
+                                    message=f"Missing handler for hook '{event}': {handler_path}",
+                                )
                             )
                     except (ValueError, IndexError):
                         pass
@@ -426,138 +584,156 @@ def validate_hooks_config(hooks_file: Path) -> tuple[bool, list[str]]:
                         "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
                     )
                     if not Path(script_path_str).exists():
-                        errors.append(
-                            f"Missing script for hook '{event}': {script_path_str}"
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.FAIL,
+                                message=f"Missing script for hook '{event}': {script_path_str}",
+                            )
                         )
 
-    return len(errors) == 0, errors
+    return ValidationResult(
+        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
+    )
 
 
-def validate_manifest_file(manifest_file: Path) -> tuple[bool, list[str]]:
+def validate_manifest_file(manifest_file: Path) -> ValidationResult:
     """Validate plugin.json manifest."""
     if not manifest_file.exists():
-        return False, [f"plugin.json not found at {manifest_file}"]
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"plugin.json not found at {manifest_file}",
+                )
+            ],
+        )
 
-    errors: list[str] = []
+    issues: list[ValidationIssue] = []
     try:
         data = json.loads(manifest_file.read_text(encoding="utf-8"))
         required = ["name", "version", "description"]
         for key in required:
             if key not in data:
-                errors.append(f"Manifest missing required key: '{key}'")
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Manifest missing required key: '{key}'",
+                    )
+                )
     except (json.JSONDecodeError, OSError) as e:
-        return False, [f"Failed to parse plugin.json: {e}"]
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL, message=f"Failed to parse plugin.json: {e}"
+            )
+        )
 
-    return len(errors) == 0, errors
+    return ValidationResult(
+        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
+    )
 
 
 # --- Reporting ---
 
 
+def print_validation_issues(result: ValidationResult) -> None:
+    """Print validation issues with appropriate levels."""
+    for issue in result.issues:
+        prefix = "FAIL" if issue.level == IssueLevel.FAIL else "WARN"
+        safe_print(f"{prefix}: {issue}", file=sys.stderr)
+
+
 def print_audit_report(root_dir: Path, results: AuditResults) -> int:
     """Print the final formatted audit report."""
-    print(f"## Full Plugin Health Audit: {root_dir.name}\n")
+    safe_print(f"## Full Plugin Health Audit: {root_dir.name}\n")
 
-    print(f"### Directory Structure ({root_dir.name})")
-    print("```")
+    safe_print(f"### Directory Structure ({root_dir.name})")
+    safe_print("```")
     for line in results.structure:
-        print(line)
-    print("```\n")
+        safe_print(line)
+    safe_print("```\n")
 
-    print("### Project Environment")
-    print(f"- **Package Manager:** {results.env.package_manager}")
-    print(f"- **Test Runner:** {results.env.test_runner}")
-    print(f"- **Linter/Formatter:** {results.env.linter}")
-    print(f"- **Monorepo:** {'Yes' if results.env.is_monorepo else 'No'}\n")
+    safe_print("### Project Environment")
+    safe_print(f"- **Package Manager:** {results.env.package_manager}")
+    safe_print(f"- **Test Runner:** {results.env.test_runner}")
+    safe_print(f"- **Linter/Formatter:** {results.env.linter}")
+    safe_print(f"- **Monorepo:** {'Yes' if results.env.is_monorepo else 'No'}\n")
 
+    safe_print("### Installed Dependencies")
     if results.dependencies:
-        print("### Installed Dependencies")
         for dep in results.dependencies:
             size_str = (
                 f"{dep.size_mb} MB"
                 if isinstance(dep.size_mb, (int, float))
                 else dep.size_mb
             )
-            print(f"- **{dep.name}** ({dep.type}) → `{dep.path}` [{size_str}]")
+            safe_print(
+                f"- **{dep.name}** ({dep.type}) \u2192 `{dep.path}` [{size_str}]"
+            )
     else:
-        print("### Installed Dependencies")
-        print("- None detected in root directory.")
-    print("")
+        safe_print("- None detected in root directory.")
+    safe_print("")
 
     # Skill validation
-    print(f"### Validating Skills in {root_dir / 'skills'}")
-    if not results.skills_errors:
-        print("PASS: All skills have valid frontmatter.")
+    safe_print(f"### Validating Skills in {root_dir / 'skills'}")
+    if results.skills.success and not results.skills.issues:
+        safe_print("PASS: All skills have valid frontmatter.")
     else:
-        for err in results.skills_errors:
-            print(
-                f"{'WARN' if err.startswith('WARN') else 'FAIL'}: {err}",
-                file=sys.stderr,
-            )
-    print("")
+        print_validation_issues(results.skills)
+    safe_print("")
 
     # AGENTS.md validation
-    print(f"### Linting {root_dir / 'AGENTS.md'}")
-    if not results.agents_md_errors:
-        print(f"PASS: {root_dir / 'AGENTS.md'} looks correct.")
+    safe_print(f"### Linting {root_dir / 'AGENTS.md'}")
+    if results.agents_md.success and not results.agents_md.issues:
+        safe_print(f"PASS: {root_dir / 'AGENTS.md'} looks correct.")
     else:
-        for err in results.agents_md_errors:
-            print(
-                f"{'WARN' if err.startswith('WARN') else 'FAIL'}: {err}",
-                file=sys.stderr,
-            )
-    print("")
+        print_validation_issues(results.agents_md)
+    safe_print("")
 
     # Hooks validation
-    print(f"### Validating Hooks in {root_dir / 'hooks' / 'hooks.json'}")
-    if not results.hooks_errors:
-        print("PASS: Hook configuration and handlers are valid.")
+    safe_print(f"### Validating Hooks in {root_dir / 'hooks' / 'hooks.json'}")
+    if results.hooks.success and not results.hooks.issues:
+        safe_print("PASS: Hook configuration and handlers are valid.")
     else:
-        for err in results.hooks_errors:
-            print(f"FAIL: {err}", file=sys.stderr)
-    print("")
+        print_validation_issues(results.hooks)
+    safe_print("")
 
     # Manifest validation
-    print(f"### Validating Manifest in {root_dir / '.claude-plugin' / 'plugin.json'}")
-    if not results.manifest_errors:
-        print("PASS: Manifest is valid.")
+    safe_print(
+        f"### Validating Manifest in {root_dir / '.claude-plugin' / 'plugin.json'}"
+    )
+    if results.manifest.success and not results.manifest.issues:
+        safe_print("PASS: Manifest is valid.")
     else:
-        for err in results.manifest_errors:
-            print(f"FAIL: {err}", file=sys.stderr)
+        print_validation_issues(results.manifest)
 
-    print("\n## Audit Summary")
+    safe_print("\n## Audit Summary")
     if any(
         [
-            not results.skills_valid,
-            not results.agents_md_valid,
-            not results.hooks_valid,
-            not results.manifest_valid,
+            results.skills.has_errors,
+            results.agents_md.has_errors,
+            results.hooks.has_errors,
+            results.manifest.has_errors,
         ]
     ):
-        print("FAIL: Audit failed with one or more errors.")
+        safe_print("FAIL: Audit failed with one or more errors.")
         return 1
-    print("PASS: Audit passed. Plugin is healthy.")
+    safe_print("PASS: Audit passed. Plugin is healthy.")
     return 0
 
 
 def run_full_audit(root_dir: Path) -> int:
     """Orchestrate the full audit process."""
     results = AuditResults()
-    patterns = load_gitignore(root_dir) | DEFAULT_IGNORE_PATTERNS
+    patterns = load_gitignore(root_dir) | Config.DEFAULT_IGNORE_PATTERNS
 
     results.structure = get_tree_lines(root_dir, patterns)
     results.env = analyze_project_env(root_dir)
     results.dependencies = get_dependencies(root_dir)
-    results.skills_valid, results.skills_errors = validate_skill_files(
-        root_dir / "skills"
-    )
-    results.agents_md_valid, results.agents_md_errors = validate_agents_md_file(
-        root_dir / "AGENTS.md"
-    )
-    results.hooks_valid, results.hooks_errors = validate_hooks_config(
-        root_dir / "hooks" / "hooks.json"
-    )
-    results.manifest_valid, results.manifest_errors = validate_manifest_file(
+    results.skills = validate_skill_files(root_dir / "skills")
+    results.agents_md = validate_agents_md_file(root_dir / "AGENTS.md")
+    results.hooks = validate_hooks_config(root_dir / "hooks" / "hooks.json")
+    results.manifest = validate_manifest_file(
         root_dir / ".claude-plugin" / "plugin.json"
     )
 
@@ -591,45 +767,38 @@ def main() -> int:
         case "check-all":
             return run_full_audit(root)
         case "check-hooks":
-            valid, errors = validate_hooks_config(root / "hooks" / "hooks.json")
-            for err in errors:
-                print(f"FAIL: {err}", file=sys.stderr)
-            if valid:
-                print("PASS: Hooks are valid.")
-            return 0 if valid else 1
+            result = validate_hooks_config(root / "hooks" / "hooks.json")
+            print_validation_issues(result)
+            if result.success:
+                safe_print("PASS: Hooks are valid.")
+            return 0 if result.success else 1
         case "check-manifest":
-            valid, errors = validate_manifest_file(
-                root / ".claude-plugin" / "plugin.json"
-            )
-            for err in errors:
-                print(f"FAIL: {err}", file=sys.stderr)
-            if valid:
-                print("PASS: Manifest is valid.")
-            return 0 if valid else 1
+            result = validate_manifest_file(root / ".claude-plugin" / "plugin.json")
+            print_validation_issues(result)
+            if result.success:
+                safe_print("PASS: Manifest is valid.")
+            return 0 if result.success else 1
         case "validate-skills":
-            valid, errors = validate_skill_files(root / "skills")
-            for err in errors:
-                prefix = "WARN" if err.startswith("WARN") else "FAIL"
-                print(f"{prefix}: {err}", file=sys.stderr)
-            if valid:
-                print("PASS: Skills are valid.")
-            return 0 if valid else 1
+            result = validate_skill_files(root / "skills")
+            print_validation_issues(result)
+            if result.success:
+                safe_print("PASS: Skills are valid.")
+            return 0 if result.success else 1
         case "lint-agents-md":
-            valid, errors = validate_agents_md_file(args.file_path)
-            for err in errors:
-                print(f"FAIL: {err}", file=sys.stderr)
-            if valid:
-                print("PASS: AGENTS.md is valid.")
-            return 0 if valid else 1
+            result = validate_agents_md_file(args.file_path)
+            print_validation_issues(result)
+            if result.success:
+                safe_print("PASS: AGENTS.md is valid.")
+            return 0 if result.success else 1
         case "analyze-env":
             env = analyze_project_env(root)
-            print(f"Env: {env}")
+            safe_print(f"Env: {env}")
             return 0
         case "scan-structure":
-            patterns = load_gitignore(root) | DEFAULT_IGNORE_PATTERNS
+            patterns = load_gitignore(root) | Config.DEFAULT_IGNORE_PATTERNS
             lines = get_tree_lines(root, patterns)
             for line in lines:
-                print(line)
+                safe_print(line)
             return 0
         case _:
             return 1
