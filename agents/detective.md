@@ -24,18 +24,6 @@ tools:
   - Grep
   - Skill
   - TodoWrite
-  - mcp__filesystem__read
-  - mcp__filesystem__search_text
-  - mcp__filesystem__find_files
-  - mcp__filesystem__list
-  - mcp__filesystem__create
-  - mcp__filesystem__edit
-  - mcp__filesystem__replace_text
-  - mcp__filesystem__delete
-  - mcp__filesystem__move
-  - mcp__filesystem__stat
-  - mcp__filesystem__hash_file
-  - mcp__filesystem__list_roots
 skills:
   - name: diagnose
 ---
