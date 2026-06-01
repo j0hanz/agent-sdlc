@@ -10,15 +10,16 @@ import pytest
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from spec_parser import parse_spec, parse_plan, SpecDocument, PlanDocument
-from scaffold import scaffold
-from sync import sync
-from validate import validate_spec, validate_plan, validate_cross
+from spec_parser import parse_spec, parse_plan  # noqa: E402
+from scaffold import scaffold  # noqa: E402
+from sync import sync  # noqa: E402
+from validate import validate_spec, validate_plan, validate_cross  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def spec_file(tmp_path: Path) -> Path:
@@ -82,7 +83,7 @@ The system exposes the following interfaces:
 @pytest.fixture()
 def plan_file(tmp_path: Path, spec_file: Path) -> Path:
     """A minimal plan with one task that satisfies REQ-001."""
-    content = f"""\
+    content = """\
 # test-feature
 
 Spec: [test-feature.specs.md](test-feature.specs.md)
@@ -110,6 +111,7 @@ Expected result: All tests pass.
 # Parser tests
 # ---------------------------------------------------------------------------
 
+
 def test_parse_spec_populates_reqs_and_acs(spec_file: Path) -> None:
     doc = parse_spec(spec_file)
     assert "REQ-001" in doc.reqs
@@ -132,6 +134,7 @@ def test_parse_plan_extracts_satisfies(plan_file: Path) -> None:
 # ---------------------------------------------------------------------------
 # Scaffold tests
 # ---------------------------------------------------------------------------
+
 
 def test_scaffold_creates_both_files(tmp_path: Path) -> None:
     spec_path, plan_path = scaffold("my-feature", depth="contract", out_dir=tmp_path)
@@ -162,6 +165,7 @@ def test_scaffold_all_depths(tmp_path: Path) -> None:
 # Sync tests
 # ---------------------------------------------------------------------------
 
+
 def test_sync_adds_satisfies_stubs(spec_file: Path, tmp_path: Path) -> None:
     plan_path = tmp_path / "test-feature.plan.md"
     added = sync(spec_file, plan_path)
@@ -180,9 +184,12 @@ def test_sync_is_idempotent(spec_file: Path, tmp_path: Path) -> None:
     assert first_text == second_text, "plan should be unchanged after second sync"
 
 
-def test_sync_preserves_authored_task(spec_file: Path, plan_file: Path, tmp_path: Path) -> None:
+def test_sync_preserves_authored_task(
+    spec_file: Path, plan_file: Path, tmp_path: Path
+) -> None:
     # plan_file already has TASK-001 covering REQ-001; sync should not duplicate it
     import shutil
+
     work = tmp_path / "preserve"
     work.mkdir()
     dest_spec = work / spec_file.name
@@ -192,13 +199,18 @@ def test_sync_preserves_authored_task(spec_file: Path, plan_file: Path, tmp_path
     sync(dest_spec, dest_plan)
     text = dest_plan.read_text(encoding="utf-8")
     # REQ-001 should appear exactly once in Satisfies lines
-    satisfies_lines = [l for l in text.splitlines() if "Satisfies:" in l and "REQ-001" in l]
-    assert len(satisfies_lines) == 1, f"expected 1 Satisfies line for REQ-001, got {len(satisfies_lines)}"
+    satisfies_lines = [
+        ln for ln in text.splitlines() if "Satisfies:" in ln and "REQ-001" in ln
+    ]
+    assert len(satisfies_lines) == 1, (
+        f"expected 1 Satisfies line for REQ-001, got {len(satisfies_lines)}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # Validate tests
 # ---------------------------------------------------------------------------
+
 
 def test_validate_spec_valid_contract(spec_file: Path) -> None:
     errors, warnings = validate_spec(spec_file, "contract")
@@ -243,7 +255,9 @@ Expected result: exit 0.
     assert any("REQ-999" in e for e in errors), "orphan task not detected"
 
 
-def test_validate_cross_flags_uncovered_requirement(spec_file: Path, tmp_path: Path) -> None:
+def test_validate_cross_flags_uncovered_requirement(
+    spec_file: Path, tmp_path: Path
+) -> None:
     # Empty plan — all requirements uncovered
     plan_text = """\
 # test-feature

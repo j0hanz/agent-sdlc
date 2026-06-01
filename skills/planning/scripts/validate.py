@@ -36,18 +36,35 @@ from spec_parser import parse_spec, parse_plan
 # ---------------------------------------------------------------------------
 
 VAGUE_ADJECTIVES = [
-    "lightweight", "clean", "robust", "fast", "performant", "easy", "simple",
+    "lightweight",
+    "clean",
+    "robust",
+    "fast",
+    "performant",
+    "easy",
+    "simple",
 ]
 
 SECTIONS_BY_LEVEL: dict[str, list[str]] = {
     "sketch": ["Goal", "Requirements", "Interfaces"],
     "contract": [
-        "Goal", "Requirements", "Constraints", "Interfaces", "Context",
-        "Acceptance Criteria & Validation", "Examples & Edge Cases",
+        "Goal",
+        "Requirements",
+        "Constraints",
+        "Interfaces",
+        "Context",
+        "Acceptance Criteria & Validation",
+        "Examples & Edge Cases",
     ],
     "blueprint": [
-        "Goal", "Requirements", "Constraints", "Interfaces", "Context",
-        "Acceptance Criteria & Validation", "Examples & Edge Cases", "Notes & Risks",
+        "Goal",
+        "Requirements",
+        "Constraints",
+        "Interfaces",
+        "Context",
+        "Acceptance Criteria & Validation",
+        "Examples & Edge Cases",
+        "Notes & Risks",
     ],
 }
 
@@ -55,7 +72,12 @@ _REQ_STMT_RE = re.compile(r"^[ ]{0,2}-\s+`?(REQ|SEC|PERF|COMP)-\d+`?[\s:]*")
 _IMPL_PREFIXES = ("REQ-", "SEC-", "PERF-", "COMP-")
 
 PLAN_MANDATORY_FIELDS = {
-    "Depends on", "Files", "Symbols", "Action", "Validate", "Expected result",
+    "Depends on",
+    "Files",
+    "Symbols",
+    "Action",
+    "Validate",
+    "Expected result",
 }
 
 
@@ -63,11 +85,14 @@ PLAN_MANDATORY_FIELDS = {
 # Spec validation
 # ---------------------------------------------------------------------------
 
+
 def _contains_code(line: str) -> bool:
     return "`" in line
 
 
-def validate_spec(spec_path: Path, level: str = "contract") -> tuple[list[str], list[str]]:
+def validate_spec(
+    spec_path: Path, level: str = "contract"
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -82,11 +107,15 @@ def validate_spec(spec_path: Path, level: str = "contract") -> tuple[list[str], 
             errors.append(f"[SPEC] Missing mandatory section: {section}")
 
     # 2. Requirement linter
-    req_lines = [l for l in spec.raw_lines if _REQ_STMT_RE.match(l)]
+    req_lines = [line for line in spec.raw_lines if _REQ_STMT_RE.match(line)]
     for line in req_lines:
         if " and " in line.lower() and not _contains_code(line):
-            warnings.append(f"[SPEC] Requirement may not be atomic (contains 'and'): {line.strip()}")
-        if "be " in line.lower() and ("ed " in line.lower() or line.lower().endswith("ed")):
+            warnings.append(
+                f"[SPEC] Requirement may not be atomic (contains 'and'): {line.strip()}"
+            )
+        if "be " in line.lower() and (
+            "ed " in line.lower() or line.lower().endswith("ed")
+        ):
             warnings.append(f"[SPEC] Requirement may be passive voice: {line.strip()}")
         for adj in VAGUE_ADJECTIVES:
             if adj in line.lower():
@@ -95,9 +124,13 @@ def validate_spec(spec_path: Path, level: str = "contract") -> tuple[list[str], 
     # 3. Traceability (skip for sketch)
     if spec.reqs and level != "sketch":
         if not spec.acs:
-            errors.append("[SPEC] Requirements found but no Acceptance Criteria (AC-###) defined.")
+            errors.append(
+                "[SPEC] Requirements found but no Acceptance Criteria (AC-###) defined."
+            )
         if not spec.vals:
-            errors.append("[SPEC] Requirements found but no Validation steps (VAL-###) defined.")
+            errors.append(
+                "[SPEC] Requirements found but no Validation steps (VAL-###) defined."
+            )
         if len(spec.acs) < len(spec.reqs) * 0.5:
             warnings.append(
                 f"[SPEC] Low AC density: {len(spec.acs)} ACs for {len(spec.reqs)} requirements."
@@ -114,6 +147,7 @@ def validate_spec(spec_path: Path, level: str = "contract") -> tuple[list[str], 
 # Plan validation
 # ---------------------------------------------------------------------------
 
+
 def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -128,8 +162,14 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     for task in plan.tasks:
-        missing = PLAN_MANDATORY_FIELDS - set(task.fields.keys()) - (
-            {"Satisfies"} if True else set()  # Satisfies is new, not yet mandatory for compat
+        missing = (
+            PLAN_MANDATORY_FIELDS
+            - set(task.fields.keys())
+            - (
+                {"Satisfies"}
+                if True
+                else set()  # Satisfies is new, not yet mandatory for compat
+            )
         )
         # Satisfies is strongly recommended but warn rather than error until fully adopted
         if not task.satisfies:
@@ -137,7 +177,9 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
                 f"[PLAN] {task.id}: missing Satisfies: field — traceability spine not set."
             )
         if missing:
-            errors.append(f"[PLAN] {task.id}: missing mandatory fields: {', '.join(sorted(missing))}")
+            errors.append(
+                f"[PLAN] {task.id}: missing mandatory fields: {', '.join(sorted(missing))}"
+            )
 
         files_val = task.fields.get("Files", "")
         syms_val = task.fields.get("Symbols", "")
@@ -148,7 +190,11 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
                 )
 
         validate_val = task.fields.get("Validate", "")
-        if validate_val and "none" not in validate_val.lower() and "`" not in validate_val:
+        if (
+            validate_val
+            and "none" not in validate_val.lower()
+            and "`" not in validate_val
+        ):
             warnings.append(
                 f"[PLAN] {task.id} 'Validate': should contain a command in backticks."
             )
@@ -159,6 +205,7 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
 # ---------------------------------------------------------------------------
 # Cross validation (coverage matrix)
 # ---------------------------------------------------------------------------
+
 
 def validate_cross(
     spec_path: Path, plan_path: Path, level: str = "contract"
@@ -176,7 +223,9 @@ def validate_cross(
     except FileNotFoundError:
         return [f"Plan file not found: {plan_path}"], [], {}
 
-    impl_ids = {id_ for id_ in spec.reqs if any(id_.startswith(p) for p in _IMPL_PREFIXES)}
+    impl_ids = {
+        id_ for id_ in spec.reqs if any(id_.startswith(p) for p in _IMPL_PREFIXES)
+    }
     ac_ids = spec.acs
 
     # All IDs that appear in plan Satisfies fields
@@ -187,7 +236,9 @@ def validate_cross(
     # 1. Uncovered requirements — impl IDs in spec with no task covering them
     uncovered = impl_ids - all_satisfied
     for id_ in sorted(uncovered):
-        errors.append(f"[CROSS] Uncovered requirement: {id_} has no task with Satisfies: {id_}")
+        errors.append(
+            f"[CROSS] Uncovered requirement: {id_} has no task with Satisfies: {id_}"
+        )
 
     # 2. Orphan tasks — task Satisfies IDs not in spec
     all_spec_ids = spec.reqs | spec.acs | spec.vals | spec.cons
@@ -210,9 +261,7 @@ def validate_cross(
         "covered": sorted(impl_ids & all_satisfied),
         "uncovered": sorted(uncovered),
         "orphan_count": sum(
-            1 for t in plan.tasks
-            for sid in t.satisfies
-            if sid not in all_spec_ids
+            1 for t in plan.tasks for sid in t.satisfies if sid not in all_spec_ids
         ),
         "ac_covered": sorted(ac_ids & all_satisfied),
         "ac_uncovered": sorted(uncovered_acs),
@@ -224,6 +273,7 @@ def validate_cross(
 # ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
+
 
 def _print_results(
     label: str,
@@ -244,7 +294,7 @@ def _print_results(
         total = len(matrix["spec_impl_ids"])
         ac_cov = len(matrix["ac_covered"])
         ac_total = len(matrix["spec_ac_ids"])
-        print(f"\nCoverage matrix:")
+        print("\nCoverage matrix:")
         print(f"  Requirements covered : {covered}/{total}")
         print(f"  ACs covered          : {ac_cov}/{ac_total}")
         print(f"  Orphan Satisfies IDs : {matrix['orphan_count']}")
@@ -255,6 +305,7 @@ def _print_results(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def _resolve_paths(name_or_path: str) -> tuple[Path, Path]:
     """Resolve stem to (spec_path, plan_path) regardless of input form."""
@@ -279,7 +330,9 @@ def main() -> None:
     )
     parser.add_argument("--spec", action="store_true", help="Run spec validation only")
     parser.add_argument("--plan", action="store_true", help="Run plan validation only")
-    parser.add_argument("--cross", action="store_true", help="Run cross-coverage check only")
+    parser.add_argument(
+        "--cross", action="store_true", help="Run cross-coverage check only"
+    )
     parser.add_argument(
         "--level",
         choices=["sketch", "contract", "blueprint"],
