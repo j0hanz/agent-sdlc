@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { runLocalityCheck } from './check-locality.mjs';
-import path from 'path';
+import path from 'node:path';
 
 test('identifies circular dependencies in fixtures', () => {
     const fixtureDir = path.join(process.cwd(), 'skills/architecture/scripts/fixtures');

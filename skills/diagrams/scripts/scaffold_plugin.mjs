@@ -1,22 +1,23 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT || process.cwd();
+const rawRoot = process.env.CLAUDE_PLUGIN_ROOT || process.cwd();
+const pluginRoot = path.resolve(rawRoot);
 
 function generateDiagram() {
   const commands = fs.readdirSync(path.join(pluginRoot, 'commands'))
     .filter(f => f.endsWith('.md'))
     .map(f => f.replace('.md', ''));
-  
+
   const agents = fs.readdirSync(path.join(pluginRoot, 'agents'))
     .filter(f => f.endsWith('.md'))
     .map(f => f.replace('.md', ''));
-  
+
   const skills = fs.readdirSync(path.join(pluginRoot, 'skills'))
     .filter(f => fs.statSync(path.join(pluginRoot, 'skills', f)).isDirectory());
 
   let mermaid = 'graph TD\n';
-  
+
   mermaid += '  subgraph Commands\n';
   commands.forEach(c => {
     mermaid += `    C_${c.replace(/-/g, '_')}(/${c})\n`;
@@ -41,11 +42,11 @@ function generateDiagram() {
     mermaid += '  C_plan --> S_create_specs\n';
     mermaid += '  C_plan --> S_create_plan\n';
   }
-  
+
   if (commands.includes('eval')) {
     mermaid += '  C_eval --> S_skill_builder\n';
   }
-  
+
   if (commands.includes('deliver')) {
     mermaid += '  C_deliver --> S_delivery_manager\n';
   }

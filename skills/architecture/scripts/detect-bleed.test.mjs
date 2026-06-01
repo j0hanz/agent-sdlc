@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { runBleedDetection } from './detect-bleed.mjs';
-import path from 'path';
+import path from 'node:path';
 
 test('detects infrastructure imports in domain file', () => {
     const fixtureDir = path.join(process.cwd(), 'skills/architecture/scripts/fixtures');

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { extractImports } from './utils/extractor.mjs';
 import { findCycles } from './utils/graph.mjs';
 
@@ -55,12 +55,14 @@ export function runLocalityCheck(targetDir, exclude = [
                 // Crude resolution: just append .ts (assumes fixtures logic for now)
                 // A robust script would need proper node module resolution here
                 const resolved = path.resolve(path.dirname(file), imp);
-                if (fs.existsSync(`${resolved  }.ts`)) {
-                     graph[file].push(`${resolved  }.ts`);
-                } else if (fs.existsSync(`${resolved  }.tsx`)) {
-                     graph[file].push(`${resolved  }.tsx`);
-                } else if (fs.existsSync(`${resolved  }/index.ts`)) {
-                     graph[file].push(`${resolved  }/index.ts`);
+                for (const candidate of [`${resolved}.ts`, `${resolved}.tsx`, `${resolved}/index.ts`]) {
+                    try {
+                        fs.statSync(candidate);
+                        graph[file].push(candidate);
+                        break;
+                    } catch {
+                        // not found, try next candidate
+                    }
                 }
             }
         }
