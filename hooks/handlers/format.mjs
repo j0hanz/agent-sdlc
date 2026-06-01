@@ -30,11 +30,14 @@ export function onWrite(input = {}) {
   if (PRETTIER.has(ext)) {
     const entry = prettierEntry();
     if (entry) {
+      // 20s timeout handles most files; very large files (10MB+) may timeout gracefully
+      // and be skipped. Side effect: formatting fails silently, write succeeds.
       sh(process.execPath, [entry, '--write', file], { timeout: 20000 });
       debug('prettier formatted', file);
     }
   } else if (RUFF.has(ext)) {
     // Ruff ships a native binary — execFile runs it directly, no shell needed.
+    // Two passes: format (20s) then check --fix (20s). Total max ~40s for large files.
     sh('ruff', ['format', file], { timeout: 20000 });
     sh('ruff', ['check', '--fix', '--quiet', file], { timeout: 20000 });
     debug('ruff formatted', file);

@@ -38,14 +38,18 @@ export function breadcrumb(input = {}) {
 export function replay() {
   const recent = readJsonlTail(TRAIL, 12);
   if (!recent.length) return null;
-  // De-duplicate while preserving recency (most recent wins).
+  // De-duplicate while preserving recency (most recent win) and session-relative order.
+  // Each breadcrumb has ts (ISO timestamp) for temporal context; group by session.
   const seen = new Set();
   const notes = [];
   for (let i = recent.length - 1; i >= 0; i--) {
-    const n = recent[i].note;
+    const entry = recent[i];
+    const n = entry.note;
     if (n && !seen.has(n)) {
       seen.add(n);
-      notes.unshift(`  ${n}`);
+      // Include timestamp if available for session-relative ordering across resume.
+      const time = entry.ts ? new Date(entry.ts).toLocaleTimeString() : '';
+      notes.unshift(`  ${n}${time ? ` [${time}]` : ''}`);
     }
   }
   if (!notes.length) return null;

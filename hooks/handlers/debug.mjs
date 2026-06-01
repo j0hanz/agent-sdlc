@@ -19,7 +19,9 @@ const PROBES = [
 
 /** Stop: scan added lines in the working diff for debug artifacts. */
 export function scan(input = {}) {
-  if (input.stop_hook_active) return null; // re-entry guard (we never block anyway)
+  // Re-entry guard: if Stop hook is already active in the event pipeline, skip.
+  // This prevents duplicate scans when multiple Stop hooks run in parallel.
+  if (input.stop_hook_active) return null;
 
   const diff = sh('git', ['diff', '--unified=0', '--no-color'], { timeout: 8000 });
   if (!diff) return null;
