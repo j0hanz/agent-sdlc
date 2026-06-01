@@ -1,6 +1,6 @@
 ---
 name: github-automation
-description: "GitHub automation: PATH A (Actions workflows, OIDC, hardening) or PATH B (gh CLI, bots, batch ops). Trigger on 'add CI', 'set up release', 'pin actions', 'deploy AWS'."
+description: "GitHub automation skill for writing, hardening, or debugging GitHub Actions workflows (PATH A) and building gh CLI scripts or batch API automation (PATH B). Trigger on: 'add CI', 'set up release', 'deploy to AWS/GCP/Azure', 'pin actions', 'harden workflow', 'matrix testing', 'composite action', 'reusable workflow', 'why isn't this triggering', 'close issues in bulk', 'sync labels', 'cross-repo bot', 'rate-limit-safe script', 'gh api', 'list PRs in a script'. Also trigger when user shares a .github/workflows/*.yml and asks to fix or improve it."
 disable-model-invocation: true
 allowed-tools: Bash(python *) Bash(python3 *)
 ---
@@ -16,7 +16,9 @@ Read this first — pick one path and follow only that section.
 | Writing, editing, linting, or hardening `.github/workflows/*.yml`; YAML workflow authoring; "add CI", "set up release", "pin these actions", "why isn't this triggering" | **PATH A — ACTIONS** |
 | Building a `gh` script, batch API operations, headless automation, cross-repo bot, `gh api` usage, rate-limit-safe looping                                               | **PATH B — CLI**     |
 
-When in doubt: if the output is a YAML workflow file, use Path A. If the output is a shell/Python script calling `gh`, use Path B.
+When in doubt: if the output is a YAML workflow file, use Path A. If the output is a shell/Python script calling `gh`, use Path B. For one-off CLI questions ("what command do I use?"), answer directly without creating a script file.
+
+**Routing for conceptual questions**: if the user asks a concept-only question (no authoring needed), use Path A but skip to the Answer shape section — give a docs-grounded explanation, no workflow file required.
 
 ---
 
@@ -58,7 +60,7 @@ Pick one. The classification drives which reference to load:
 | Deploy to cloud (Azure)              | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § Azure         |
 | Matrix / cross-version testing       | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Matrix                                              |
 | Reusable workflow / composite action | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Reuse                                               |
-| Harden existing workflow             | **MANDATORY — READ ENTIRE FILE**: `references/security-hardening.md`                                                     |
+| Harden existing workflow             | Apply the hardening checklist below, then **READ ENTIRE FILE**: `references/security-hardening.md`                        |
 | Diagnose a misbehaving workflow      | **MANDATORY — READ ENTIRE FILE**: `references/troubleshooting.md`                                                        |
 | Pure docs / conceptual question      | **MANDATORY — READ ENTIRE FILE**: `references/topic-map.md` → live `docs.github.com`                                     |
 
@@ -78,7 +80,7 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
 
    **IMPORTANT:** Verify `gh auth status` before running pinning scripts. If not authenticated, explain this to the user as pinning requires API access.
 
-   Use `scripts/pin_actions.py` to resolve tags → SHAs in bulk.
+   Use `<skill-dir>/scripts/pin_actions.py` to resolve tags → SHAs in bulk.
 
 2. **NEVER write a workflow without `permissions:` at the top.** Default to least privilege at the workflow level, widen per-job only where needed:
 
@@ -88,6 +90,8 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
    ```
 
    For OIDC: add `id-token: write` only on the deploy job.
+
+   **OIDC config values are not secrets.** IAM role ARN, GCP workload identity provider, Azure client/tenant IDs, region, and bucket name are non-sensitive. Store them as repo/environment **variables** (`vars.AWS_ROLE_ARN`, `vars.AWS_REGION`) so they are visible in workflow diffs and review. Storing them in `secrets.*` hides them unnecessarily and is a common mistake.
 
 3. **NEVER interpolate untrusted input into `run:` blocks.** Pipe through `env:` so the shell sees a real variable:
 
@@ -103,11 +107,11 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
 python <skill-dir>/scripts/lint.py .github/workflows/<file>.yml
 ```
 
-`lint.py` is the cross-platform linter. It prefers `actionlint` when installed, otherwise performs built-in Python-based checks for expression injection, SHA pinning, and permissions.
+`lint.py` is the cross-platform linter. It prefers `actionlint` when installed, otherwise performs built-in Python-based checks for expression injection, SHA pinning, and permissions. Always invoke via the `<skill-dir>` absolute path (see the Scripts section for how to resolve it) — relative paths break when the working directory is not the project root.
 
 **Do not report the task complete until lint passes. ALWAYS report which linter tier was used (e.g., "actionlint" or "built-in Python checks").**
 
-**After lint passes — spawn the `workflow-security-auditor` subagent** (`agents/workflow-security-auditor.md`) for semantic security review that rule-based linting cannot catch:
+**After lint passes — spawn the `workflow-security-auditor` subagent** (`agents/workflow-security-auditor.md`) for semantic security review that rule-based linting cannot catch. (Note: `disable-model-invocation: true` in this skill's frontmatter only prevents skill preloading into subagents — it does NOT block `Agent()` calls. Spawning the security auditor via `Agent()` works normally.)
 
 ```
 Agent(
@@ -129,7 +133,23 @@ The agent evaluates 7 semantic dimensions: OIDC trust scope, `pull_request_targe
 - `workflow_dispatch` → `gh workflow run <file>.yml`
 - `schedule` → note that the first run can be delayed up to ~15 min, and crons must be UTC
 
+### Hardening checklist (use when intent = "harden existing workflow")
+
+Work through these in order. Each issue must be addressed before running lint:
+
+- [ ] **SHA-pin all third-party actions** — replace `@v4`/`@main` with `@<40-char-sha> # vX.Y.Z`. Run `scripts/pin_actions.py` to do it in bulk.
+- [ ] **Add `permissions:` block** — if absent, add `permissions: contents: read` at the workflow level. Widen per-job only where necessary (e.g., `id-token: write` only on a deploy job).
+- [ ] **Fix expression injection** — find every `${{ github.event.pull_request.title }}`, `${{ github.head_ref }}`, `${{ github.event.*.body }}` etc. that appears inside a `run:` block and move it to an `env:` key. The shell must never see the raw expression value.
+- [ ] **Audit `pull_request_target`** — if present, verify it does NOT check out or execute PR head code. If it does, change the trigger to `pull_request` (for the test job) + `workflow_run` (for the results/notification job).
+- [ ] **Scope secrets** — check every `secrets.*` reference. Is each secret only accessed by the step that genuinely needs it? Move secrets to job-level `env:` rather than step-level when possible.
+- [ ] **No long-lived cloud credentials** — if the workflow calls AWS/GCP/Azure, confirm it uses OIDC (`id-token: write` + the cloud provider's OIDC action), not a stored access key or service account JSON.
+- [ ] **Check `runs-on`** — self-hosted runners on public repos with fork-PR triggers are dangerous. Flag this for the user if present.
+
+After addressing all items, run lint and the security-auditor subagent as described in step 4.
+
 ### Scripts (Path A)
+
+> **Resolving `<skill-dir>`:** Every script command uses `<skill-dir>` as a placeholder for the absolute path to this skill's directory. In Claude Code, resolve it as `$CLAUDE_PLUGIN_ROOT/skills/github-automation`. Example on a typical install: `~/.claude/skills/github-automation` or the path shown by your plugin loader. Do not use a relative path — scripts must be invoked from any working directory.
 
 #### `scripts/pin_actions.py`
 
@@ -137,17 +157,17 @@ Resolves every `uses: org/repo@<ref>` in a workflow to a full commit SHA, rewrit
 
 ```bash
 python <skill-dir>/scripts/pin_actions.py .github/workflows/ci.yml
-python <skill-dir>/scripts/pin_actions.py .github/workflows/   # whole directory
+python <skill-dir>/scripts/pin_actions.py .github/workflows/
 ```
 
-#### `scripts/lint.py` (Preferred over `lint.sh`)
+#### `scripts/lint.py`
 
 ```bash
 python <skill-dir>/scripts/lint.py .github/workflows/ci.yml
-python <skill-dir>/scripts/lint.py .github/workflows/   # whole directory
+python <skill-dir>/scripts/lint.py .github/workflows/
 ```
 
-Cross-platform linter. Tries: `actionlint` → `yamllint` → built-in Python check.
+Cross-platform linter. Tries: `actionlint` → `yamllint` → built-in Python check. Always use absolute paths to avoid path-resolution issues in subagent contexts.
 
 ### Answer shape (Path A)
 
@@ -161,7 +181,7 @@ These are in addition to the three non-negotiables above (permissions, SHA-pinni
 
 - **NEVER** pin to `@main` or `@master`.
 - **NEVER** suggest long-lived `AWS_ACCESS_KEY_ID` / `GCP_SA_KEY` secrets when OIDC is the documented path.
-- **NEVER** use `pull_request_target` for builds — it runs with secrets on PR head code from forks.
+- **NEVER** use `pull_request_target` for builds — it runs with secrets on PR head code from forks. The safe pattern for "run tests in PR context, then post results with write access" is `pull_request` for the build + `workflow_run` for the follow-up step.
 - **NEVER** confuse reusable workflows (`uses: org/repo/.github/workflows/x.yml@ref`) with composite actions (`uses: ./path/to/action`).
 - **NEVER** reach for matrix when a couple of explicit jobs would be clearer.
 
@@ -178,6 +198,10 @@ These are in addition to the three non-negotiables above (permissions, SHA-pinni
 ## PATH B — CLI: GitHub CLI Automation
 
 This path is for building and hardening GitHub CLI automation used in CI/CD, headless scripts, bots, or cross-repo workflows.
+
+### One-off commands vs. headless scripts
+
+If the user asks "what command do I use to…" or "how do I quickly…", give the `gh` command directly. Do NOT create a script file, add `GH_PROMPT_DISABLED`, or add auth checks. Reserve script creation for tasks that need to run in CI or repeat across many resources.
 
 ### Expert Anti-Patterns (NEVER do these)
 
@@ -263,6 +287,13 @@ if [ -z "$exists" ]; then
     -f name="needs-triage" -f color="ff0000"
 fi
 ```
+
+### Auth token selection for cross-repo automation
+
+When the automation touches more than one repo or org-level resources:
+- Use `GH_ORG_TOKEN` (a fine-grained PAT with the required scopes across all targets), not `GITHUB_TOKEN`
+- Export it as `GH_TOKEN` so the CLI picks it up: `export GH_TOKEN="$GH_ORG_TOKEN"`
+- Store it in GitHub Secrets as a named secret (e.g., `GH_ORG_TOKEN`), not as `GITHUB_TOKEN` which gets the automatic repo-scoped token
 
 ### Recommended script checklist
 
