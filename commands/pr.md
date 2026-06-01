@@ -1,5 +1,7 @@
 ---
+name: pr
 description: Validate the current branch and open a GitHub pull request
+model: sonnet
 argument-hint: [--draft]
 ---
 

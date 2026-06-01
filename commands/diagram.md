@@ -1,5 +1,7 @@
 ---
+name: diagram
 description: Generate a Mermaid diagram for a plugin component, flow, or architecture
+model: sonnet
 argument-hint: <component or system to diagram>
 ---
 

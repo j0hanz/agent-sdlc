@@ -1,5 +1,7 @@
 ---
+name: explore
 description: Spawn the explorer agent to research a question about the codebase or documentation
+model: sonnet
 argument-hint: <research question>
 ---
 

@@ -4,6 +4,25 @@
 
 A Claude Code plugin for authoring and maintaining agents, skills, and hooks.
 
+## Installation
+
+1. **Prerequisites:** Node.js ≥22 and Python ≥3.10 must be installed.
+2. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/j0hanz/agent-dev.git
+   cd agent-dev
+   ```
+
+3. **Install dependencies:**
+
+   ```bash
+   npm install
+   pip install pytest pyyaml jsonschema
+   ```
+
+4. **Load in Claude Code:** The plugin is auto-discovered from the `.claude-plugin/` directory.
+
 ## Overview
 
 Agent Dev is a Claude Code plugin that provides process skills, managed agents, slash commands, and lifecycle hooks for building AI-assisted development workflows. It scaffolds components, validates output, and auto-formats code as you author Claude agents, skills, and hooks.

@@ -1,5 +1,7 @@
 ---
+name: detective
 description: Spawn the detective agent to investigate bugs, hunt for latent issues, audit suspicious code, or trace hard-to-find failures — reactive and proactive modes
+model: sonnet
 argument-hint: <symptom | file/directory | "recent changes" | area of concern>
 ---
 

@@ -1,5 +1,7 @@
 ---
+name: coder
 description: Spawn the coder agent to execute a coding task autonomously
+model: sonnet
 argument-hint: <task description>
 ---
 

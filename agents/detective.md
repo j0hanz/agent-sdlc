@@ -14,7 +14,7 @@ description: |
   "Investigate the NullPointerException in the user authentication flow and explain the root cause with a proposed fix."
   </example>
 color: red
-model: claude-sonnet-4-6
+model: sonnet
 effort: high
 tools:
   - Read

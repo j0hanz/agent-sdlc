@@ -1,5 +1,7 @@
 ---
+name: hook
 description: Validate all hooks, or create/fix a specific hook handler
+model: sonnet
 argument-hint: [check | new <hook-name> | fix <handler-file>]
 ---
 

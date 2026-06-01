@@ -1,5 +1,7 @@
 ---
+name: fix
 description: Diagnose and fix a bug using structured root-cause analysis
+model: sonnet
 argument-hint: <bug description or error message>
 ---
 

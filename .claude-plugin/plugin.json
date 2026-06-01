@@ -1,7 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "agent-dev",
-  "displayName": "Agent Dev",
   "version": "0.1.0",
   "description": "A plugin to help with agent development and testing.",
   "license": "MIT",
@@ -11,31 +10,8 @@
   "repository": "https://github.com/j0hanz/agent-dev",
   "homepage": "https://github.com/j0hanz/agent-dev#readme",
   "keywords": ["agent-dev", "claude", "plugin", "agent", "development", "testing"],
-  "category": "developer-tools",
   "hooks": "./hooks/hooks.json",
-  "_comment_hooks": "Explicit path retained for pre-auto-discovery Claude Code compatibility",
   "experimental": {
     "monitors": "./monitors/monitors.json"
-  },
-  "_comment_monitors": "experimental.monitors retained; auto-discovery not guaranteed across all versions",
-  "userConfig": {
-    "brainstorm_nudge": {
-      "type": "boolean",
-      "title": "Brainstorm nudge",
-      "description": "Remind to brainstorm before implementing on UserPromptSubmit",
-      "default": true
-    },
-    "skills_announce": {
-      "type": "boolean",
-      "title": "Skills routing guide",
-      "description": "Inject the skill routing guide into context at SessionStart",
-      "default": true
-    },
-    "telemetry_enabled": {
-      "type": "boolean",
-      "title": "Hook telemetry",
-      "description": "Write hook execution timings to .claude/telemetry.log",
-      "default": true
-    }
   }
 }

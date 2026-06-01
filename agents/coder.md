@@ -16,7 +16,7 @@ description: |
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
 color: green
-model: claude-sonnet-4-6
+model: sonnet
 effort: high
 maxTurns: 40
 isolation: 'worktree'

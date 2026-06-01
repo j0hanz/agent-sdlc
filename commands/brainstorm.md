@@ -1,5 +1,7 @@
 ---
+name: brainstorm
 description: Run structured requirements discovery before implementing a feature or change
+model: sonnet
 argument-hint: <feature or change description>
 ---
 
