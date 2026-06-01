@@ -13,9 +13,11 @@
   "keywords": ["agent-dev", "claude", "plugin", "agent", "development", "testing"],
   "category": "developer-tools",
   "hooks": "./hooks/hooks.json",
+  "_comment_hooks": "Explicit path retained for pre-auto-discovery Claude Code compatibility",
   "experimental": {
     "monitors": "./monitors/monitors.json"
   },
+  "_comment_monitors": "experimental.monitors retained; auto-discovery not guaranteed across all versions",
   "userConfig": {
     "brainstorm_nudge": {
       "type": "boolean",

@@ -65,6 +65,7 @@ npm run test:integration    # Hook firing and skill loading
 - **Skill editing:** Use the skill's own files as the source of truth — don't copy patterns from sibling skills.
 - **Hook handlers use `.mjs`** (native ESM). Skill scripts outside hooks may use `.js`. No TypeScript, no transpile step.
 - **Extension points:** `commands/<name>.md` adds slash commands; `monitors/monitors.json` registers monitors; `bin/` contains CLI utilities.
+- **Output styles:** `output-styles/` is a plugin-local convention (not a Claude Code spec directory) that defines response formatting guidance. `output-styles/agent-dev.md` is an output style definition with `force-for-plugin: true` that instructs Claude to follow the Design → Build → Validate → Ship workflow and phase-aware output rules. These frontmatter hints are used by plugin initialization hooks to configure response behaviour.
 
 ## Commit Attribution
 

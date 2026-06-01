@@ -16,7 +16,7 @@ description: |
   </example>
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
-color: '#0d6efd'
+color: blue
 model: claude-sonnet-4-6
 effort: high
 maxTurns: 30
@@ -29,7 +29,6 @@ tools:
   - Skill
   - WebFetch
   - WebSearch
-skill_composition: declined
 skills:
   - name: diagrams
   - name: research

@@ -13,7 +13,7 @@ description: |
   <example>
   "Investigate the NullPointerException in the user authentication flow and explain the root cause with a proposed fix."
   </example>
-color: '#dc3545'
+color: red
 model: claude-sonnet-4-6
 effort: high
 tools:

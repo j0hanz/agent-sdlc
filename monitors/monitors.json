@@ -2,6 +2,7 @@
   {
     "name": "telemetry-watcher",
     "command": "Get-Content -Wait -Tail 20 \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\"",
+    "shell": "powershell",
     "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (PowerShell)"
   },
   {

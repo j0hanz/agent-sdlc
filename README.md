@@ -17,13 +17,13 @@ Agent Dev is a Claude Code plugin that provides process skills, managed agents, 
 
 ## Highlights
 
-| Component | Count | Purpose                                                                                                                 |
-| :-------- | :---: | :---------------------------------------------------------------------------------------------------------------------- |
-| Skills    |  19   | Process + domain skills (brainstorming, TDD, diagnose, refactor, …)                                                     |
-| Agents    |   2   | `coder` (autonomous execution) · `explorer` (read-only research)                                                        |
-| Commands  |  11   | `/plan`, `/new`, `/eval`, `/check`, `/deliver`, `/artifact-review`, `/debug`, `/test`, `/refactor`, `/docs`, `/welcome` |
-| Hooks     |  15   | Lifecycle events covering format, nudge, session context, and debug scan                                                |
-| MCP       |   1   | Context7 for live library documentation                                                                                 |
+| Component | Count | Purpose                                                                                     |
+| :-------- | :---: | :------------------------------------------------------------------------------------------ |
+| Skills    |  18   | Process + domain skills (brainstorming, TDD, diagnose, refactor, code-review, …)            |
+| Agents    |   4   | `coder` (execution) · `detective` (debugging) · `documenter` (docs) · `explorer` (research) |
+| Commands  |   8   | `/brainstorm`, `/coder`, `/detective`, `/diagram`, `/explore`, `/fix`, `/hook`, `/pr`       |
+| Hooks     |  15   | Lifecycle events covering format, nudge, session context, and debug scan                    |
+| MCP       |   1   | Context7 for live library documentation                                                     |
 
 ## Quick Start
 
@@ -64,7 +64,7 @@ All plugin capabilities are exposed as slash commands inside Claude Code.
 ## Project Structure
 
 ```text
-agents/             — Agent definitions (coder.md, explorer.md) + eval suites
+agents/             — Agent definitions (coder, detective, documenter, explorer) + eval suites
 bin/                — CLI utilities: simulate, telemetry, validate
 commands/           — Slash command markdown definitions
 hooks/
@@ -75,7 +75,7 @@ hooks/
   utils.mjs         — Shared hook utilities
 monitors/           — Monitor definitions
 output-styles/      — Output formatting rules
-skills/             — 19 skill definitions, each in skills/<name>/
+skills/             — 18 skill definitions, each in skills/<name>/
 tests/              — Integration tests (hooks fire, skills load)
 AGENTS.md           — Layout, conventions, and debugging guide
 ```
