@@ -109,7 +109,7 @@ Ask yourself:
 **For SDD integration**: If coming from `spec-driven-development` with a validated spec, generate a plan skeleton with `generate_plan.py` before Step 4:
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/generate_plan.py \
+python <skill-builder-dir>/scripts/generate_plan.py \
   spec.md --purpose <purpose> --component <component>
 ```
 
@@ -173,7 +173,7 @@ For effort estimation tables by task type, see [references/decomposition.md](ref
 Before marking plan complete, run the validation script:
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+python <skill-builder-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 ```
 
 This checks **all of these automatically**:
@@ -189,7 +189,7 @@ This checks **all of these automatically**:
 ### Example Validation
 
 ```bash
-$ python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+$ python <skill-builder-dir>/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 
 Validating plan-feature-auth-middleware-1.md...
 ✓ 27 tasks

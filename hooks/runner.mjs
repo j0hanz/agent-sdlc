@@ -77,7 +77,7 @@ async function main() {
   const input = await readStdin();
   const event = input.hook_event_name || '';
   const started = Date.now();
-  let status = 'ok';
+  let status = 'success';
   let errMessage;
 
   try {
