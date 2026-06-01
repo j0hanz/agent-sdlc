@@ -18,6 +18,11 @@ Read this first — pick one path and follow only that section.
 
 When in doubt: if the output is a YAML workflow file, use Path A. If the output is a shell/Python script calling `gh`, use Path B. For one-off CLI questions ("what command do I use?"), answer directly without creating a script file.
 
+**Required output per path:**
+
+- **Path A:** The workflow `.yml` file + lint result (which tier ran) + security auditor output summary. No YAML without lint passing.
+- **Path B:** The complete script (no placeholders) + the recommended test invocation + auth prerequisites noted. One-off commands are answered inline — no script file.
+
 **Routing for conceptual questions**: if the user asks a concept-only question (no authoring needed), use Path A but skip to the Answer shape section — give a docs-grounded explanation, no workflow file required.
 
 ---

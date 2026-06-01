@@ -71,6 +71,8 @@ Tests written in bulk verify _imagined_ behavior. By the time you implement the 
 - **NEVER mock internal collaborators.** Agents often use `unittest.mock` or `jest.mock` on internal imports to avoid building actual objects. This creates brittle tests that test the mock, not the system. **Mock at system boundaries only** (external APIs, DBs, Time, I/O).
 - **NEVER bypass the public interface to set up test state.** (e.g., directly mutating a private class property or inserting raw database rows for a unit test). If an internal state is unreachable via the public interface, the public interface is incomplete or the test is invalid.
 - **NEVER ignore the test runner output.** Read the actual traceback. If it says `ModuleNotFoundError`, do not rewrite the business logic.
+- **NEVER write a test that only verifies internal implementation details.** A test that fails when you rename a private variable but passes when the public behavior is broken is worse than no test — it creates noise and false confidence.
+- **NEVER skip `run the test` between RED and GREEN.** Writing the test and immediately writing the implementation without running in between means you never confirmed the test actually failed — it may have been a tautology from the start.
 
 ## Pre-TDD: Document Public Interface
 

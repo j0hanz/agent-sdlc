@@ -208,6 +208,8 @@ Document answers as you gather them. If the user can't answer something, mark it
 - **NEVER skip error cases in interfaces.** The happy path is easy; specs exist to define how the system fails. Always define invalid inputs, auth failures, and timeouts.
 - **NEVER resolve stakeholder conflicts by guessing.** If requirements contradict, document both with a `CONFLICT:` tag and escalate.
 - **NEVER mix requirements and design.** Requirements dictate _what_ must happen; design dictates _how_. Move architectural decisions to the Context or Notes & Risks sections.
+- **NEVER write an AC without a corresponding VAL.** An acceptance criterion that cannot be executed is untestable — it is a wish, not a contract. If you cannot write a runnable VAL command, either rewrite the AC to be observable or mark it `UNKNOWN: needs verification method`.
+- **NEVER hand the spec to `create-plan` with unresolved `CONFLICT:` items.** Planning against a conflict produces contradictory tasks. Resolve the conflict at the spec level first.
 
 ## Best Practices
 

@@ -8,15 +8,15 @@ disable-model-invocation: false
 
 Progress the user through the skill development lifecycle:
 
-| Intent                            | Starting Point                                                    |
-| :-------------------------------- | :---------------------------------------------------------------- |
-| "I want to make a skill for X"    | [Interview and Draft](#interview-and-draft)                       |
-| "Turn this workflow into a skill" | Extract steps, confirm, then [Draft](#write-the-skillmd)          |
-| "Help me improve my skill"        | [Improving the Skill](#improving-the-skill)                       |
-| "My skill is inconsistent"        | Ask for bad-output example, then [Diagnose](#improving-the-skill) |
-| "Just vibe with me (no evals)"    | Draft directly, skip formal eval loop                             |
+| Intent                             | Starting Point                                                    |
+| :--------------------------------- | :---------------------------------------------------------------- |
+| "I want to make a skill for X"     | [Interview and Draft](#interview-and-draft)                       |
+| "Turn this workflow into a skill"  | Extract steps, confirm, then [Draft](#write-the-skillmd)          |
+| "Help me improve my skill"         | [Improving the Skill](#improving-the-skill)                       |
+| "My skill is inconsistent"         | Ask for bad-output example, then [Diagnose](#improving-the-skill) |
+| "Build quickly, skip formal evals" | Draft directly, skip formal eval loop                             |
 
-**Vibe mode:** Draft immediately. Skip `evals/evals.json`, formal workspace, and baseline runs. Still enforce all NEVER list items and frontmatter constraints. Propose test prompts verbally at the end.
+**Quick draft mode (no formal evals):** Draft immediately. Skip `evals/evals.json`, formal workspace, and baseline runs. Still enforce all NEVER list items and frontmatter constraints. Propose 2-3 test prompts verbally at the end.
 
 ---
 
@@ -27,6 +27,8 @@ Progress the user through the skill development lifecycle:
 - **NEVER** overfit to test cases; prefer general logic over rigid constraints.
 - **NEVER** use conversational filler; provide direct, imperative instructions.
 - **NEVER** defer producing a SKILL.md when a constraint violation is detected (e.g., invalid name with spaces). Apply the correction inline, note it with one sentence, and produce the complete SKILL.md immediately without asking for confirmation.
+- **NEVER** produce a SKILL.md with `disable-model-invocation: true` in the `skills:` preload list of another skill — that flag means the skill cannot be preloaded; attempting it silently fails.
+- **NEVER** put multi-line prose paragraphs in a skill body — skills are scanned by the model under time pressure; use imperative bullets, tables, and code blocks only.
 
 ---
 

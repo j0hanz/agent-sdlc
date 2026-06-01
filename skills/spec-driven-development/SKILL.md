@@ -14,6 +14,8 @@ disable-model-invocation: false
 - **NEVER patch code and backfill the spec afterward** — when implementation conflicts with the spec, stop, resolve at the spec level, then resume; reversing this order makes the spec meaningless
 - **NEVER skip `validate_spec.py`** because the spec "looks right" — structural errors (missing REQ→AC traceability, unresolvable VAL commands) only surface when the validator runs, and they invalidate the planning step
 - **NEVER skip sub-skills for Contract or Blueprint maturity tasks** — the Trivial Fast-Path (Sketch) is limited to unambiguous one-file changes with no interface impact; "time pressure" and "manager says skip docs" are not Sketch qualifiers
+- **NEVER absorb scope creep silently** — when new requirements emerge mid-implementation, stop coding immediately, checkpoint with a WIP commit, classify the change (minor/major), update the spec, revalidate, then resume; absorbing scope without updating the spec produces a spec that no longer describes what was built
+- **NEVER proceed past a gate with a FAIL status** — if `validate_spec.py` or `validate_plan.py` reports errors, fix them before the next step; a plan built on a failed spec will produce tasks that contradict each other
 
 ## Context Disambiguation (Run Before All Steps)
 
@@ -52,19 +54,19 @@ Match response length to the stage and maturity level. Do not over-explain.
 
 ## Philosophy
 
-**Core principle**: A spec defines the contract. Implementation serves the spec, not the other way around.
+**Core principle:** A spec defines the contract. Implementation serves the spec, not the other way around.
 
-Writing code before the spec is done doesn't save time — it borrows time at high interest. Early implementation commits you to design decisions before you understand the problem. The spec is how you understand the problem. Without a spec, you're optimizing a guess.
+**Three artifacts, in this order:**
 
-**Good SDD produces three artifacts in order:**
+| Artifact           | What it says                                                     | Produced by               |
+| ------------------ | ---------------------------------------------------------------- | ------------------------- |
+| **Spec**           | What must be built, why, how it connects to other systems        | `create-specs`            |
+| **Plan**           | Atomic ordered tasks with verified paths and validation commands | `create-plan`             |
+| **Implementation** | Code that satisfies the plan, verified against the spec's ACs    | `test-driven-development` |
 
-1. **Spec** — what must be built, why, and how it connects to other systems (`create-specs`)
-2. **Plan** — atomic ordered tasks derived from the spec, with verified paths and validation commands (`create-plan`)
-3. **Implementation** — code that satisfies the plan and is verified against the spec's acceptance criteria
+**Change propagation order:** requirements change → update spec → validate spec → update plan → update code. Never reverse this. Patching code and backfilling the spec makes the spec a description of what was built, not a contract.
 
-Specs use three notation types — `REQ` (requirements), `AC` (acceptance criteria), and `VAL` (validation commands) — defined and scaffolded by the `create-specs` sub-skill.
-
-**The spec is the single source of truth.** When implementation decisions conflict with the spec, stop and resolve at the spec level. When requirements change, update the spec first — then the plan — then the code. Never patch code and backfill the spec.
+**Notation:** `REQ` (requirements), `AC` (acceptance criteria), `VAL` (validation commands) — defined and scaffolded by the `create-specs` sub-skill.
 
 For common mistakes and how to avoid them: [Anti-Patterns](references/anti-patterns.md).
 

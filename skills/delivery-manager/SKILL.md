@@ -95,3 +95,5 @@ NEVER do the following during delivery:
 - **NEVER mix unrelated changes.** If you find unrelated refactoring or formatting fixes in the diff, isolate them or flag them explicitly for the reviewer.
 - **NEVER commit unresolved artifacts.** Scan the diff for `console.log`, `.skip` in tests, or `TODO: fix before merge`. If found, halt delivery and fix them.
 - **NEVER invent version numbers.** Always target the `[Unreleased]` block in the changelog unless explicitly instructed to perform a release cut.
+- **NEVER proceed past Phase 1 if `delivery_blockers` is non-empty.** Each blocker must be resolved by the developer before the PR is created — do not create the PR and note the blockers in the description; that ships broken code.
+- **NEVER open a PR if `code-review` has not returned PASS.** If the user hasn't run code review, invoke `code-review` now. Do not skip this prerequisite under time pressure.

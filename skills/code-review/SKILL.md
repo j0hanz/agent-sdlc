@@ -217,9 +217,9 @@ When in doubt, lean advisory — the goal is to unblock delivery, not to gatekee
 After Phase 3:
 
 - **PASS** → hand off to `delivery-manager` (zero blocking issues required)
-- **FAIL** → route back to implementation; re-run this skill after fixes
+- **FAIL** → route back to implementation; re-run this skill **only after the developer confirms all blocking issues are resolved** — do not re-review the same unchanged code, and do not downgrade blocking findings to advisory to unblock delivery
 
-Do not invoke `delivery-manager` until code review returns PASS.
+Do not invoke `delivery-manager` until code review returns PASS with zero blocking issues.
 
 ---
 

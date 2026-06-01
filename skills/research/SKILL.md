@@ -10,6 +10,8 @@ argument-hint: '[library/framework or ctx7 command]'
 - **NEVER answer a library or framework question from training data alone without disclosing it** — APIs change between versions; always note when falling back to training data and recommend verifying against current docs
 - **NEVER reuse a Context7 library ID from memory across sessions** — IDs can change on republication; always resolve fresh with `mcp__context7__resolve-library-id`
 - **NEVER skip the MCP path and go straight to CLI** — MCP is lower latency and doesn't require a local install; prefer it when `mcp__context7__resolve-library-id` is available
+- **NEVER infer or guess version-specific syntax** — if the user specifies a version (e.g., "React 19", "Next.js 15"), include the version in the Context7 query; do not assume behavior from a different version you happened to see in training data
+- **NEVER reproduce raw documentation verbatim** — extract and present only the parts that directly answer the user's specific question; include working code examples focused on their exact use case
 
 ## Research & Context7
 

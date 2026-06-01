@@ -8,9 +8,12 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-If you think there is even a 1% chance a skill might apply to what you are doing, YOU MUST INVOKE IT BEFORE ACTING.
+If a skill might apply, invoke it before acting. No exceptions.
 
-This is not negotiable. Not optional. Invoking a skill that turns out not to apply costs nothing. Skipping a skill that should have applied causes rework.
+Invoking a skill that turns out not to apply costs nothing.
+Skipping a skill that should have applied causes rework — and that rework compounds.
+
+When in doubt: invoke first, act second.
 </EXTREMELY-IMPORTANT>
 
 ---

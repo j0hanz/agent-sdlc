@@ -104,6 +104,18 @@ After passing all anti-pattern checks above, evaluate the architectural problem 
 
 ---
 
+## Required Output
+
+Every diagram delivery includes exactly these three artifacts — deliver all three or the task is incomplete:
+
+1. **The Mermaid source** — fenced code block (` ```mermaid `) in the conversation, ready to copy
+2. **Lint result** — command + output shown inline (even if PASS — don't silently skip)
+3. **Preview path** — the `.html` file path the user can open in a browser
+
+Do not deliver only a code block without validation. Do not validate without producing the preview.
+
+---
+
 ## Automation & Validation
 
 You MUST validate your architectures using these scripts. **Show the command and results to the user.**

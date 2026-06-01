@@ -143,6 +143,8 @@ Once the user picks a candidate, do NOT start writing code immediately.
 
 5. **Handoff:** This skill diagnoses and proposes seams — it does not implement them. Once a seam is approved, execute it with the `refactor` skill for a behavior-preserving extraction, or hand the proposed seam to `create-plan` when the change spans multiple files or phases.
 
+**Required output for Mode A:** A ranked candidate list (3–6 items in Phase 2 format) + a proposed seam interface (typed signatures only, no implementation bodies) for the user-selected candidate. No code changes. No file edits until the user explicitly approves and the appropriate downstream skill is invoked.
+
 ### When to Stop
 
 Stop proposing candidates when:
@@ -207,3 +209,5 @@ Do NOT escalate to architecture if:
 - **NEVER** use "Hidden Coupling" (Global state, Singletons that hold logic, implicit environment variable dependencies).
 - **NEVER** implement CQRS or Event Sourcing just for "scalability" unless you can identify a specific read-model bottleneck that justifies the 5x increase in complexity.
 - **NEVER** let a "Utility" module grow past 3 unrelated functions. Split it by domain responsibility immediately.
+
+**Required output for Mode B:** A proposed public surface (interface/type signatures — no implementation bodies), the result of the Swap Test stated explicitly ("If we swapped X, only Y would change"), and a single ADR entry using the template in `references/ADR_TEMPLATE.md`. No implementation until the user approves and invokes the appropriate downstream skill.

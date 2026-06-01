@@ -90,6 +90,8 @@ Default to `command`. Reach for `prompt`/`agent` only when a deterministic rule 
 
 **Fire-and-forget side effects** (logging, notifications, metrics) should set `"async": true` on the hook. This runs the command in the background so it adds zero latency to the event's hot path. Never use `async` when the hook needs to block or return a decision.
 
+**NEVER set `"async": true` on a hook that must block, deny, or return a decision.** Async hooks cannot influence the tool's execution — their exit code and stdout are discarded. A hook that sets `"async": true` and then exits `2` to block a command will silently fail to block it. Only use `async` for pure side effects (logging, notifications) where the outcome doesn't matter.
+
 `prompt`/`agent` are supported only on: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `UserPromptSubmit`.
 
 ---

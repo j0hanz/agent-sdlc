@@ -3,13 +3,17 @@ name: brainstorming
 description: "Structured requirements discovery before implementation. Trigger on 'let's build', 'add a feature', 'we need a new', 'I want to implement', 'add X to', 'create a Y', ambiguous design, or unclear terminology — even when the user says 'just build it'. Proactively offer before any implementation begins. Prevents rework by catching problems early."
 ---
 
-## When to Apply
+## Routing
 
-Use this whenever the user says "let's build X", "add a feature", "we need a new Y", "I want to implement Z", or describes a new component or behavior — even if they don't explicitly ask for brainstorming or say "just build it". Proactively offer a quick brainstorm before any implementation begins.
-
-Also use when: domain terminology is ambiguous, foundational assumptions need validation, or the user is unsure how to approach a design problem.
-
-Skip only for: bug fixes with a clearly defined problem, pure refactors with no behavior change, documentation-only updates, or when a design has already been explicitly approved and implementation is the next step.
+| Condition                                                                                                   | Action                                      |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| "let's build X", "add a feature", "we need a new Y", "I want to implement Z", any new component or behavior | **Run** — even if user says "just build it" |
+| Domain terminology ambiguous, foundational assumptions unvalidated                                          | **Run**                                     |
+| User unsure how to approach a design problem                                                                | **Run**                                     |
+| Bug fix with clearly defined problem and root cause                                                         | **Skip**                                    |
+| Pure refactor with no behavior change                                                                       | **Skip**                                    |
+| Documentation-only update                                                                                   | **Skip**                                    |
+| Design already explicitly approved, implementation is the next step                                         | **Skip**                                    |
 
 # Brainstorming
 
@@ -161,3 +165,19 @@ When the user approves a design:
    - **Success criteria** (how you'll know it worked)
 
    Produce this brief as your final output and stop — do not invoke `/plan` or write any code automatically. The user decides what to do next. If they want to proceed to planning, they can invoke `/plan` themselves or ask you to do so explicitly.
+
+**Required output format for the design brief:**
+
+```markdown
+## Design Brief
+
+**Chosen approach:** [Approach letter + name, e.g., "Approach B — Event-sourced queue"]
+**Why:** [Key tradeoff in 1-2 sentences; what this gains and what it costs]
+**Architecture:**
+
+- [Component 1: responsibility]
+- [Component 2: responsibility]
+- [Key data flow between them]
+  **Success criteria:** [Observable signals — what user/system will do differently]
+  **Open TBDs:** [Unresolved items with owner and due date, or "None"]
+```

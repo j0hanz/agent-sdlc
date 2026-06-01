@@ -16,13 +16,13 @@ argument-hint: |
 
 Creates one **executable implementation plan file** for a specific technical task. Plans include structured phases, atomic tasks, verified file paths, validation commands, and acceptance criteria—designed for stateless execution so agents can pick up mid-way and understand current state.
 
-## Get Started Now (30 Seconds)
+## Quick Start
 
 ```bash
 /create-plan "Add JWT authentication to Express API"
 ```
 
-This creates `plan-feature-auth-middleware-1.md` with 9 atomic tasks, complete code examples, and test cases ready for execution.
+Produces `plan-feature-auth-middleware-1.md` with atomic tasks, verified file paths, and runnable validation commands.
 
 **Available flags** (optional):
 
@@ -234,6 +234,9 @@ The agent samples tasks and scores four dimensions: atomicity (one observable ou
 ---
 
 ## Anti-Patterns (NEVER Do These)
+
+- **NEVER hand a plan to an executor before `validate_plan.py` returns `READY FOR EXECUTION`** — an unvalidated plan will fail mid-execution with cryptic errors.
+- **NEVER mark `UNVERIFIED` path markers as resolved without running discovery** — guessed paths cause silent executor failures.
 
 Learn what breaks plans, and how to fix them:
 

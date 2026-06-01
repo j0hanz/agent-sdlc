@@ -170,6 +170,8 @@ Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
 
 - **NEVER mix behavior changes with structural changes:** Do not add features or fix bugs in the same step as a refactor. If a test fails, you won't know if the refactor broke it or the "fix" broke it.
 - **NEVER extract based solely on structural similarity (Incidental Duplication):** Two blocks of code that _look_ identical but represent different business concepts should NOT be merged. They will evolve differently and force you to add awkward boolean flags later.
+- **NEVER change a public API signature without test coverage:** Renaming or reshaping a public function that has no tests gives you no safety net — callers break silently. Write characterization tests first, then reshape the API under them.
+- **NEVER refactor an untested critical path:** "Scary code" with no tests exists because no one has verified its behavior. Write characterization tests that document current behavior (even if you don't like it) before touching the structure.
 
   **How to tell the difference — reason both sides before deciding:**
 

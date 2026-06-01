@@ -1,6 +1,6 @@
 ---
 name: agents-maintainer
-description: Create, audit, refactor AGENTS.md, CLAUDE.md, instruction files and onboarding guides. Trigger on 'agent docs', 'instructions', 'onboard', 'understand repo', file needs setup.
+description: "Create, audit, refactor, or trim AGENTS.md, CLAUDE.md, GEMINI.md, and onboarding guides. Trigger on 'agent docs', 'instructions', 'onboard me', 'understand this repo', 'setup AGENTS.md', 'this file is too long', 'trim CLAUDE.md', 'improve agent instructions', 'add conventions', 'update instructions file', or when the user shares an existing AGENTS.md/CLAUDE.md and asks to improve, review, or clean it up."
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -26,13 +26,22 @@ This is a three-phase process. Do not skip phases.
 
 ### Express Mode (Skip Phases)
 
-If the project environment is already well-understood (e.g., standard Node.js/TypeScript project, standard layout), you may skip the full 3-phase analysis:
+Use Express Mode only when ALL of the following are true:
 
-1. Draft `AGENTS.md` directly using the appropriate template.
-2. Run automated validation (Pass 1).
-3. Finalize and wire (Phase 3).
+- The tech stack is explicitly named and standard (e.g., "Next.js 15 + pnpm + Vitest")
+- The project layout matches the named stack's defaults (no custom structure)
+- The user confirms they want a quick draft
 
-_Note: If you skip Phase 1 and 1.5, you MUST explicitly ask the user to confirm the project stack (package manager, test runner) before finalizing._
+If any condition is uncertain, run the full 3-phase workflow.
+
+**Express Mode steps:**
+
+1. Ask the user to confirm: package manager, test runner, any non-standard conventions.
+2. Draft `AGENTS.md` directly using the appropriate template.
+3. Run automated validation (Pass 1).
+4. Finalize and wire (Phase 3).
+
+_Do not skip Phase 1 and assume a stack without confirmation — AGENTS.md built on wrong assumptions silently misleads every agent that loads it._
 
 ### Phase 1 — Environment Discovery
 

@@ -64,6 +64,8 @@ The value of this methodology is that it forces you to know — not guess — be
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
 - **Action:** Rank hypotheses and present to user before testing any of them.
 
+**GATE — mandatory stop:** Do not touch any code or run any instrumentation until you have stated the ranked hypothesis list out loud. If the user has not responded, wait. Testing a hypothesis you haven't declared is not debugging — it's guessing.
+
 **Example hypotheses for a KeyError crash:**
 
 - H1: The key is genuinely absent in some inputs (most likely — recent data model change). _Falsify:_ add a log before the access; check whether the key appears in the failing case.
