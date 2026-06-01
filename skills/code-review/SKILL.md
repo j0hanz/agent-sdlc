@@ -10,6 +10,8 @@ allowed-tools: Bash(git *)
 
 Code review is not verification (does it work?) and not architecture (is it well-designed?). It is a focused scan for **correctness bugs, security risks, missed reuse, and API hygiene** that survived testing. Catching these in the diff is 10× cheaper than after merge.
 
+**Integration Check**: Before proceeding, verify that associated unit tests have passed. If you are unsure, ask the user to confirm that tests passed in the current session or run them using `verification-before-completion`. Do not perform a review if the code hasn't been verified.
+
 ---
 
 ## NEVER
@@ -55,7 +57,17 @@ git diff --stat origin/main..HEAD     # summary of what changed (run first)
 
 Run `--stat` first to understand the shape of the change before reading the full diff.
 
-**If no git history is available:** ask the user to paste the diff, or describe what changed. Note explicitly that you are reviewing without the before/after context and your confidence is lower.
+**If no git history is available:** ask the user for the diff using this format:
+
+```markdown
+File: <path/to/file>
+Before:
+<paste before-code block>
+After:
+<paste after-code block>
+```
+
+Note explicitly that you are reviewing without the before/after context and your confidence is lower.
 
 **Plugin-specific:** For agent-dev plugin files, validate frontmatter in addition to logic — see Phase 2 section.
 
@@ -167,13 +179,13 @@ Always conclude with this exact structure. Do not omit it even when there are no
 
 ### What Was Checked
 
-<!-- Prove you looked. List the tiers you ran and what the diff covered. -->
+<!-- Provide a concise summary of checks performed per tier. -->
 
-- Tier 1 (Security): [summary of what was checked, e.g. "no exec calls, no SQL construction, no hardcoded secrets"]
+- Tier 1 (Security): [summary]
 - Tier 2 (Correctness): [summary]
-- Tier 3 (Performance): [summary, or "not applicable — no loops or I/O in diff"]
+- Tier 3 (Performance): [summary]
 - Tier 4 (Reuse/API): [summary]
-- Plugin checks: [if applicable — list which component types were reviewed]
+- Plugin checks: [if applicable]
 ```
 
 **Status definitions:**
