@@ -11,6 +11,7 @@
   "repository": "https://github.com/j0hanz/agent-dev",
   "homepage": "https://github.com/j0hanz/agent-dev#readme",
   "keywords": ["agent-dev", "claude", "plugin", "agent", "development", "testing"],
+  "category": "developer-tools",
   "hooks": "./hooks/hooks.json",
   "experimental": {
     "monitors": "./monitors/monitors.json"
