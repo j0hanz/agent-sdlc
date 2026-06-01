@@ -37,10 +37,14 @@ function validateFrontmatter(filePath, componentType) {
   return { frontmatter, content };
 }
 
-// Check agent trigger enumeration
+// Check agent trigger enumeration — only enforced for proactive agents (proactive: true)
 function validateAgentTriggers(filePath, frontmatter) {
   if (!frontmatter.includes('type: agent')) {
     return; // Not an agent
+  }
+
+  if (!frontmatter.includes('proactive: true')) {
+    return; // User-invoked agent — no proactive trigger required
   }
 
   if (!frontmatter.includes('PROACTIVELY activate for:')) {
