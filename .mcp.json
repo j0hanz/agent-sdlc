@@ -6,7 +6,7 @@
     },
     "filesystem": {
       "command": "node",
-      "args": ["C:\\filesystem-mcp\\dist\\index.js", "${workspaceFolder}"]
+      "args": ["C:\\filesystem-mcp\\dist\\index.js"]
     }
   }
 }
