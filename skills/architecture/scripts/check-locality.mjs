@@ -56,7 +56,6 @@ export function runLocalityCheck(
     '.nuxt',
     '.cache',
     '.parcel',
-    'node_modules',
     '.npm',
     '.yarn',
     'target',

@@ -11,9 +11,9 @@ from spec_parser import parse_spec
 
 class Spec(Protocol):
     sections: dict[str, str]
-    reqs: list[str]
-    acs: list[str]
-    vals: list[str]
+    reqs: set[str]
+    acs: set[str]
+    vals: set[str]
 
 
 def generate_plan(spec: Spec, purpose: str, component: str) -> str:

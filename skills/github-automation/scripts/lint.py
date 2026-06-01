@@ -62,7 +62,7 @@ def check_file(path: Path) -> list[str]:
                 )
             continue
         elif in_run_block:
-            if stripped and current_indent <= run_block_indent:
+            if stripped and current_indent < run_block_indent:
                 in_run_block = False
                 run_block_indent = None
 

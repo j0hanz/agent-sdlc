@@ -114,7 +114,7 @@ export function sh(file, args, opts = {}) {
     }).trim();
   } catch (err) {
     debug(`sh ${file} failed`, String(err?.message || err));
-    return '';
+    return null;
   }
 }
 
