@@ -1,5 +1,4 @@
 ---
-type: agent
 name: skill-analyzer
 description: |
   Skill analysis subagent for diagnostic insights. Analyzes comparison results or benchmark data to produce structured JSON observations.

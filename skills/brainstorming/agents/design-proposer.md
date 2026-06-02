@@ -1,5 +1,4 @@
 ---
-type: agent
 name: design-proposer
 description: |
   Phase 4 design synthesis subagent for brainstorming sessions. Takes the full accumulated context — discovery findings, domain terms, risks, and success criteria — and generates 2–3 concrete design approaches with tradeoffs and a grounded recommendation.

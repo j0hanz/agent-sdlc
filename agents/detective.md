@@ -1,5 +1,4 @@
 ---
-type: agent
 name: detective
 description: |
   Code debugging specialist. Diagnoses runtime failures, logic bugs, and quality inconveniences through systematic root-cause analysis so the main thread does not have to context-switch between reading code, logs, and tracing call chains.
@@ -18,14 +17,12 @@ model: sonnet
 effort: high
 tools:
   - Read
-  - Write
-  - Edit
   - Glob
   - Grep
   - Skill
   - TodoWrite
 skills:
-  - name: diagnose
+  - diagnose
 ---
 
 # Debug Detective

@@ -1,5 +1,4 @@
 ---
-type: agent
 name: architecture-scanner
 description: |
   Structural analysis subagent for seam identification. Analyzes codebase locality and infrastructure bleed to identify candidate seams and boundaries.

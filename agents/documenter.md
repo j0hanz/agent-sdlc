@@ -1,5 +1,4 @@
 ---
-type: agent
 name: documenter
 description: |
   Documentation maintenance agent. Audits, writes, and keeps all docs in sync with the codebase.
@@ -27,12 +26,10 @@ tools:
   - Glob
   - Grep
   - Skill
-  - WebFetch
-  - WebSearch
 skills:
-  - name: diagrams
-  - name: research
-  - name: architecture
+  - diagrams
+  - research
+  - architecture
 ---
 
 # Documenter Agent

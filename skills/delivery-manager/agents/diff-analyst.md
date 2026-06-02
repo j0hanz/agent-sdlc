@@ -1,5 +1,4 @@
 ---
-type: agent
 name: diff-analyst
 description: |
   Delivery analysis subagent for PR narrative synthesis. Analyzes git diffs and logs to understand intent, entry points, and potential scope creep.

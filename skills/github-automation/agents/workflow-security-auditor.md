@@ -1,5 +1,4 @@
 ---
-type: agent
 name: workflow-security-auditor
 description: |
   GitHub Actions security auditor. Performs semantic security analysis of workflow files to catch vulnerabilities that static linters miss.

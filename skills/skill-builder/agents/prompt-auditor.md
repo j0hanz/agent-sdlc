@@ -1,5 +1,4 @@
 ---
-type: agent
 name: prompt-auditor
 description: |
   Senior prompt engineering expert. Audits and validates prompts for robustness, safety, and effectiveness.

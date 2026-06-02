@@ -1,5 +1,4 @@
 ---
-type: agent
 name: codebase-scanner
 description: |
   Phase 1 discovery subagent for brainstorming sessions. Scans the codebase — files, git history, glossaries, ADRs, and technical constraints — for context relevant to the feature under discussion. Returns a structured Codebase Context Report.
@@ -43,11 +42,11 @@ Extract domain nouns and verbs from the feature description first (e.g., `"add s
 **Preferred:** run `scan_context.py` as a single parallel call:
 
 ```bash
-python skills/brainstorming/scripts/scan_context.py <noun1> [noun2 ...] --cwd <project_root>
+python skills/brainstorming/scripts/scan_context.py -- <noun1> [noun2 ...] --cwd <project_root>
 ```
 
 Use its JSON output to populate the report. Fall back to manual steps only if the script fails.
-
+...
 **Manual fallback (run all steps in parallel):**
 
 1. **Files** — Glob `**/*<noun>*`, Grep for function/class/type/import matches. Cap at 5.

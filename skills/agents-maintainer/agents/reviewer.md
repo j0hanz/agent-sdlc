@@ -1,6 +1,5 @@
 ---
-type: agent
-name: reviewer
+name: agents-maintainer-reviewer
 description: |
   AGENTS.md quality auditor. Performs semantic reviews of agent instructions, scores them across five dimensions, and provides concrete improvement suggestions.
 

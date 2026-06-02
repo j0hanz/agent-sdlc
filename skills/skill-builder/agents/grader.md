@@ -1,5 +1,4 @@
 ---
-type: agent
 name: eval-grader
 description: |
   Eval grading subagent for authoritative verdicts. Evaluates whether assertions pass or fail based on verifiable evidence in transcripts and output files.

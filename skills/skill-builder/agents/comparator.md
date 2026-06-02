@@ -1,5 +1,4 @@
 ---
-type: agent
 name: blind-comparator
 description: |
   Blind comparison subagent for objective skill evaluation. Compares two outputs without knowing their origin and returns a scored JSON verdict.

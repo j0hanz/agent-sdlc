@@ -1,5 +1,4 @@
 ---
-type: agent
 name: explorer
 description: |
   Research-focused agent for exploring codebases and documentation.
@@ -29,12 +28,10 @@ tools:
   - Read
   - Glob
   - Grep
-  - WebSearch
-  - WebFetch
   - mcp__plugin_context7_context7__query-docs
   - mcp__plugin_context7_context7__resolve-library-id
 skills:
-  - name: research
+  - research
 ---
 
 # Explorer Agent
