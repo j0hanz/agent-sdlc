@@ -37,27 +37,10 @@ Every plan task carries a `Satisfies: REQ-001, SEC-002` field that links it back
 ## Modifiers
 
 - `--spec-only` — write only `NAME.specs.md`; stop before planning
-- `--from-spec <file>` — skip spec authoring, generate plan from an existing spec file. **Error:** If the file does not exist, exit with clear error message: `"Spec file not found: <path>. Create it first or omit --from-spec to run the full pipeline."`
+- `--from-spec <file>` — skip spec authoring, generate plan from an existing spec file (see Step 2 for error handling)
 - `--quick` — skip file discovery, assume standard structure
 - `--assume-paths` — multi-repo: document path assumptions instead of discovering
 - `--domain api|cli` — inject domain-specific requirement + interface snippets
-
-## Pipeline
-
-```
-Intake → scaffold.py → Author spec → validate.py --spec
-       → sync.py → discover.py → Author plan tasks → validate.py --plan
-       → validate.py --cross → reviewer agent → Handoff
-```
-
-**Scripts drive the mechanical work; you write prose only.**
-
-| Script                                     | What it does                                                                        | When to run                                  |
-| ------------------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------- |
-| `scaffold.py NAME --depth D`               | Emits both paired files with pre-placed IDs                                         | Start of every invocation                    |
-| `sync.py NAME.specs.md`                    | Reads spec IDs, populates plan task stubs with `Satisfies:` pre-filled (idempotent) | After authoring/editing spec                 |
-| `discover.py --files GLOB --names SYM`     | Resolves paths + symbols to verified markdown links                                 | Before filling task Files/Symbols fields     |
-| `validate.py NAME [--spec --plan --cross]` | Structural + traceability checks; `--cross` = coverage matrix                       | After authoring each artifact and after sync |
 
 ## Step-by-Step Execution
 
@@ -65,13 +48,10 @@ Intake → scaffold.py → Author spec → validate.py --spec
 
 Confirm: purpose (what are we adding/fixing?), scope (which component?), constraints (hard limits?).
 
-**Trigger spec interview if ANY TWO OR MORE are unclear:**
+**Trigger spec interview if the user's request does NOT explicitly state all five of:**
+goal · scope · constraints · interface · success criteria
 
-- [ ] Goal — what outcome or capability is being enabled?
-- [ ] Scope — which system or component is affected, and what is out of scope?
-- [ ] Constraints — hard limits: timeline, existing systems, compliance, tech stack?
-- [ ] Interface — what input, what output, who calls it?
-- [ ] Success — how will the user verify it is done?
+Exception: if all five are inferable from the request text (e.g., a fully specified API contract), proceed directly to scaffold and note what was inferred.
 
 If triggered, ask IN ORDER (one at a time, wait for answer before next):
 
@@ -83,9 +63,15 @@ If triggered, ask IN ORDER (one at a time, wait for answer before next):
 
 Document all answers inline. Mark unknowns `UNKNOWN: [what and why]` — don't guess.
 
-If ≤1 items are unclear, proceed directly to scaffold.
+**Script path:** All `python <skill-dir>/scripts/...` commands resolve `<skill-dir>` to the directory containing this `SKILL.md` file. If `${CLAUDE_PLUGIN_ROOT}` is set in the environment, use that. Otherwise, derive the path from the location of this file.
 
 ### Step 2 — Scaffold
+
+**If `--from-spec <file>` was passed:**
+
+- Check the file exists before continuing.
+- If missing: output `"Spec file not found: <path>. Create it first or omit --from-spec."` and stop.
+- If exists: skip Steps 2–3 and go directly to Step 4 (Sync).
 
 ```bash
 python <skill-dir>/scripts/scaffold.py NAME --depth contract [--domain api|cli] [--goal "..."]
@@ -152,7 +138,14 @@ Checks: every spec requirement covered by ≥1 task; every `Satisfies:` ID exist
 
 ### Step 8 — Reviewer (REQUIRED GATE)
 
-Spawn `agents/reviewer.md` with both `spec_path` and `plan_path`. It scores spec quality, plan quality, and traceability together and writes findings to `plan/NAME.review.md` with a `ready_for_execution: true|false` field.
+Spawn `agents/reviewer.md` with this exact prompt:
+
+```
+spec_path: plan/<name>.specs.md
+plan_path: plan/<name>.plan.md
+```
+
+It scores spec quality, plan quality, and traceability together and writes findings to `plan/NAME.review.md` with a `ready_for_execution: true|false` field.
 
 This step is REQUIRED — handoff is incomplete without a review file. Verify:
 
@@ -184,8 +177,8 @@ Expected result: Observable success signal (e.g., "All 8 tests pass").
 
 ## Anti-Patterns
 
-- **Never hand-type a spec ID** — use `scaffold.py` to generate them. Typos create orphans.
-- **Never hand-type a file path** — use `discover.py` output. Unverified paths fail at execution.
+- **Never hand-type a spec ID** — run `scaffold.py` to generate them. If scaffold already ran and you need a new ID, re-run it with the same NAME (it is idempotent).
+- **Never hand-type a file path** — use `discover.py` output. For new (non-existent) files, document the intended path with an `[UNVERIFIED]` prefix (see Step 5).
 - **Never edit `Satisfies:` manually** — re-run `sync.py` if requirements change.
 - **Never skip `validate.py --cross`** — a plan that passes `--spec` and `--plan` can still have uncovered requirements.
 - **Never hand the plan to an executor before all three validators pass.**

@@ -86,6 +86,17 @@
         "Skill stops after spec authoring and does not invoke sync.py or validate.py --plan",
         "Skill communicates clearly that --spec-only mode stopped before planning"
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "/planning --from-spec plan/nonexistent.specs.md",
+      "expected_output": "Skill outputs the exact error message: 'Spec file not found: plan/nonexistent.specs.md. Create it first or omit --from-spec.' and stops without creating any files.",
+      "files": [],
+      "expectations": [
+        "Skill does not create any new files",
+        "Skill outputs the specified error message",
+        "Skill does not proceed to scaffold.py or sync.py"
+      ]
     }
   ]
 }

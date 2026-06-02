@@ -15,7 +15,14 @@ You do NOT modify the spec or plan. You only write the review file.
 
 ### 1. Parse inputs
 
-The invocation prompt provides `spec_path` and `plan_path`. Extract both paths. Derive `name` as the stem of the spec filename with `.specs.md` stripped. Example: `plan/auth-jwt.specs.md` → name `auth-jwt`, review path `plan/auth-jwt.review.md`.
+The invocation prompt contains two lines in this exact format:
+
+```text
+spec_path: <path>
+plan_path: <path>
+```
+
+Extract each value by splitting each line on the first colon and trimming leading whitespace from the value. Derive `name` as the stem of the spec filename with `.specs.md` stripped. Example: `plan/auth-jwt.specs.md` → name `auth-jwt`, review path `plan/auth-jwt.review.md`.
 
 ### 2. Read both artifacts
 
@@ -31,13 +38,20 @@ Infer depth from spec content:
 
 ### 4. Run structural validator (optional baseline)
 
-Search for `validate.py` relative to the spec file: try `../scripts/validate.py` from the spec's parent directory, then `../../scripts/validate.py`, then glob `**/planning/scripts/validate.py` from the working directory. If found, run:
+Locate `validate.py` using this order:
 
-```python
-python <validate_path> <name_or_path> --spec --plan --cross --level <depth>
+1. If `${CLAUDE_PLUGIN_ROOT}` is set, use `${CLAUDE_PLUGIN_ROOT}/scripts/validate.py`.
+2. Otherwise, glob `**/planning/scripts/validate.py` from the working directory and take the first match.
+
+If not found, note "validate.py not run — verify paths manually" in the review and continue.
+
+If found, run:
+
+```bash
+python <validate_path> <name> --spec --plan --cross --level <depth>
 ```
 
-Record output verbatim. Continue regardless of exit code.
+where `<name>` is the stem derived in Step 1. Record output verbatim. Continue regardless of exit code.
 
 ### 5. Apply spec semantic checks
 
