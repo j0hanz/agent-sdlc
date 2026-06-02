@@ -1,6 +1,6 @@
 ---
 name: planning
-description: "Full planning pipeline: spec then plan, cross-aligned. Trigger on 'write a spec', 'create a plan', 'what should we build', 'define requirements', 'write specs', 'plan this feature', 'implementation plan', 'spec and plan', 'planning'. Produces two paired artifacts per invocation: <name>.specs.md and <name>.plan.md. Replaces create-specs and create-plan."
+description: "Full planning pipeline: spec then plan, cross-aligned. Trigger on 'write a spec', 'create a plan', 'what should we build', 'define requirements', 'write specs', 'plan this feature', 'implementation plan', 'spec and plan', 'planning'. Produces two paired artifacts per invocation: NAME.specs.md and NAME.plan.md. Replaces create-specs and create-plan."
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -19,10 +19,10 @@ argument-hint: |
 
 Produces two paired, cross-linked artifacts per invocation:
 
-| File                   | What it says                                                     |
-| ---------------------- | ---------------------------------------------------------------- |
-| `plan/<name>.specs.md` | What must be built, why, interfaces, acceptance criteria         |
-| `plan/<name>.plan.md`  | Atomic ordered tasks with verified paths and validation commands |
+| File                 | What it says                                                     |
+| -------------------- | ---------------------------------------------------------------- |
+| `plan/NAME.specs.md` | What must be built, why, interfaces, acceptance criteria         |
+| `plan/NAME.plan.md`  | Atomic ordered tasks with verified paths and validation commands |
 
 Every plan task carries a `Satisfies: REQ-001, SEC-002` field that links it back to spec IDs. `validate.py --cross` enforces a coverage matrix: no uncovered requirements, no orphan tasks.
 
@@ -36,7 +36,7 @@ Every plan task carries a `Satisfies: REQ-001, SEC-002` field that links it back
 
 ## Modifiers
 
-- `--spec-only` — write only `<name>.specs.md`; stop before planning
+- `--spec-only` — write only `NAME.specs.md`; stop before planning
 - `--from-spec <file>` — skip spec authoring, generate plan from an existing spec file. **Error:** If the file does not exist, exit with clear error message: `"Spec file not found: <path>. Create it first or omit --from-spec to run the full pipeline."`
 - `--quick` — skip file discovery, assume standard structure
 - `--assume-paths` — multi-repo: document path assumptions instead of discovering
@@ -65,14 +65,15 @@ Intake → scaffold.py → Author spec → validate.py --spec
 
 Confirm: purpose (what are we adding/fixing?), scope (which component?), constraints (hard limits?).
 
-**Trigger spec interview if ANY TWO OR MORE are missing:**
+**Trigger spec interview if ANY TWO OR MORE are unclear:**
 
-- [ ] Tech stack / language / framework
-- [ ] Auth method or mechanism
-- [ ] Which system or component is affected
-- [ ] How success will be verified / tested
+- [ ] Goal — what outcome or capability is being enabled?
+- [ ] Scope — which system or component is affected, and what is out of scope?
+- [ ] Constraints — hard limits: timeline, existing systems, compliance, tech stack?
+- [ ] Interface — what input, what output, who calls it?
+- [ ] Success — how will the user verify it is done?
 
-If triggered, ask these 5 questions IN ORDER (one at a time, wait for answer before next):
+If triggered, ask IN ORDER (one at a time, wait for answer before next):
 
 1. **Goal:** "What outcome or capability are you enabling? One sentence."
 2. **Scope:** "Which system or component does this touch? What's explicitly out of scope?"
@@ -82,35 +83,35 @@ If triggered, ask these 5 questions IN ORDER (one at a time, wait for answer bef
 
 Document all answers inline. Mark unknowns `UNKNOWN: [what and why]` — don't guess.
 
-If ≤1 items are missing, proceed directly to scaffold.
+If ≤1 items are unclear, proceed directly to scaffold.
 
 ### Step 2 — Scaffold
 
 ```bash
-python <skill-dir>/scripts/scaffold.py <name> --depth contract [--domain api|cli] [--goal "..."]
+python <skill-dir>/scripts/scaffold.py NAME --depth contract [--domain api|cli] [--goal "..."]
 ```
 
-Creates `plan/<name>.specs.md` and `plan/<name>.plan.md` with matching ID skeletons.
+Creates `plan/NAME.specs.md` and `plan/NAME.plan.md` with matching ID skeletons.
 
 ### Step 3 — Author spec
 
-Fill the scaffolded `<name>.specs.md`. Use `REQ-###`/`SEC-###`/`PERF-###`/`CON-###`/`AC-###`/`VAL-###` labels exactly as placed by scaffold. Never invent IDs by hand.
+Fill the scaffolded `NAME.specs.md`. Use `REQ-###`/`SEC-###`/`PERF-###`/`CON-###`/`AC-###`/`VAL-###` labels exactly as placed by scaffold. Never invent IDs by hand.
 
 **GATE:** Run `validate.py --spec` — resolve all ERRORS before continuing.
 
 ```bash
-python <skill-dir>/scripts/validate.py <name> --spec --level contract
+python <skill-dir>/scripts/validate.py NAME --spec --level <depth>
 ```
 
-Then spawn `agents/reviewer.md` for semantic checks (unmeasured adjectives, compound REQs, interface error gaps).
+**Self-check:** Use the checklist in `references/spec-template.md` to catch what the validator cannot: unmeasured adjectives, compound REQs, and missing interface error cases. Fix all before proceeding.
 
 ### Step 4 — Sync plan stubs
 
 ```bash
-python <skill-dir>/scripts/sync.py plan/<name>.specs.md
+python <skill-dir>/scripts/sync.py plan/NAME.specs.md
 ```
 
-Populates `<name>.plan.md` with one task stub per requirement, `Satisfies:` pre-filled. Idempotent — safe to re-run after spec edits.
+Populates `NAME.plan.md` with one task stub per requirement, `Satisfies:` pre-filled. Idempotent — safe to re-run after spec edits.
 
 ### Step 5 — Discover paths & symbols
 
@@ -138,32 +139,32 @@ See `references/plan-template.md` for the canonical task block format.
 **GATE:** Run `validate.py --plan` — resolve all ERRORS.
 
 ```bash
-python <skill-dir>/scripts/validate.py <name> --plan
+python <skill-dir>/scripts/validate.py NAME --plan
 ```
 
 ### Step 7 — Cross-validate
 
 ```bash
-python <skill-dir>/scripts/validate.py <name> --cross
+python <skill-dir>/scripts/validate.py NAME --cross
 ```
 
 Checks: every spec requirement covered by ≥1 task; every `Satisfies:` ID exists in spec; every AC mapped. Fix all ERRORS — do not proceed with an uncovered requirement or orphan task.
 
 ### Step 8 — Reviewer (REQUIRED GATE)
 
-Spawn `agents/reviewer.md` with both `spec_path` and `plan_path`. It scores spec quality, plan quality, and traceability together and writes findings to `plan/<name>.review.md` with a `ready_for_execution: true|false` field.
+Spawn `agents/reviewer.md` with both `spec_path` and `plan_path`. It scores spec quality, plan quality, and traceability together and writes findings to `plan/NAME.review.md` with a `ready_for_execution: true|false` field.
 
 This step is REQUIRED — handoff is incomplete without a review file. Verify:
 
 ```bash
-python <skill-dir>/scripts/validate.py <name> --review
+python <skill-dir>/scripts/validate.py NAME --review
 ```
 
-`--review` mode checks that `plan/<name>.review.md` exists with `ready_for_execution: true`. Only then proceed to handoff.
+`--review` mode checks that `plan/NAME.review.md` exists with `ready_for_execution: true`. Only then proceed to handoff.
 
 ### Step 9 — Handoff
 
-Export `plan/<name>.specs.md` + `plan/<name>.plan.md`. The spec says _what_ and _why_; the plan says _how_ and _in what order_. Pass the plan to `test-driven-development` for execution.
+Export `plan/NAME.specs.md` + `plan/NAME.plan.md`. The spec says _what_ and _why_; the plan says _how_ and _in what order_. Pass the plan to `test-driven-development` for execution.
 
 ## Canonical Task Block
 

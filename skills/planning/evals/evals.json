@@ -73,6 +73,19 @@
         "validate.py is run in --cross mode",
         "Coverage matrix shows all requirements covered"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "/planning --spec-only \"Define the API contract for a password reset flow: user submits email, receives a time-limited reset link, clicks link to set a new password.\"",
+      "expected_output": "Skill produces only plan/<name>.specs.md (Contract depth by default). No plan file is created. validate.py --spec is run and returns 0 errors. Skill explicitly stops at Step 3 and does not proceed to sync.py or plan authoring.",
+      "files": [],
+      "expectations": [
+        "Only the spec file (plan/<name>.specs.md) is written — no plan file",
+        "scaffold.py is run to create the spec file",
+        "validate.py --spec is run and returns 0 errors",
+        "Skill stops after spec authoring and does not invoke sync.py or validate.py --plan",
+        "Skill communicates clearly that --spec-only mode stopped before planning"
+      ]
     }
   ]
 }
