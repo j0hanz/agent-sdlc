@@ -103,16 +103,25 @@ def parse_spec(path: str | Path) -> SpecDocument:
         elif current_section is not None:
             section_lines.append(line)
 
-        for match in _IDS_RE.finditer(line):
-            id_str = match.group(1)
-            if id_str.startswith("AC-"):
-                doc.acs.add(id_str)
-            elif id_str.startswith("VAL-"):
-                doc.vals.add(id_str)
-            elif id_str.startswith("CON-"):
-                doc.cons.add(id_str)
-            else:
-                doc.reqs.add(id_str)
+        if current_section:
+            sec_lower = current_section.lower()
+            for match in _IDS_RE.finditer(line):
+                id_str = match.group(1)
+                if "requirements" in sec_lower:
+                    if not (
+                        id_str.startswith("AC-")
+                        or id_str.startswith("VAL-")
+                        or id_str.startswith("CON-")
+                    ):
+                        doc.reqs.add(id_str)
+                elif "constraints" in sec_lower:
+                    if id_str.startswith("CON-"):
+                        doc.cons.add(id_str)
+                elif "acceptance criteria" in sec_lower or "validation" in sec_lower:
+                    if id_str.startswith("AC-"):
+                        doc.acs.add(id_str)
+                    elif id_str.startswith("VAL-"):
+                        doc.vals.add(id_str)
 
     _flush_section()
     return doc
@@ -149,11 +158,16 @@ def parse_plan(path: str | Path) -> PlanDocument:
 
     doc = PlanDocument(raw_lines=lines)
     current_task: PlanTask | None = None
+    current_field: str | None = None
 
     for line in lines:
         # Phase headers
         if pm := _PHASE_HEADER_RE.match(line):
+            if current_task is not None:
+                doc.tasks.append(current_task)
             doc.phases.append(pm.group(1))
+            current_task = None
+            current_field = None
             continue
 
         # Task headers
@@ -163,6 +177,7 @@ def parse_plan(path: str | Path) -> PlanDocument:
             task_id = tm.group(1)
             title = (tm.group(2) or "").strip()
             current_task = PlanTask(id=task_id, title=title)
+            current_field = None
             continue
 
         if current_task is None:
@@ -172,12 +187,26 @@ def parse_plan(path: str | Path) -> PlanDocument:
         if fm := _FIELD_RE.match(line):
             field_name = fm.group(1)
             field_value = fm.group(2).strip()
+            current_field = field_name
             if field_name == "Satisfies":
                 ids = {m.group(1) for m in _IDS_RE.finditer(field_value)}
                 current_task.satisfies = ids
                 doc.satisfied_ids |= ids
             else:
                 current_task.fields[field_name] = field_value
+        else:
+            if current_field is not None:
+                stripped = line.strip()
+                if stripped:
+                    if current_field == "Satisfies":
+                        ids = {m.group(1) for m in _IDS_RE.finditer(stripped)}
+                        current_task.satisfies |= ids
+                        doc.satisfied_ids |= ids
+                    else:
+                        existing = current_task.fields.get(current_field, "")
+                        current_task.fields[current_field] = (
+                            existing + "\n" + line
+                        ).strip()
 
     if current_task is not None:
         doc.tasks.append(current_task)

@@ -74,6 +74,9 @@ SECTIONS_BY_LEVEL: dict[str, list[str]] = {
 
 _REQ_STMT_RE = re.compile(r"^[ ]{0,2}-\s+`?(REQ|SEC|PERF|COMP)-\d+`?[\s:]*")
 _IMPL_PREFIXES = ("REQ-", "SEC-", "PERF-", "COMP-")
+_PASSIVE_VOICE_RE = re.compile(
+    r"\bbe\s+(?!(?:red|bed|fed|led|shed)\b)\w+ed\b", re.IGNORECASE
+)
 
 PLAN_MANDATORY_FIELDS = {
     "Depends on",
@@ -114,16 +117,15 @@ def validate_spec(
     # 2. Requirement linter
     req_lines = [line for line in spec.raw_lines if _REQ_STMT_RE.match(line)]
     for line in req_lines:
-        if " and " in line.lower() and not _contains_code(line):
+        clean_line = re.sub(r"`[^`]+`", "", line)
+        if " and " in clean_line.lower():
             warnings.append(
                 f"[SPEC] Requirement may not be atomic (contains 'and'): {line.strip()}"
             )
-        if "be " in line.lower() and (
-            "ed " in line.lower() or line.lower().endswith("ed")
-        ):
+        if _PASSIVE_VOICE_RE.search(clean_line):
             warnings.append(f"[SPEC] Requirement may be passive voice: {line.strip()}")
         for adj in VAGUE_ADJECTIVES:
-            if adj in line.lower():
+            if re.search(rf"\b{re.escape(adj)}\b", clean_line.lower()):
                 warnings.append(f"[SPEC] Vague adjective '{adj}' in: {line.strip()}")
 
     # 3. Traceability (skip for sketch)
@@ -344,7 +346,14 @@ def _print_results(
 
 def _resolve_paths(name_or_path: str) -> tuple[Path, Path]:
     """Resolve stem to (spec_path, plan_path) regardless of input form."""
-    p = Path(name_or_path).resolve()
+    p = Path(name_or_path)
+    # Check if we should default to 'plan/' subdirectory for bare stems
+    if len(p.parts) == 1 and not p.exists():
+        plan_dir = Path("plan")
+        if plan_dir.exists() and (plan_dir / f"{p.name}.specs.md").exists():
+            p = plan_dir / p.name
+
+    p = p.resolve()
     stem = p.name
     for suf in (".specs.md", ".plan.md", ".md"):
         if stem.endswith(suf):

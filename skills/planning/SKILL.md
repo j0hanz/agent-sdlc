@@ -42,7 +42,7 @@ Every plan task carries `Satisfies: REQ-001, SEC-002` linking it to spec IDs. `v
 
 ## Step-by-Step Execution
 
-**script-dir:** directory containing this `SKILL.md` file, or `$CLAUDE_PLUGIN_ROOT` if set. All `python <skill-dir>/scripts/...` commands resolve against it.
+**skill-dir:** directory containing this `SKILL.md` file, or `$CLAUDE_PLUGIN_ROOT` if set. All `python <skill-dir>/scripts/...` commands resolve against it.
 
 ### Step 1 — Intake
 

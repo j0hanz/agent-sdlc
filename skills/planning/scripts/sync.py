@@ -93,39 +93,65 @@ def sync(spec_path: Path, plan_path: Path) -> int:
     # Determine last task id for depends-on chain
     next_num = _next_task_number(plan.tasks) if plan else 1
 
-    new_blocks: list[str] = []
+    impl_stubs: list[str] = []
+    ac_stub: str | None = None
     prev_depends = plan.tasks[-1].id if plan and plan.tasks else "none"
 
     for spec_id in missing_impl:
         tid = f"TASK-{next_num:03}"
-        new_blocks.append(_task_stub(tid, spec_id, prev_depends))
+        impl_stubs.append(_task_stub(tid, spec_id, prev_depends))
         prev_depends = tid
         next_num += 1
 
     if not ac_covered and ac_ids:
         tid = f"TASK-{next_num:03}"
-        new_blocks.append(_acceptance_stub(tid, ac_ids, prev_depends))
-
-    stubs_text = "\n".join(new_blocks)
+        ac_stub = _acceptance_stub(tid, ac_ids, prev_depends)
 
     if plan_exists:
         original = plan_path.read_text(encoding="utf-8")
-        # Insert before PHASE-END if it exists, otherwise append
-        if "## PHASE-END" in original:
-            updated = original.replace(
-                "## PHASE-END",
-                stubs_text + "\n## PHASE-END",
-                1,
-            )
-        else:
-            updated = original.rstrip() + "\n\n" + stubs_text
+        updated = original
+        if impl_stubs:
+            impl_text = "\n".join(impl_stubs) + "\n"
+            if "## PHASE-END" in updated:
+                updated = updated.replace("## PHASE-END", impl_text + "## PHASE-END", 1)
+            else:
+                updated = updated.rstrip() + "\n\n" + impl_text
+        if ac_stub:
+            if "## PHASE-END" in updated:
+                parts = re.split(r"(## PHASE-END[^\n]*)", updated, maxsplit=1)
+                if len(parts) == 3:
+                    updated = parts[0] + parts[1] + "\n\n" + ac_stub + parts[2]
+                else:
+                    updated = updated.rstrip() + "\n\n" + ac_stub
+            else:
+                updated = updated.rstrip() + "\n\n" + ac_stub
         plan_path.write_text(updated, encoding="utf-8")
     else:
-        plan_path.write_text(
-            f"# {spec_path.stem}\n\nSpec: [{spec_path.name}]({spec_path.name})\n\n"
-            + stubs_text,
-            encoding="utf-8",
+        feat_name = spec_path.stem.replace(".specs", "")
+        goal_content = spec.sections.get(
+            "Goal", "One sentence: what capability or outcome?"
+        ).strip()
+        if not goal_content:
+            goal_content = "One sentence: what capability or outcome?"
+
+        impl_text = "\n".join(impl_stubs) if impl_stubs else ""
+        new_plan_content = (
+            f"# {feat_name}\n\n"
+            f"Spec: [{spec_path.name}]({spec_path.name})\n\n"
+            f"## Goal\n\n"
+            f"{goal_content}\n\n"
+            f"## PHASE-001: Implementation\n\n"
         )
+        if impl_text:
+            new_plan_content += impl_text + "\n"
+        else:
+            new_plan_content += "[Run sync.py to populate stubs]\n\n"
+
+        new_plan_content += "## PHASE-END: Acceptance\n"
+        if ac_stub:
+            new_plan_content += f"\n{ac_stub}"
+
+        plan_path.write_text(new_plan_content, encoding="utf-8")
 
     added = len(missing_impl) + (0 if ac_covered else 1)
     print(f"sync: added {added} stub(s) to {plan_path}")

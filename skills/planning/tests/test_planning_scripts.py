@@ -281,3 +281,128 @@ Expected result: exit 0.
     errors, warnings, matrix = validate_cross(spec_file, plan_path)
     assert len(matrix["uncovered"]) > 0, "uncovered requirements not detected"
     assert any("Uncovered" in e for e in errors)
+
+
+def test_validate_spec_ignores_code_ticks_and_false_positives(tmp_path: Path) -> None:
+    # Test that code ticks block "and" / vague adjectives warnings,
+    # and "be red" doesn't trigger passive voice warning
+    spec_content = """\
+# test-feature
+
+## 1. Goal
+
+- Testing code blocks.
+- Completion signal: success.
+
+## 2. Requirements
+
+- `REQ-001`: The system MUST use `simple` and `robust` libraries.
+- `REQ-002`: The indicator light MUST be red.
+- `REQ-003`: The system MUST be configured.
+"""
+    p = tmp_path / "test-spec-ticks.specs.md"
+    p.write_text(spec_content, encoding="utf-8")
+    errors, warnings = validate_spec(p, "sketch")
+
+    passive_voice_warnings = [w for w in warnings if "passive voice" in w]
+    assert len(passive_voice_warnings) == 1
+    assert "REQ-003" in passive_voice_warnings[0]
+
+    vague_warnings = [w for w in warnings if "vague adjective" in w]
+    assert len(vague_warnings) == 0
+
+
+def test_parse_spec_ignores_referenced_ids_outside_definition_sections(
+    tmp_path: Path,
+) -> None:
+    # Test that IDs referenced in Context or Goal section are not parsed as requirements/constraints defined in the spec
+    spec_content = """\
+# test-feature
+
+## 1. Goal
+
+- This enables JWT token capability. Related to REQ-999.
+- Completion signal: success.
+
+## 2. Requirements
+
+- `REQ-001`: The system MUST validate auth tokens.
+
+## 5. Context
+
+- This builds on REQ-888 which was implemented previously.
+"""
+    p = tmp_path / "test-ref.specs.md"
+    p.write_text(spec_content, encoding="utf-8")
+    doc = parse_spec(p)
+    assert "REQ-001" in doc.reqs
+    assert "REQ-999" not in doc.reqs
+    assert "REQ-888" not in doc.reqs
+
+
+def test_parse_plan_multiline_fields(tmp_path: Path) -> None:
+    plan_text = """\
+# test-feature
+
+Spec: [test-feature.specs.md](test-feature.specs.md)
+
+## PHASE-001: Implementation
+
+### TASK-001: Multi-line action task
+Depends on: none
+Files: [src/auth.ts](src/auth.ts)
+Symbols: none
+Satisfies: REQ-001
+Action: Start the implementation.
+  Then configure the security headers.
+  Finally run unit tests.
+Validate: `npm test`
+Expected result:
+  All unit tests pass successfully.
+  Coverage is above 90%.
+
+## PHASE-END: Acceptance
+"""
+    p = tmp_path / "test-multiline.plan.md"
+    p.write_text(plan_text, encoding="utf-8")
+    doc = parse_plan(p)
+    assert len(doc.tasks) == 1
+    task = doc.tasks[0]
+    assert (
+        task.fields["Action"]
+        == "Start the implementation.\n  Then configure the security headers.\n  Finally run unit tests."
+    )
+    assert (
+        task.fields["Expected result"]
+        == "All unit tests pass successfully.\n  Coverage is above 90%."
+    )
+
+
+def test_scaffold_domain_injection_sketch(tmp_path: Path) -> None:
+    # Test that domain injection works in sketch depth
+    spec_path, plan_path = scaffold(
+        "feat-sketch", depth="sketch", out_dir=tmp_path, domain="api"
+    )
+    spec_text = spec_path.read_text(encoding="utf-8")
+    assert "Standard error cases" in spec_text
+    assert "SEC-101" in spec_text
+
+
+def test_validate_resolve_paths_bare_stem(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Set current working directory to tmp_path
+    monkeypatch.chdir(tmp_path)
+
+    plan_dir = tmp_path / "plan"
+    plan_dir.mkdir()
+
+    spec_file = plan_dir / "auth-jwt.specs.md"
+    spec_file.write_text("# auth-jwt", encoding="utf-8")
+
+    from validate import _resolve_paths
+
+    spec_path, plan_path = _resolve_paths("auth-jwt")
+
+    assert spec_path == spec_file.resolve()
+    assert plan_path == (plan_dir / "auth-jwt.plan.md").resolve()

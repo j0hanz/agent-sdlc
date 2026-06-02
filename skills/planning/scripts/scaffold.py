@@ -235,11 +235,19 @@ def _inject_domain(template: str, domain: str) -> str:
             "## 2. Requirements", f"## 2. Requirements{req_snip}", 1
         )
     if iface_snip and "## 4. Interfaces" in template:
-        template = template.replace(
-            "The system exposes the following interfaces:",
-            f"The system exposes the following interfaces:{iface_snip}",
-            1,
-        )
+        if "The system exposes the following interfaces:" in template:
+            template = template.replace(
+                "The system exposes the following interfaces:",
+                f"The system exposes the following interfaces:{iface_snip}",
+                1,
+            )
+        else:
+            # Fallback for sketch template
+            template = template.replace(
+                "## 4. Interfaces",
+                f"## 4. Interfaces\n{iface_snip}",
+                1,
+            )
     return template
 
 
