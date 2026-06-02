@@ -78,3 +78,21 @@ test('scan() detects TODO markers in uncommitted changes', () => {
   const entry = JSON.parse(readFileSync(logPath, 'utf8').trim().split('\n').at(-1));
   assert.ok(entry.findings.some((f) => f.kind === 'TODO/FIXME marker'));
 });
+
+test('scan() returns warning string in PostToolUse context', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'agentdev-debug-posttooluse-'));
+  process.env.CLAUDE_PROJECT_DIR = dir;
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['config', 'user.email', 'test@test.com'], { cwd: dir });
+  execFileSync('git', ['config', 'user.name', 'Test'], { cwd: dir });
+  writeFileSync(join(dir, 'app.js'), 'const x = 1;\n');
+  execFileSync('git', ['add', '.'], { cwd: dir });
+  execFileSync('git', ['commit', '-m', 'init', '--no-verify'], { cwd: dir });
+
+  writeFileSync(join(dir, 'app.js'), 'const x = 1;\nconsole.log(x);\n');
+
+  const result = scan({}, { event: 'PostToolUse' });
+  assert.ok(typeof result === 'string');
+  assert.match(result, /Warning: 1 possible debug artifact/);
+  assert.match(result, /console.log/);
+});

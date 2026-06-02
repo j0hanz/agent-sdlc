@@ -18,7 +18,7 @@ const PROBES = [
 ];
 
 /** Stop: scan added lines in the working diff for debug artifacts. */
-export function scan(input = {}) {
+export function scan(input = {}, context = {}) {
   // Re-entry guard: if Stop hook is already active in the event pipeline, skip.
   // This prevents duplicate scans when multiple Stop hooks run in parallel.
   if (input.stop_hook_active) return null;
@@ -54,5 +54,12 @@ export function scan(input = {}) {
     `agent-dev: ${findings.length} possible debug artifact(s) in uncommitted changes ` +
       `(see .claude/debug-scan.log)\n`,
   );
+
+  const eventName = context?.event;
+  if (eventName === 'PostToolUse' || eventName === 'PostToolUseFailure') {
+    const list = findings.map((f) => `  - ${f.file}: ${f.kind} ("${f.line}")`).join('\n');
+    return `Warning: ${findings.length} possible debug artifact(s) or TODO marker(s) left in uncommitted changes:\n${list}\nPlease clean them up before completing the task.`;
+  }
+
   return null;
 }

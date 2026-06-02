@@ -20,6 +20,16 @@ function prettierEntry() {
   return existsSync(entry) ? entry : null;
 }
 
+// Find local venv Ruff executable or fallback to global ruff on PATH.
+function ruffPath() {
+  const projectDir = getProjectDir();
+  const winPath = join(projectDir, '.venv', 'Scripts', 'ruff.exe');
+  const unixPath = join(projectDir, '.venv', 'bin', 'ruff');
+  if (existsSync(winPath)) return winPath;
+  if (existsSync(unixPath)) return unixPath;
+  return 'ruff';
+}
+
 /** PostToolUse: format the written file in place. Returns null (side effect). */
 export function onWrite(input = {}) {
   const file = input.tool_input?.file_path;
@@ -38,8 +48,9 @@ export function onWrite(input = {}) {
   } else if (RUFF.has(ext)) {
     // Ruff ships a native binary — execFile runs it directly, no shell needed.
     // Two passes: format (20s) then check --fix (20s). Total max ~40s for large files.
-    sh('ruff', ['format', file], { timeout: 20000 });
-    sh('ruff', ['check', '--fix', '--quiet', file], { timeout: 20000 });
+    const ruff = ruffPath();
+    sh(ruff, ['format', file], { timeout: 20000 });
+    sh(ruff, ['check', '--fix', '--quiet', file], { timeout: 20000 });
     debug('ruff attempted', file);
   }
 

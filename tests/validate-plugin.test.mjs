@@ -14,7 +14,7 @@ test('validate-plugin detects invalid YAML frontmatter in skills', () => {
   if (!fs.existsSync(tempSkillDir)) {
     fs.mkdirSync(tempSkillDir);
   }
-  
+
   // Write a SKILL.md with invalid YAML frontmatter (unquoted colon in value)
   const skillMdPath = path.join(tempSkillDir, 'SKILL.md');
   const invalidContent = `---
@@ -23,9 +23,9 @@ description: Invalid YAML description: which fails validation
 ---
 Some instructions.
 `;
-  
+
   fs.writeFileSync(skillMdPath, invalidContent, 'utf-8');
-  
+
   try {
     // Run the validator, it should fail and exit with code 1
     let errorOccurred = false;
@@ -34,9 +34,12 @@ Some instructions.
     } catch (err) {
       errorOccurred = true;
       const output = err.stdout.toString() + err.stderr.toString();
-      assert.ok(output.includes('Invalid YAML frontmatter'), 'Output should contain Invalid YAML frontmatter warning/error');
+      assert.ok(
+        output.includes('Invalid YAML frontmatter'),
+        'Output should contain Invalid YAML frontmatter warning/error',
+      );
     }
-    
+
     assert.ok(errorOccurred, 'Validator should have failed with exit code 1');
   } finally {
     // Cleanup

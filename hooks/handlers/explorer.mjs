@@ -21,6 +21,8 @@ function describe(tool, input = {}) {
       return input.file_path ? `read ${input.file_path}` : '';
     case 'WebFetch':
       return input.url ? `fetch ${input.url}` : '';
+    case 'WebSearch':
+      return input.query ? `search "${input.query}"` : '';
     default:
       return '';
   }

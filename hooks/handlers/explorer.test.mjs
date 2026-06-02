@@ -36,6 +36,18 @@ test('breadcrumb ignores tools with no searchable target', () => {
   assert.equal(replay(), null);
 });
 
+test('breadcrumb records a web search target and replay surfaces it', () => {
+  freshProject();
+  assert.equal(
+    breadcrumb({ tool_name: 'WebSearch', tool_input: { query: 'how to write hooks' } }),
+    null,
+  );
+  const out = replay();
+  assert.ok(out, 'expected replay output');
+  assert.match(out, /Recently explored/);
+  assert.match(out, /search "how to write hooks"/);
+});
+
 test('replay de-duplicates repeated searches', () => {
   freshProject();
   for (let i = 0; i < 3; i++)

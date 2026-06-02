@@ -23,7 +23,7 @@ function getPythonPath() {
     path.join(pluginRoot, '.venv', 'Scripts', 'python.exe'),
     path.join(pluginRoot, '.venv', 'bin', 'python'),
     'python3',
-    'python'
+    'python',
   ];
   for (const p of paths) {
     try {
@@ -53,7 +53,7 @@ function validateFrontmatter(filePath, componentType) {
   try {
     const jsonStr = execSync(`"${pythonPath}" "${helperPath}"`, {
       input: frontmatter,
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
     }).toString();
     fmData = JSON.parse(jsonStr);
   } catch (err) {
@@ -63,7 +63,9 @@ function validateFrontmatter(filePath, componentType) {
   }
 
   if (!fmData || typeof fmData.description !== 'string' || !fmData.description.trim()) {
-    errors.push(`[${componentType}] ${filePath}: Missing or empty 'description' field in frontmatter`);
+    errors.push(
+      `[${componentType}] ${filePath}: Missing or empty 'description' field in frontmatter`,
+    );
     return null;
   }
 
