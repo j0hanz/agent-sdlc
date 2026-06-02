@@ -49,17 +49,20 @@ These thoughts mean you are about to make a mistake. Check the routing table fir
 | :------------------------------------------------------------------------------------------- | :------------------------------- |
 | "let's build X", "add a feature", "we need a new Y", ambiguous design, unclear terminology   | `brainstorming`                  |
 | "write a spec", "create a plan", "define requirements", "implementation plan"                | `planning`                       |
-| Implementing code, writing functions, any non-trivial implementation                         | `test-driven-development`        |
+| Implementing code, writing functions, any non-trivial implementation                         | `test-driven-development` ⚠️     |
 | "something is broken", "debug this", "why is X failing", unexpected output, production error | `diagnose`                       |
-| "review this", "any issues?", "check for bugs", before opening a PR                          | `code-review`                    |
+| "review this", "any issues?", "check for bugs", before opening a PR (PR not yet open)        | `code-review`                    |
 | "clean up", "refactor", "simplify", "improve this code", "hard to read"                      | `refactor`                       |
 | "architecture review", "too coupled", "where should this code live", "God class"             | `architecture`                   |
 | "add hook", "block a tool", "auto-format", "run tests on save", lifecycle guarantees         | `create-hook`                    |
 | "build an agent", "create subagent", "agent prompt", "agent not working"                     | `create-agent`                   |
 | "make a skill", "build skill", "skill not working", "turn this workflow into a skill"        | `skill-builder`                  |
 | "add CI", "set up release", GitHub Actions workflows, `gh` CLI scripting                     | `github-automation`              |
-| About to say "done", "ready to review", "looks good", or "ready to merge"                    | `verification-before-completion` |
+| PR already open and "ready for review" — route to `code-review`, not verification            | `code-review`                    |
+| "done", "ready to merge", "looks good" — PR not yet reviewed                                 | `verification-before-completion` |
 | "update AGENTS.md", "improve agent instructions", "onboard me", trimming CLAUDE.md           | `agents-maintainer`              |
+
+> ⚠️ **Agentic skills** (`test-driven-development`, `code-review` in execution mode) run autonomously for multiple minutes and many tool calls. Before invoking them, output one line: `This will start an autonomous session (~N tool calls). Proceed?` and wait for confirmation in interactive sessions. In subagent context skip confirmation.
 
 ---
 
@@ -101,10 +104,18 @@ Side paths — invoke at any stage when the signal matches:
 
 ## Skill Types
 
-| Type                                           | Skills                                                     | How to follow                                                   |
-| :--------------------------------------------- | :--------------------------------------------------------- | :-------------------------------------------------------------- |
-| **Rigid** — mandatory phase gates, no skipping | `test-driven-development`, `diagnose`, `planning`          | Follow every phase in order. Gates are blocking. Never skip.    |
-| **Flexible** — adapt to context                | `brainstorming`, `refactor`, `code-review`, `architecture` | Apply judgment within the defined phases. Complete all of them. |
+| Type                                           | Skills                                                                              | How to follow                                                   |
+| :--------------------------------------------- | :---------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| **Rigid** — mandatory phase gates, no skipping | `test-driven-development`, `diagnose`, `planning`, `verification-before-completion` | Follow every phase in order. Gates are blocking. Never skip.    |
+| **Flexible** — adapt to context                | `brainstorming`, `refactor`, `code-review`, `architecture`                          | Apply judgment within the defined phases. Complete all of them. |
+
+---
+
+## If a Routed Skill Is Missing
+
+If the skill named in the routing table is not installed, tell the user:
+`The \`<skill-name>\` skill is not installed. I'll proceed without it, but results may be less structured.`
+Then apply the skill's intent manually using best judgment.
 
 ---
 
