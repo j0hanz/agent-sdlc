@@ -2,36 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { extractImports } from './utils/extractor.mjs';
 import { findCycles } from './utils/graph.mjs';
-
-function walkDir(dir, exclude) {
-  let files = [];
-  try {
-    const list = fs.readdirSync(dir);
-    for (const file of list) {
-      if (exclude.some((ex) => file.includes(ex))) continue;
-      const fullPath = path.join(dir, file);
-      let stat;
-      try {
-        stat = fs.statSync(fullPath);
-      } catch (e) {
-        // Skip files/dirs we can't read (permissions, symlinks, etc.)
-        continue;
-      }
-      if (stat.isDirectory()) {
-        files = files.concat(walkDir(fullPath, exclude));
-      } else if (
-        fullPath.endsWith('.ts') ||
-        fullPath.endsWith('.tsx') ||
-        fullPath.endsWith('.js')
-      ) {
-        files.push(fullPath);
-      }
-    }
-  } catch (e) {
-    // Skip directories we can't read
-  }
-  return files;
-}
+import { walkDir } from './utils/walk.mjs';
 
 export function runLocalityCheck(
   targetDir,

@@ -1,33 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { extractImports } from './utils/extractor.mjs';
-
-function walkDir(dir, exclude) {
-  let files = [];
-  try {
-    const list = fs.readdirSync(dir);
-    for (const file of list) {
-      if (exclude.some((ex) => file.includes(ex))) continue;
-      const fullPath = path.join(dir, file);
-      let stat;
-      try {
-        stat = fs.statSync(fullPath);
-      } catch (e) {
-        continue;
-      }
-      if (stat.isDirectory()) {
-        files = files.concat(walkDir(fullPath, exclude));
-      } else if (
-        fullPath.endsWith('.ts') ||
-        fullPath.endsWith('.tsx') ||
-        fullPath.endsWith('.js')
-      ) {
-        files.push(fullPath);
-      }
-    }
-  } catch (e) {}
-  return files;
-}
+import { walkDir } from './utils/walk.mjs';
 
 const defaultExclude = [
   'node_modules',
