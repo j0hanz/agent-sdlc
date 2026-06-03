@@ -30,7 +30,10 @@ async def run_single_query(
     timeout: int,
     project_root: str,
     model: str | None = None,
-) -> bool:
+) -> tuple[bool, str | None]:
+    """Return (triggered, error). error is None on a clean run; a non-None
+    error (e.g. "timeout", "exit:1") marks an infrastructure failure that must
+    NOT be silently counted as a non-trigger."""
     unique_id = uuid.uuid4().hex[:8]
     clean_name = f"{skill_name}-skill-{unique_id}"
     project_commands_dir = Path(project_root) / ".claude" / "commands"
@@ -81,7 +84,10 @@ async def run_single_query(
                 await process.wait()
             except ProcessLookupError:
                 pass
-            return False
+            return False, "timeout"
+
+        if process.returncode not in (0, None):
+            return False, f"exit:{process.returncode}"
 
         triggered = False
         pending_tool_name: str | None = None
@@ -138,7 +144,7 @@ async def run_single_query(
                     ):
                         triggered = True
 
-        return triggered
+        return triggered, None
     finally:
         await asyncio.to_thread(command_file.unlink, missing_ok=True)
 
@@ -174,24 +180,36 @@ async def run_eval(
 
     results_data = await asyncio.gather(*tasks, return_exceptions=True)
 
-    query_triggers = {}
+    # Per query, separate clean trigger observations from infrastructure errors.
+    # A timeout / crashed subprocess is NOT evidence that the skill failed to
+    # trigger, so it is excluded from the trigger rate and counted as an error.
+    query_triggers: dict[str, list[bool]] = {}
+    query_errors: dict[str, int] = {}
     idx = 0
     for item in eval_set:
         query = item["query"]
         query_triggers[query] = []
+        query_errors[query] = 0
         for _ in range(runs_per_query):
             res = results_data[idx]
             idx += 1
             if isinstance(res, Exception):
-                query_triggers[query].append(False)
+                query_errors[query] += 1
             else:
-                query_triggers[query].append(res)
+                triggered, error = res
+                if error is not None:
+                    query_errors[query] += 1
+                else:
+                    query_triggers[query].append(triggered)
 
     results = []
     for item in eval_set:
         query = item["query"]
         triggers = query_triggers[query]
-        trigger_rate = sum(triggers) / len(triggers)
+        errors = query_errors[query]
+        valid_runs = len(triggers)
+        # No valid observation -> cannot judge; rate 0 but flagged via errors.
+        trigger_rate = (sum(triggers) / valid_runs) if valid_runs else 0.0
         should_trigger = item["should_trigger"]
         did_pass = (
             (trigger_rate >= trigger_threshold)
@@ -204,13 +222,22 @@ async def run_eval(
                 "should_trigger": should_trigger,
                 "trigger_rate": trigger_rate,
                 "triggers": sum(triggers),
-                "runs": len(triggers),
+                "runs": valid_runs,
+                "errors": errors,
                 "pass": did_pass,
             }
         )
 
     passed = sum(1 for r in results if r["pass"])
     total = len(results)
+    total_errors = sum(query_errors.values())
+
+    if total_errors:
+        print(
+            f"WARNING: {total_errors} run(s) failed (timeout/crash) and were "
+            f"excluded from trigger rates — results may be unreliable.",
+            file=sys.stderr,
+        )
 
     return {
         "skill_name": skill_name,
@@ -220,6 +247,7 @@ async def run_eval(
             "total": total,
             "passed": passed,
             "failed": total - passed,
+            "errors": total_errors,
         },
     }
 

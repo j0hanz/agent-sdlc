@@ -87,9 +87,19 @@ Canonical JSON formats for skill-builder.
   "run_summary": {
     "with_skill": { "pass_rate": { "mean": 1.0 } },
     "without_skill": { "pass_rate": { "mean": 0.0 } },
-    "delta": { "pass_rate": "+1.0" }
+    "delta": {
+      "primary": "with_skill",
+      "baseline": "without_skill",
+      "pass_rate": "+1.0",
+      "pass_rate_ci": [0.6, 1.0],
+      "pass_rate_significant": true,
+      "n_primary": 3,
+      "n_baseline": 3
+    }
   }
 }
 ```
 
-**Mandatory Fields:** `configuration` ("with_skill"|"without_skill") and `result` structure are required for viewer parsing.
+**Mandatory Fields:** `configuration` ("with_skill"|"without_skill"|"old_skill") and `result` structure are required for viewer parsing.
+
+**Delta semantics:** `delta` is always `primary − baseline`, keyed by role (`primary`=version under test, `baseline`=comparison), NOT by directory sort order. `pass_rate_significant` is true only when the Welch 95% CI excludes 0. A non-significant delta — even a large one — is noise at the current run count; raise `--runs-per-query` / runs-per-config before trusting it.

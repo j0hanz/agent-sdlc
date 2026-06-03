@@ -43,6 +43,120 @@ def calculate_stats(values: list[float]) -> dict[str, float]:
     }
 
 
+# Config names ranked by role. The "primary" is the version under test (the new
+# skill); the "baseline" is whatever it is measured against. Delta is always
+# primary - baseline, so a genuine improvement reads positive regardless of how
+# the config directories happen to sort alphabetically.
+_PRIMARY_PREF = ("with_skill",)
+_BASELINE_PREF = ("without_skill", "old_skill", "baseline")
+
+# Two-sided t critical values at 95% confidence, keyed by integer df.
+_T_TABLE_95 = {
+    1: 12.706,
+    2: 4.303,
+    3: 3.182,
+    4: 2.776,
+    5: 2.571,
+    6: 2.447,
+    7: 2.365,
+    8: 2.306,
+    9: 2.262,
+    10: 2.228,
+    11: 2.201,
+    12: 2.179,
+    13: 2.160,
+    14: 2.145,
+    15: 2.131,
+    16: 2.120,
+    17: 2.110,
+    18: 2.101,
+    19: 2.093,
+    20: 2.086,
+    21: 2.080,
+    22: 2.074,
+    23: 2.069,
+    24: 2.064,
+    25: 2.060,
+    26: 2.056,
+    27: 2.052,
+    28: 2.048,
+    29: 2.045,
+    30: 2.042,
+}
+
+
+def select_primary_baseline(
+    configs: list[str],
+) -> tuple[str | None, str | None]:
+    """Pick the (primary, baseline) config by semantic role, not sort order.
+
+    Without this, delta was computed as configs[0] - configs[1] in alphabetical
+    order, which silently inverted the sign in improve mode (old_skill sorts
+    before with_skill, so an improvement read as negative).
+    """
+    if not configs:
+        return None, None
+    primary = next((c for c in _PRIMARY_PREF if c in configs), configs[0])
+    baseline = next((c for c in _BASELINE_PREF if c in configs and c != primary), None)
+    if baseline is None:
+        baseline = next((c for c in configs if c != primary), None)
+    return primary, baseline
+
+
+def _t_critical_95(df: float) -> float:
+    """Two-sided 95% t critical value for df, conservative when df is unlisted."""
+    di = int(math.floor(df))
+    if di >= 31:
+        return 1.96
+    if di in _T_TABLE_95:
+        return _T_TABLE_95[di]
+    lower = [k for k in _T_TABLE_95 if k <= di]
+    return _T_TABLE_95[max(lower)] if lower else _T_TABLE_95[1]
+
+
+def welch_ci(a: list[float], b: list[float]) -> dict[str, Any] | None:
+    """Welch 95% CI for mean(a) - mean(b). None when n < 2 in either group.
+
+    Significance = the CI excludes 0. Uses Welch's unequal-variance t with a
+    Satterthwaite df and stdlib only (no scipy). Designed for the small-n
+    regime (3-5 runs) where a raw delta carries no information about whether it
+    is real or noise.
+    """
+    n_a, n_b = len(a), len(b)
+    if n_a < 2 or n_b < 2:
+        return None
+
+    mean_a, mean_b = sum(a) / n_a, sum(b) / n_b
+    delta = mean_a - mean_b
+    var_a = sum((x - mean_a) ** 2 for x in a) / (n_a - 1)
+    var_b = sum((x - mean_b) ** 2 for x in b) / (n_b - 1)
+    se = math.sqrt(var_a / n_a + var_b / n_b)
+
+    if se == 0:
+        return {
+            "delta": delta,
+            "ci_low": delta,
+            "ci_high": delta,
+            "significant": delta != 0,
+            "n_a": n_a,
+            "n_b": n_b,
+        }
+
+    df = (var_a / n_a + var_b / n_b) ** 2 / (
+        (var_a / n_a) ** 2 / (n_a - 1) + (var_b / n_b) ** 2 / (n_b - 1)
+    )
+    margin = _t_critical_95(df) * se
+    lo, hi = delta - margin, delta + margin
+    return {
+        "delta": delta,
+        "ci_low": lo,
+        "ci_high": hi,
+        "significant": lo > 0 or hi < 0,
+        "n_a": n_a,
+        "n_b": n_b,
+    }
+
+
 def load_run_results(benchmark_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """
     Load all run results from a benchmark directory.
@@ -118,22 +232,33 @@ def load_run_results(benchmark_dir: Path) -> dict[str, list[dict[str, Any]]]:
                 # Extract timing
                 timing = grading.get("timing", {})
                 result["time_seconds"] = timing.get("total_duration_seconds", 0.0)
+
+                # Token count comes only from authoritative token sources. Never
+                # coerce output_chars into tokens — they are different units, and
+                # mixing them across configs produces a meaningless delta. When no
+                # token data exists the value stays None and is excluded from
+                # aggregate token stats rather than fabricated as 0.
+                tokens = timing.get("total_tokens")
+
                 timing_file = run_dir / "timing.json"
-                if result["time_seconds"] == 0.0 and timing_file.exists():
+                if timing_file.exists():
                     try:
                         timing_data = load_json(timing_file)
-                        result["time_seconds"] = timing_data.get(
-                            "total_duration_seconds", 0.0
-                        )
-                        result["tokens"] = timing_data.get("total_tokens", 0)
+                        if result["time_seconds"] == 0.0:
+                            result["time_seconds"] = timing_data.get(
+                                "total_duration_seconds", 0.0
+                            )
+                        if tokens is None:
+                            tokens = timing_data.get("total_tokens")
                     except Exception:
                         pass
+
+                result["tokens"] = tokens  # None when genuinely unknown
 
                 # Extract metrics
                 metrics = grading.get("execution_metrics", {})
                 result["tool_calls"] = metrics.get("total_tool_calls", 0)
-                if result.get("tokens") is None:
-                    result["tokens"] = metrics.get("output_chars", 0)
+                result["output_chars"] = metrics.get("output_chars", 0)
                 result["errors"] = metrics.get("errors_encountered", 0)
 
                 # Extract expectations
@@ -172,7 +297,8 @@ def aggregate_results(results: dict[str, list[dict[str, Any]]]) -> dict[str, dic
 
         pass_rates = [float(r["pass_rate"]) for r in runs]
         times = [float(r["time_seconds"]) for r in runs]
-        tokens = [float(r.get("tokens", 0)) for r in runs]
+        # Exclude runs with no token data instead of counting them as 0.
+        tokens = [float(r["tokens"]) for r in runs if r.get("tokens") is not None]
 
         run_summary[config] = {
             "pass_rate": calculate_stats(pass_rates),
@@ -180,29 +306,40 @@ def aggregate_results(results: dict[str, list[dict[str, Any]]]) -> dict[str, dic
             "tokens": calculate_stats(tokens),
         }
 
-    if len(configs) >= 2:
-        primary = run_summary.get(configs[0], {})
-        baseline = run_summary.get(configs[1], {})
-        delta_pass_rate = primary.get("pass_rate", {}).get("mean", 0) - baseline.get(
-            "pass_rate", {}
-        ).get("mean", 0)
-        delta_time = primary.get("time_seconds", {}).get("mean", 0) - baseline.get(
-            "time_seconds", {}
-        ).get("mean", 0)
-        delta_tokens = primary.get("tokens", {}).get("mean", 0) - baseline.get(
-            "tokens", {}
-        ).get("mean", 0)
+    primary, baseline = select_primary_baseline(configs)
+
+    if primary and baseline and primary != baseline:
+        p = run_summary[primary]
+        b = run_summary[baseline]
+        delta_pass_rate = p["pass_rate"]["mean"] - b["pass_rate"]["mean"]
+        delta_time = p["time_seconds"]["mean"] - b["time_seconds"]["mean"]
+        delta_tokens = p["tokens"]["mean"] - b["tokens"]["mean"]
+
+        sig = welch_ci(
+            [float(r["pass_rate"]) for r in results[primary]],
+            [float(r["pass_rate"]) for r in results[baseline]],
+        )
 
         run_summary["delta"] = {
+            "primary": primary,
+            "baseline": baseline,
             "pass_rate": f"{delta_pass_rate:+.2f}",
             "time_seconds": f"{delta_time:+.1f}",
             "tokens": f"{delta_tokens:+.0f}",
+            "pass_rate_ci": (
+                [round(sig["ci_low"], 4), round(sig["ci_high"], 4)] if sig else None
+            ),
+            "pass_rate_significant": bool(sig and sig["significant"]),
+            "n_primary": sig["n_a"] if sig else len(results.get(primary, [])),
+            "n_baseline": sig["n_b"] if sig else len(results.get(baseline, [])),
         }
     else:
         run_summary["delta"] = {
             "pass_rate": "+0.00",
             "time_seconds": "+0.0",
             "tokens": "+0",
+            "pass_rate_ci": None,
+            "pass_rate_significant": False,
         }
 
     return run_summary
@@ -231,7 +368,7 @@ def generate_benchmark(
                         "failed": result["failed"],
                         "total": result["total"],
                         "time_seconds": result["time_seconds"],
-                        "tokens": result.get("tokens", 0),
+                        "tokens": result.get("tokens") or 0,
                         "tool_calls": result.get("tool_calls", 0),
                         "errors": result.get("errors", 0),
                     },
@@ -306,6 +443,22 @@ def generate_markdown(benchmark: dict) -> str:
         f"| Tokens | {a_tokens.get('mean', 0):.0f} ± {a_tokens.get('stddev', 0):.0f} | {b_tokens.get('mean', 0):.0f} ± {b_tokens.get('stddev', 0):.0f} | {delta.get('tokens', '—')} |"
     )
 
+    ci = delta.get("pass_rate_ci")
+    if ci is not None:
+        verdict = (
+            "**significant** (95% CI excludes 0)"
+            if delta.get("pass_rate_significant")
+            else "NOT significant (95% CI includes 0)"
+        )
+        lines.extend(
+            [
+                "",
+                f"**Pass-rate delta {delta.get('pass_rate', '')}** — {verdict}; "
+                f"95% CI [{ci[0]:+.2f}, {ci[1]:+.2f}] over "
+                f"n={delta.get('n_primary', '?')} vs {delta.get('n_baseline', '?')} runs.",
+            ]
+        )
+
     if benchmark.get("notes"):
         lines.extend(["", "## Notes", ""])
         for note in benchmark["notes"]:
@@ -362,6 +515,12 @@ def main():
         label = config.replace("_", " ").title()
         print(f"  {label}: {pr * 100:.1f}% pass rate")
     print(f"  Delta:         {delta.get('pass_rate', '—')}")
+    ci = delta.get("pass_rate_ci")
+    if ci is not None:
+        verdict = (
+            "significant" if delta.get("pass_rate_significant") else "not significant"
+        )
+        print(f"  95% CI:        [{ci[0]:+.2f}, {ci[1]:+.2f}] ({verdict})")
 
 
 if __name__ == "__main__":

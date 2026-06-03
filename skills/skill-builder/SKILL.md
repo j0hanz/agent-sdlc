@@ -184,7 +184,7 @@ Save `total_tokens` and `duration_ms` from the completion notification to `timin
    ```bash
    python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
    ```
-3. **Analyze**: **MANDATORY: Read `agents/analyzer.md`**. Identify patterns and outliers.
+3. **Analyze**: **MANDATORY: Read `agents/analyzer.md`**. Identify patterns and outliers. Report the pass-rate delta WITH its significance verdict (`pass_rate_significant`); never present a delta as "the skill helps" if the 95% CI includes 0 — increase runs first.
 4. **Launch Viewer**:
    ```bash
    python -u "<skill-builder-dir>/eval-viewer/generate_review.py" \
