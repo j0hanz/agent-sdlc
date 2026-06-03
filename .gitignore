@@ -15,7 +15,6 @@ skills/*/eval-workspace/
 
 # Claude settings (keep project settings, ignore machine-local overrides)
 !.claude/settings.json
-.claude/settings.local.json
 
 # IDE
 .vscode/
@@ -25,3 +24,4 @@ package-lock.json
 .simulate/
 .claude/worktrees/
 .antigravitycli/
+.fallow/
