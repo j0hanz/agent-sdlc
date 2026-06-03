@@ -26,7 +26,10 @@ export function walkDir(dir, exclude = []) {
       } else if (
         fullPath.endsWith('.ts') ||
         fullPath.endsWith('.tsx') ||
-        fullPath.endsWith('.js')
+        fullPath.endsWith('.js') ||
+        fullPath.endsWith('.mjs') ||
+        fullPath.endsWith('.py') ||
+        fullPath.endsWith('.go')
       ) {
         files.push(fullPath);
       }

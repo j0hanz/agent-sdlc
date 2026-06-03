@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { extractImports } from './utils/extractor.mjs';
+import { extractImports, detectLang } from './utils/extractor.mjs';
 import { findCycles } from './utils/graph.mjs';
 import { walkDir } from './utils/walk.mjs';
 
@@ -45,7 +45,8 @@ export function runLocalityCheck(
 
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
-    const imports = extractImports(content);
+    const lang = detectLang(file);
+    const imports = extractImports(content, lang);
     graph[file] = [];
 
     for (const imp of imports) {

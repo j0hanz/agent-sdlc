@@ -40,6 +40,7 @@ Bundled guides in `references/`:
 - **INTERFACE_SHAPES.md** — how to design interfaces when deepening modules; shows before/after code
 - **ADR_TEMPLATE.md** — lightweight template for recording architectural decisions that shouldn't be revisited
 - **DOMAIN_INTERVIEW.md** — structured interview to align terminology before refactoring
+- **MIGRATION_STRATEGIES.md** — how to safely execute a seam refactoring in production (Strangler Fig, Branch by Abstraction, Parallel Run, Feature Flag, Expand-Contract). Load when the user asks "how do we actually get there?"
 
 Load these as needed during the 3-phase procedure.
 
@@ -64,12 +65,14 @@ Architectural refactoring fails when it adds indirection without adding depth. *
 
 #### Phase 1: Explore
 
-Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files.
+Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files. All scripts support TypeScript, JavaScript, and Python projects — no configuration needed.
 
 - **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node <skill-dir>/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node <skill-dir>/scripts/check-locality.mjs src`
 - **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Example: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm`
+- **RECOMMENDED — RUN SCRIPT**: **Git Coupling**: Run `node <skill-dir>/scripts/git-coupling.mjs [dir]` to find files that always change together in git history — the hidden coupling that import graphs cannot reveal. Example: `node <skill-dir>/scripts/git-coupling.mjs src`. If the output shows pairs with >5 co-changes that have no imports of each other, those are your highest-priority seam candidates.
+- **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `node <skill-dir>/scripts/detect-hotspots.mjs [dir] [infra_packages]` for a single ranked table combining fan-out + bleed + churn + size into an Architectural Debt Score. Use this when you need to triage a large codebase quickly. Example: `node <skill-dir>/scripts/detect-hotspots.mjs src express,prisma,sqlalchemy`
 
-**After both scripts complete — spawn the `architecture-scanner` subagent** (`agents/architecture-scanner.md`):
+**After scripts complete — spawn the `architecture-scanner` subagent** (`agents/architecture-scanner.md`):
 
 ```
 Agent(
@@ -110,7 +113,14 @@ You must constrain yourself. Do NOT write implementation code — no function bo
 - **The Bleed:** [1 sentence: What mechanism is leaking, or what makes this shallow?]
 - **The Deepening:** [Plain English: Where the new boundary goes and why it increases leverage.]
 - **Impact:** [Locality | Testability | AI-Navigability]
+- **Risk:** [LOW | MEDIUM | HIGH] — [1 sentence: callers + test coverage + churn. e.g. "8 callers, no test file, changed 12 times in 90 days."]
 ```
+
+**Risk scoring guide** (run `node <skill-dir>/scripts/estimate-risk.mjs <root> <file...>` for exact numbers, or estimate manually):
+
+- **HIGH**: >5 callers, OR >2 callers with no tests
+- **MEDIUM**: 2–5 callers, OR no tests with active churn
+- **LOW**: ≤1 caller and has test coverage
 
 **Refer to SEAMS_BY_EXAMPLE.md in references/ for 3 real examples of good and bad seams.**
 
@@ -123,6 +133,7 @@ You must constrain yourself. Do NOT write implementation code — no function bo
 - **The Bleed:** Password hashing is in utils, JWT generation is in middleware, user lookup is in routes. Each change requires touching 4 files. Testing requires a database.
 - **The Deepening:** Consolidate password hashing, token generation, and credential validation into one `auth/` module. Routes and middleware become thin adapters that call auth, not the other way around. Tests can mock the user lookup, so no database needed.
 - **Impact:** Locality (auth logic concentrated in one module) | Testability (test password and token logic in isolation) | AI-Navigability (one module to understand instead of four)
+- **Risk:** MEDIUM — 3 callers, no dedicated test file, changed 7 times in 90 days.
 ```
 
 End your response exactly with:
@@ -141,7 +152,9 @@ Once the user picks a candidate, do NOT start writing code immediately.
 
 4. Wait for user approval before modifying files.
 
-5. **Handoff:** This skill diagnoses and proposes seams — it does not implement them. Once a seam is approved, execute it with the `refactor` skill for a behavior-preserving extraction, or hand the proposed seam to `planning` when the change spans multiple files or phases.
+5. **Migration Path:** When the user approves a seam, load **MIGRATION_STRATEGIES.md** from references/ and recommend the appropriate strategy for their situation (Strangler Fig for module replacement, Branch by Abstraction for inserting a new interface, Feature Flag if they need instant rollback). State the strategy name and the first concrete step.
+
+6. **Handoff:** This skill diagnoses and proposes seams — it does not implement them. Once a seam is approved, execute it with the `refactor` skill for a behavior-preserving extraction, or hand the proposed seam to `planning` when the change spans multiple files or phases.
 
 **Required output for Mode A:** A ranked candidate list (3–6 items in Phase 2 format) + a proposed seam interface (typed signatures only, no implementation bodies) for the user-selected candidate. No code changes. No file edits until the user explicitly approves and the appropriate downstream skill is invoked.
 
@@ -210,4 +223,12 @@ Do NOT escalate to architecture if:
 - **NEVER** implement CQRS or Event Sourcing just for "scalability" unless you can identify a specific read-model bottleneck that justifies the 5x increase in complexity.
 - **NEVER** let a "Utility" module grow past 3 unrelated functions. Split it by domain responsibility immediately.
 
-**Required output for Mode B:** A proposed public surface (interface/type signatures — no implementation bodies), the result of the Swap Test stated explicitly ("If we swapped X, only Y would change"), and a single ADR entry using the template in `references/ADR_TEMPLATE.md`. No implementation until the user approves and invokes the appropriate downstream skill.
+**Required output for Mode B:** A proposed public surface (interface/type signatures — no implementation bodies), the result of the Swap Test stated explicitly ("If we swapped X, only Y would change"), a single ADR entry using the template in `references/ADR_TEMPLATE.md`, and — once the user approves — a recommended migration strategy from `references/MIGRATION_STRATEGIES.md` plus an offer to scaffold the boundary:
+
+```
+node <skill-dir>/scripts/scaffold-boundary.mjs <domain> <pattern> [output-dir]
+# pattern: hexagonal | vertical-slice | layered
+# Example: node <skill-dir>/scripts/scaffold-boundary.mjs notifications hexagonal src
+```
+
+The scaffold creates typed interface stubs (ports, adapters, entities) as a starting point — no implementation. No implementation until the user approves and invokes the appropriate downstream skill.

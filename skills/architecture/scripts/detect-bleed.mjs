@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { extractImports } from './utils/extractor.mjs';
+import { extractImports, detectLang } from './utils/extractor.mjs';
 import { walkDir } from './utils/walk.mjs';
 
 const defaultExclude = [
@@ -43,11 +43,12 @@ export function runBleedDetection(targetDir, infraPackages) {
 
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
+    const lang = detectLang(file);
     const lines = content.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const imports = extractImports(line);
+      const imports = extractImports(line, lang);
 
       for (const imp of imports) {
         if (infraPackages.includes(imp) || infraPackages.some((pkg) => imp.startsWith(`${pkg}/`))) {
