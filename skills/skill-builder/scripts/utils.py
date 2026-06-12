@@ -55,7 +55,7 @@ def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
     except FileNotFoundError:
         raise FileNotFoundError(f"SKILL.md not found in {skill_path}") from None
 
-    match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
+    match = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n", content, re.DOTALL)
     if not match:
         raise ValueError(f"SKILL.md in {skill_path} missing frontmatter")
 

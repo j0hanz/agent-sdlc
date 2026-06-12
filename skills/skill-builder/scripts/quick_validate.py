@@ -18,6 +18,9 @@ _ALLOWED_PROPERTIES = {
     "metadata",
     "compatibility",
     "disable-model-invocation",
+    "argument-hint",
+    "user-invocable",
+    "disallowed-tools",
 }
 
 
@@ -36,7 +39,7 @@ def validate_skill(skill_path: Path | str) -> tuple[bool, str]:
         return False, "No YAML frontmatter found"
 
     # Extract frontmatter
-    match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+    match = re.match(r"^---\r?\n(.*?)\r?\n---", content, re.DOTALL)
     if not match:
         return False, "Invalid frontmatter format"
 

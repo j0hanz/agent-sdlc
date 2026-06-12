@@ -49,7 +49,11 @@ export function runBleedDetection(targetDir, infraPackages) {
     // Scan the whole file (not line-by-line) so multiline `import { ... } from
     // '...'` statements — the default Prettier/ESLint output — are not missed.
     for (const { specifier: imp, index } of extractImportsWithPositions(content, lang)) {
-      if (infraPackages.includes(imp) || infraPackages.some((pkg) => imp.startsWith(`${pkg}/`))) {
+      const normalized = imp.startsWith('node:') ? imp.slice(5) : imp;
+      if (
+        infraPackages.includes(normalized) ||
+        infraPackages.some((pkg) => normalized.startsWith(`${pkg}/`))
+      ) {
         const lineNo = content.slice(0, index).split('\n').length;
         violations.push({
           file,

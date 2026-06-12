@@ -285,6 +285,13 @@ def scaffold(
     spec_path = out / f"{name}.specs.md"
     plan_path = out / f"{name}.plan.md"
 
+    force = "--force" in sys.argv
+    for path_obj in (spec_path, plan_path):
+        if path_obj.exists() and not force:
+            raise FileExistsError(
+                f"{path_obj} already exists. Use --force to overwrite."
+            )
+
     spec_path.write_text(spec_text, encoding="utf-8")
     plan_path.write_text(plan_text, encoding="utf-8")
 

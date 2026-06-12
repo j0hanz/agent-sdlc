@@ -226,7 +226,7 @@ function pascal(str) {
     .join('');
 }
 
-function scaffold(domain, pattern, outputDir) {
+function scaffold(domain, pattern, outputDir, force = false) {
   const def = PATTERNS[pattern];
   if (!def) {
     console.error(`Unknown pattern: ${pattern}. Available: ${Object.keys(PATTERNS).join(', ')}`);
@@ -247,6 +247,12 @@ function scaffold(domain, pattern, outputDir) {
   for (const { rel, content } of def.files(domain)) {
     const filePath = path.join(baseDir, rel);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    if (fs.existsSync(filePath) && !force) {
+      console.warn(
+        `  skipped  ${path.relative(process.cwd(), filePath)} (exists; use --force to overwrite)`,
+      );
+      continue;
+    }
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`  created  ${path.relative(process.cwd(), filePath)}`);
   }
@@ -267,15 +273,17 @@ if (
   (process.argv[1] === new URL(import.meta.url).pathname ||
     process.argv[1].endsWith('scaffold-boundary.mjs'))
 ) {
-  const domain = process.argv[2];
-  const pattern = process.argv[3] || 'hexagonal';
-  const outputDir = process.argv[4] || 'src';
+  const args = process.argv.slice(2).filter((a) => a !== '--force');
+  const force = process.argv.includes('--force');
+  const domain = args[0];
+  const pattern = args[1] || 'hexagonal';
+  const outputDir = args[2] || 'src';
 
   if (!domain) {
-    console.error('Usage: node scaffold-boundary.mjs <domain> [pattern] [output-dir]');
+    console.error('Usage: node scaffold-boundary.mjs <domain> [pattern] [output-dir] [--force]');
     console.error(`Patterns: ${Object.keys(PATTERNS).join(', ')}`);
     process.exit(1);
   }
 
-  scaffold(domain, pattern, path.resolve(process.cwd(), outputDir));
+  scaffold(domain, pattern, path.resolve(process.cwd(), outputDir), force);
 }

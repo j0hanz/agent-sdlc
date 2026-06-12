@@ -40,6 +40,7 @@ def run_case(cmd: str, payload: dict[str, Any], shell_cmd: bool) -> dict[str, An
         capture_output=True,
         text=True,
         shell=shell_cmd,
+        timeout=30,
     )
     parsed = None
     if proc.stdout.strip():

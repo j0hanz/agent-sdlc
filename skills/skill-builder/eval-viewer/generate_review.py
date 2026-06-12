@@ -448,9 +448,15 @@ def _kill_port(port: int) -> None:
                 timeout=5,
             )
             for line in result.stdout.strip().split("\n"):
-                if f":{port}" in line and "LISTENING" in line:
-                    pid = line.strip().split()[-1]
-                    subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
+                cols = line.split()
+                if len(cols) >= 2 and "LISTENING" in line:
+                    local_addr = cols[1]
+                    addr_port = local_addr.rsplit(":", 1)[-1]
+                    if addr_port == str(port):
+                        pid = cols[-1]
+                        subprocess.run(
+                            ["taskkill", "/F", "/PID", pid], capture_output=True
+                        )
         except (subprocess.CalledProcessError, IndexError, subprocess.TimeoutExpired):
             pass
         return

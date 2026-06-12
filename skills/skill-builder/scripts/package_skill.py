@@ -105,6 +105,8 @@ def package_skill(
             for file_path in sorted(skill_path.rglob("*")):
                 if not file_path.is_file():
                     continue
+                if file_path.resolve() == skill_filename.resolve():
+                    continue
                 arcname = file_path.relative_to(skill_path.parent)
                 if should_exclude(arcname):
                     print(f"  Skipped: {arcname}")

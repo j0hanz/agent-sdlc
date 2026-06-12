@@ -180,33 +180,32 @@ async def run_eval(
 
     results_data = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # Per query, separate clean trigger observations from infrastructure errors.
+    # Per item, separate clean trigger observations from infrastructure errors.
+    # Keyed by item index (not query string) so duplicate queries are tracked
+    # independently — re-initialising by query string would discard earlier runs.
     # A timeout / crashed subprocess is NOT evidence that the skill failed to
     # trigger, so it is excluded from the trigger rate and counted as an error.
-    query_triggers: dict[str, list[bool]] = {}
-    query_errors: dict[str, int] = {}
-    idx = 0
-    for item in eval_set:
-        query = item["query"]
-        query_triggers[query] = []
-        query_errors[query] = 0
+    item_triggers: list[list[bool]] = [[] for _ in eval_set]
+    item_errors: list[int] = [0] * len(eval_set)
+    result_idx = 0
+    for eval_idx in range(len(eval_set)):
         for _ in range(runs_per_query):
-            res = results_data[idx]
-            idx += 1
+            res = results_data[result_idx]
+            result_idx += 1
             if isinstance(res, Exception):
-                query_errors[query] += 1
+                item_errors[eval_idx] += 1
             else:
                 triggered, error = res
                 if error is not None:
-                    query_errors[query] += 1
+                    item_errors[eval_idx] += 1
                 else:
-                    query_triggers[query].append(triggered)
+                    item_triggers[eval_idx].append(triggered)
 
     results = []
-    for item in eval_set:
+    for eval_idx, item in enumerate(eval_set):
         query = item["query"]
-        triggers = query_triggers[query]
-        errors = query_errors[query]
+        triggers = item_triggers[eval_idx]
+        errors = item_errors[eval_idx]
         valid_runs = len(triggers)
         # No valid observation -> cannot judge; rate 0 but flagged via errors.
         trigger_rate = (sum(triggers) / valid_runs) if valid_runs else 0.0
@@ -230,7 +229,7 @@ async def run_eval(
 
     passed = sum(1 for r in results if r["pass"])
     total = len(results)
-    total_errors = sum(query_errors.values())
+    total_errors = sum(item_errors)
 
     if total_errors:
         print(

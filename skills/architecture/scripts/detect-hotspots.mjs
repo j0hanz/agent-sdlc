@@ -26,7 +26,7 @@ export function runHotspotDetection(dir, infraPkgs = [], { since = '6 months ago
 
   const { fanOut } = runLocalityCheck(absDir);
   const violations = infraPkgs.length > 0 ? runBleedDetection(absDir, infraPkgs) : [];
-  const { fileChurn } = runGitCoupling(absDir, { since, minCount: 1 });
+  const { fileChurn } = runGitCoupling(absDir, { since, minCount: 1, topN: Infinity });
 
   // git reports paths relative to the repo root, not to absDir. fanOut/bleed
   // keys are absolute paths, so churn must be keyed by absolute paths too or

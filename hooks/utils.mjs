@@ -115,7 +115,7 @@ export function writeTelemetry(record) {
 }
 
 /**
- * Run a command synchronously and return trimmed stdout, or '' on any failure.
+ * Run a command synchronously and return trimmed stdout, or null on any failure.
  * Used for read-only probes (git status, formatters) — never let a failed probe
  * break the workflow.
  */

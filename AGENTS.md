@@ -31,3 +31,5 @@ A Claude Code plugin for authoring and maintaining agents, skills, and hooks.
 - **Skill structure:** Each skill lives in `skills/<name>/` with a `SKILL.md` and optional `references/`, `scripts/`, `evals/` subdirs. Never flatten skill files into `skills/`.
 - **Plugin validation:** Run `npm run validate` before committing — it checks plugin structure and manifest compliance via `bin/validate-plugin.mjs`.
 - **Telemetry:** Hook debug output is written to `.claude/telemetry.log`. Set `CLAUDE_HOOKS_DEBUG=1` to enable verbose hook tracing.
+
+Co-Authored-By: Claude <noreply@anthropic.com>

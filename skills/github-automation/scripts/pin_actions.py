@@ -66,7 +66,7 @@ def resolve_via_gh(repo: str, rev: str) -> str | None:
         # Refs API handles both branches and tags. Try tag first, then branch.
         for ref_kind in ("tags", "heads"):
             result = subprocess.run(
-                ["gh", "api", f"repos/{repo}/git/refs/{ref_kind}/{rev}"],
+                ["gh", "api", f"repos/{repo}/git/ref/{ref_kind}/{rev}"],
                 capture_output=True,
                 text=True,
                 timeout=15,

@@ -149,9 +149,9 @@ Current scores ({scores_summary}):
             score_str = f"train={train_s}" + (f", test={test_s}" if test_s else "")
             prompt += f"<attempt {score_str}>\n"
             prompt += f'Description: "{h["description"]}"\n'
-            if "results" in h:
+            if "train_results" in h:
                 prompt += "Train results:\n"
-                for r in h["results"]:
+                for r in h["train_results"]:
                     status = "PASS" if r["pass"] else "FAIL"
                     prompt += f'  [{status}] "{r["query"][:80]}" (triggered {r["triggers"]}/{r["runs"]})\n'
             if h.get("note"):

@@ -48,7 +48,7 @@ def check_file(path: Path) -> list[str]:
         stripped = line.lstrip()
         current_indent = len(line) - len(stripped)
 
-        run_match = re.match(r"^(\s*)run:\s*[|>-]?\s*$", line)
+        run_match = re.match(r"^(\s*)run:\s*([|>][-+]?\d*)?\s*(#.*)?$", line)
         if run_match:
             in_run_block = True
             run_block_indent = len(run_match.group(1)) + 1
@@ -76,7 +76,7 @@ def check_file(path: Path) -> list[str]:
     has_pr_target = "pull_request_target" in content
 
     for i, line in enumerate(lines):
-        if "permissions:" in line:
+        if "permissions:" in line and not line.lstrip().startswith("#"):
             has_permissions = True
 
         uses_match = re.search(r"uses:\s+([^@\s]+)@([^\s#]+)", line)

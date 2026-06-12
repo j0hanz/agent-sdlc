@@ -111,4 +111,6 @@ async function main() {
 
 main()
   .catch((err) => debug('runner fatal', String(err)))
-  .finally(() => process.exit(0));
+  .finally(() => {
+    process.exitCode = 0;
+  });

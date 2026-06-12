@@ -186,7 +186,11 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
         files_val = task.fields.get("Files", "")
         syms_val = task.fields.get("Symbols", "")
         for field_name, val in [("Files", files_val), ("Symbols", syms_val)]:
-            if val and "none" not in val.lower() and "[" not in val:
+            if (
+                val
+                and not re.search(r"\bnone\b", val, re.IGNORECASE)
+                and "[" not in val
+            ):
                 errors.append(
                     f"[PLAN] {task.id} '{field_name}': bare path — use markdown links."
                 )
@@ -194,7 +198,7 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
         validate_val = task.fields.get("Validate", "")
         if (
             validate_val
-            and "none" not in validate_val.lower()
+            and not re.search(r"\bnone\b", validate_val, re.IGNORECASE)
             and "`" not in validate_val
         ):
             warnings.append(

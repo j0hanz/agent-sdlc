@@ -93,7 +93,15 @@ def sync(spec_path: Path, plan_path: Path) -> int:
 
     impl_stubs: list[str] = []
     ac_stub: str | None = None
-    prev_depends = plan.tasks[-1].id if plan and plan.tasks else "none"
+
+    # Seed the depends-on chain from the last *implementation* task, not the
+    # acceptance task (which appears after PHASE-END and should remain last).
+    existing_tasks = plan.tasks if plan and plan.tasks else []
+    last_impl = next(
+        (t for t in reversed(existing_tasks) if "acceptance" not in t.title.lower()),
+        None,
+    )
+    prev_depends = last_impl.id if last_impl else "none"
 
     for spec_id in missing_impl:
         tid = f"TASK-{next_num:03}"
@@ -101,7 +109,11 @@ def sync(spec_path: Path, plan_path: Path) -> int:
         prev_depends = tid
         next_num += 1
 
-    if not ac_covered and ac_ids:
+    # Only create an acceptance stub if no acceptance task exists yet.
+    existing_ac = next(
+        (t for t in existing_tasks if "acceptance" in t.title.lower()), None
+    )
+    if not ac_covered and ac_ids and existing_ac is None:
         tid = f"TASK-{next_num:03}"
         ac_stub = _acceptance_stub(tid, ac_ids, prev_depends)
 

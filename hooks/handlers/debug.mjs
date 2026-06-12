@@ -23,7 +23,17 @@ export function scan(input = {}, context = {}) {
   // This prevents duplicate scans when multiple Stop hooks run in parallel.
   if (input.stop_hook_active) return null;
 
-  const diff = sh('git', ['diff', '--unified=0', '--no-color'], { timeout: 8000 });
+  const eventName = context?.event;
+  // For PostToolUse, scope the diff to only the file just written/edited so
+  // pre-existing TODOs elsewhere in the repo don't nag on every write.
+  const editedFile =
+    eventName === 'PostToolUse'
+      ? (input?.tool_input?.file_path ?? input?.tool_input?.path ?? null)
+      : null;
+  const diffArgs = editedFile
+    ? ['diff', '--unified=0', '--no-color', '--', editedFile]
+    : ['diff', '--unified=0', '--no-color'];
+  const diff = sh('git', diffArgs, { timeout: 8000 });
   if (!diff) return null;
 
   let currentFile = '';
@@ -55,7 +65,6 @@ export function scan(input = {}, context = {}) {
       `(see .claude/debug-scan.log)\n`,
   );
 
-  const eventName = context?.event;
   if (eventName === 'PostToolUse' || eventName === 'PostToolUseFailure') {
     const list = findings.map((f) => `  - ${f.file}: ${f.kind} ("${f.line}")`).join('\n');
     return `Warning: ${findings.length} possible debug artifact(s) or TODO marker(s) left in uncommitted changes:\n${list}\nPlease clean them up before completing the task.`;

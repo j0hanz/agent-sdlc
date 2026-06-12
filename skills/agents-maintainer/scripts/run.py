@@ -67,7 +67,6 @@ class Config:
     SKILL_REQUIRED_KEYS: tuple[str, ...] = (
         "name",
         "description",
-        "disable-model-invocation",
     )
     MAX_DIR_SCAN_COUNT = 10000
     MAX_SKILL_LINES = 150
@@ -558,7 +557,10 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                 if "runner.mjs" in cmd:
                     parts = cmd.split()
                     try:
-                        domain_idx = parts.index("runner.mjs") + 1
+                        domain_idx = (
+                            next(i for i, p in enumerate(parts) if "runner.mjs" in p)
+                            + 1
+                        )
                         domain = parts[domain_idx]
                         handler_path = (
                             plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
@@ -571,7 +573,12 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                                 )
                             )
                     except (ValueError, IndexError):
-                        pass
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.WARN,
+                                message=f"Could not determine handler for hook '{event}': {cmd!r}",
+                            )
+                        )
 
                 elif "scripts" in cmd:
                     script_path_str = cmd.split()[-1].replace(

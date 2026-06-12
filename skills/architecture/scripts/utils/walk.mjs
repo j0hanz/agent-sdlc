@@ -24,7 +24,7 @@ export function walkDir(dir, exclude = [], visited = new Set()) {
 
     const list = fs.readdirSync(dir);
     for (const file of list) {
-      if (exclude.some((ex) => file.includes(ex))) continue;
+      if (exclude.some((ex) => file === ex)) continue;
       const fullPath = path.join(dir, file);
       let stat;
       try {

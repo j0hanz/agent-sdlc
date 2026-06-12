@@ -14,7 +14,7 @@ import { extractImports, detectLang } from './utils/extractor.mjs';
  *
  * Risk level:
  *  HIGH   = callerCount > 5 OR (callerCount > 2 AND no tests)
- *  MEDIUM = callerCount 2–5 OR (no tests AND low churn)
+ *  MEDIUM = callerCount 2–5 OR (no tests AND churn > 3)
  *  LOW    = callerCount <= 1 AND has tests
  *
  * @param {string[]} targetFiles  Absolute paths of files to score
@@ -81,6 +81,7 @@ export function estimateRisk(targetFiles, rootDir) {
       const log = execFileSync('git', ['log', '--oneline', '--since=90 days ago', '--', tf], {
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: absRoot,
       });
       churn = log.trim().split('\n').filter(Boolean).length;
     } catch {
