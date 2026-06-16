@@ -414,6 +414,10 @@ def main() -> int:
     matched_files.sort()
     matched_symbols.sort(key=lambda s: (s["file"], s["line"]))
 
+    if not matched_files and not matched_symbols:
+        print("No matches.", file=sys.stderr)
+        return 2
+
     if args.json_out:
         print(
             json.dumps({"files": matched_files, "symbols": matched_symbols}, indent=2)

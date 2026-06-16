@@ -10,7 +10,7 @@ import pytest
 from spec_parser import parse_spec, parse_plan  # noqa: E402
 from scaffold import scaffold  # noqa: E402
 from sync import sync  # noqa: E402
-from validate import validate_spec, validate_plan, validate_cross  # noqa: E402
+from validate import validate_spec, validate_plan, validate_cross, validate_review  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -401,3 +401,94 @@ def test_validate_resolve_paths_bare_stem(
 
     assert spec_path == spec_file.resolve()
     assert plan_path == (plan_dir / "auth-jwt.plan.md").resolve()
+
+
+# ---------------------------------------------------------------------------
+# validate_review tests (G1)
+# ---------------------------------------------------------------------------
+
+
+def test_validate_review_missing_file(tmp_path: Path) -> None:
+    spec = tmp_path / "foo.specs.md"
+    errors, warnings = validate_review(spec)
+    assert any("not found" in e.lower() for e in errors)
+
+
+def test_validate_review_passes_when_true(tmp_path: Path) -> None:
+    review = tmp_path / "foo.review.md"
+    review.write_text("ready_for_execution: true\n", encoding="utf-8")
+    spec = tmp_path / "foo.specs.md"
+    errors, warnings = validate_review(spec)
+    assert errors == []
+
+
+def test_validate_review_fails_when_field_absent(tmp_path: Path) -> None:
+    review = tmp_path / "foo.review.md"
+    review.write_text("# Review\nNo verdict here.\n", encoding="utf-8")
+    spec = tmp_path / "foo.specs.md"
+    errors, warnings = validate_review(spec)
+    assert errors
+
+
+def test_validate_review_fails_when_false_despite_true_in_comment(
+    tmp_path: Path,
+) -> None:
+    # Regression: substring "ready_for_execution: true" in a comment must not pass
+    review = tmp_path / "foo.review.md"
+    review.write_text(
+        "# Review\n<!-- ready_for_execution: true is the goal -->\nready_for_execution: false\n",
+        encoding="utf-8",
+    )
+    spec = tmp_path / "foo.specs.md"
+    errors, warnings = validate_review(spec)
+    assert errors
+
+
+# ---------------------------------------------------------------------------
+# validate_cross and validate_plan edge cases (G2)
+# ---------------------------------------------------------------------------
+
+
+def test_validate_cross_fully_covered(spec_file: Path, tmp_path: Path) -> None:
+    # Plan covers all three impl IDs from spec_file: REQ-001, REQ-002, SEC-001
+    plan_text = """\
+# test-feature
+
+Spec: [test-feature.specs.md](test-feature.specs.md)
+
+## PHASE-001: Implementation
+
+### TASK-001: Implement login
+
+Depends on: none
+Files: [src/auth.ts](src/auth.ts)
+Symbols: [issueJwt](src/auth.ts#L10)
+Satisfies: REQ-001, SEC-001
+Action: Add JWT issuance with expiry.
+Validate: `npm test -- auth.test.ts`
+Expected result: All tests pass.
+
+### TASK-002: Implement token rejection
+
+Depends on: TASK-001
+Files: [src/auth.ts](src/auth.ts)
+Symbols: [rejectInvalid](src/auth.ts#L20)
+Satisfies: REQ-002
+Action: Reject requests with missing or invalid Bearer token.
+Validate: `npm test -- auth.test.ts`
+Expected result: 401 returned on invalid token.
+
+## PHASE-END: Acceptance
+"""
+    plan_path = spec_file.parent / "test-feature.plan.md"
+    plan_path.write_text(plan_text, encoding="utf-8")
+    errors, warnings, matrix = validate_cross(spec_file, plan_path)
+    assert matrix["uncovered"] == [], (
+        f"expected no uncovered reqs, got {matrix['uncovered']}"
+    )
+    assert not errors, f"unexpected errors: {errors}"
+
+
+def test_validate_plan_missing_file(tmp_path: Path) -> None:
+    errors, warnings = validate_plan(tmp_path / "plan" / "missing.plan.md")
+    assert any("not found" in e.lower() for e in errors)

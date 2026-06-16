@@ -302,9 +302,8 @@ def validate_review(spec_path: Path) -> tuple[list[str], list[str]]:
         errors.append(f"[REVIEW] Cannot read review file: {e}")
         return errors, warnings
 
-    if (
-        "ready_for_execution: true" not in content
-        and "ready_for_execution:true" not in content
+    if not re.search(
+        r"^ready_for_execution:\s*true\s*$", content, re.MULTILINE | re.IGNORECASE
     ):
         errors.append(
             "[REVIEW] Field 'ready_for_execution: true' not found in review file. Reviewer must approve before handoff."

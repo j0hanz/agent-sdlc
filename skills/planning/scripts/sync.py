@@ -68,7 +68,10 @@ def _next_task_number(existing_tasks: list[PlanTask]) -> int:
 
 def sync(spec_path: Path, plan_path: Path) -> int:
     """Merge spec IDs into plan. Returns count of new stubs added."""
-    spec = parse_spec(spec_path)
+    try:
+        spec = parse_spec(spec_path)
+    except OSError as e:
+        raise RuntimeError(f"sync: cannot read spec '{spec_path}': {e}") from e
     impl_ids = sorted(id_ for id_ in spec.reqs if _is_impl_id(id_))
     ac_ids = sorted(spec.acs)
 

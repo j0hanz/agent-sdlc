@@ -79,11 +79,7 @@ Expected result: Observable success signal.
 
 ## Depth profiles
 
-| Depth       | Task count  | Format                                |
-| ----------- | ----------- | ------------------------------------- |
-| `sketch`    | 5–12 tasks  | Compact phases, lighter discovery     |
-| `contract`  | 12–30 tasks | Full atomic tasks, verified paths     |
-| `blueprint` | 20–50 tasks | Narrative runbook with rollback phase |
+For depth definitions (task counts, effort, format), see the **Depth Dial** table in `SKILL.md`.
 
 ## Decomposition guidance
 

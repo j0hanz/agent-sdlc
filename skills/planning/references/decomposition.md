@@ -49,8 +49,4 @@ Good phases have one measurable goal and 3–8 tasks:
 
 ## By depth
 
-| Depth     | Task count | Total effort |
-| --------- | ---------- | ------------ |
-| sketch    | 5–12       | 1–2 hours    |
-| contract  | 12–30      | 3–8 hours    |
-| blueprint | 20–50      | 8–15 hours   |
+For task counts and effort by depth, see the **Depth Dial** table in `SKILL.md`.

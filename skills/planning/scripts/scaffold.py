@@ -262,6 +262,7 @@ def scaffold(
     out_dir: str | Path = "plan",
     domain: str | None = None,
     goal: str = "One sentence: what capability or outcome?",
+    force: bool = False,
 ) -> tuple[Path, Path]:
     """Write paired spec + plan files. Returns (spec_path, plan_path)."""
     if "/" in name or "\\" in name or name.startswith(".") or "\x00" in name:
@@ -285,7 +286,6 @@ def scaffold(
     spec_path = out / f"{name}.specs.md"
     plan_path = out / f"{name}.plan.md"
 
-    force = "--force" in sys.argv
     for path_obj in (spec_path, plan_path):
         if path_obj.exists() and not force:
             raise FileExistsError(
@@ -321,10 +321,13 @@ def main() -> None:
         help="Inject domain-specific snippets",
     )
     parser.add_argument("--goal", default=None, help="One-sentence goal to pre-fill")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
 
     args = parser.parse_args()
     goal = args.goal or "One sentence: what capability or outcome?"
-    spec_path, plan_path = scaffold(args.name, args.depth, args.dir, args.domain, goal)
+    spec_path, plan_path = scaffold(
+        args.name, args.depth, args.dir, args.domain, goal, force=args.force
+    )
     print(f"Created: {spec_path}")
     print(f"Created: {plan_path}")
     print(f"\nNext: fill in {spec_path.name}, then run:")
