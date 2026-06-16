@@ -57,6 +57,6 @@ State explicitly what could not be verified and why, so the user can decide how 
 Once all applicable checklist items are confirmed (whether verified by you or reported by the developer):
 
 - **For non-trivial changes:** invoke `code-review` before finishing
-- **When moving to PR or delivery:** invoke `github-automation` or prepare the pull request manually
+- **When moving to PR or delivery:** prompt the user to run `/github-automation` — this skill requires user invocation and cannot be triggered automatically
 
 A clean test run is necessary but not sufficient for shipping. The transition steps exist to catch issues that verification alone doesn't surface.

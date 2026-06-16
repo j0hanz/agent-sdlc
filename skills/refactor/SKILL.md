@@ -130,6 +130,8 @@ After refactoring, explain briefly:
 
 Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
 
+After communicating the changes, invoke `verification-before-completion` before declaring the refactor done. A clean test run before refactoring is not sufficient — VBC confirms no regressions were introduced and no debug artifacts remain.
+
 ---
 
 ## Language Quick-Reference

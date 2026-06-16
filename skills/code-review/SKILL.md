@@ -217,7 +217,7 @@ When in doubt, lean advisory — the goal is to unblock delivery, not to gatekee
 
 After Phase 3:
 
-- **PASS** → proceed to open a pull request or merge the changes (zero blocking issues required)
+- **PASS** → prompt the user to run `/github-automation` to open a pull request or merge — that skill requires user invocation and cannot be triggered automatically
 - **FAIL** → route back to implementation; re-run this skill **only after the developer confirms all blocking issues are resolved** — do not re-review the same unchanged code, and do not downgrade blocking findings to advisory to unblock delivery
 
 Do not merge or submit the pull request until code review returns PASS with zero blocking issues.

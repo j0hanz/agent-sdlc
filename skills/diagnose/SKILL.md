@@ -122,6 +122,8 @@ Always conclude with this exact structure:
 
 - **Prevention:** [What would have prevented this?]
 - **Next Steps:** [Concrete and actionable — a skill to activate, a doc to update, or "None" if the fix is complete]
+
+After outputting the Post-Mortem: invoke `verification-before-completion` before declaring the task done.
 ```
 
 ---
@@ -134,13 +136,14 @@ Always conclude with this exact structure:
 - A regression appeared after a recent change and you need to trace where it broke.
 - A bug is subtle enough that guessing the fix would likely miss the actual cause.
 
-Prefer the `@coder` agent directly when the bug location is already known. Prefer codebase exploration (using `@explorer` agent or searching the web/docs) when unsure if the behavior is actually a bug.
+Proceed directly to implementation (skipping this skill) when the bug location is already known — root-cause analysis adds no value when the cause is already identified. Use web search or documentation when unsure if the behavior is actually a bug vs. intentional design.
 
-### Execution Coordination with Coder Agent
+### Execution Coordination After Diagnosis
 
 1. Run the `diagnose` skill first to find the root cause, identifying the file, line, and failure mode.
-2. Once the root cause is isolated, delegate the implementation to the coder agent: `Spawn coder agent with instructions: "Fix the bug at <file>:<line>. Root cause: <diagnosis>. Run tests after fix."`
-3. Verify the fix — confirm the failure is gone and check for regressions in related tests.
+2. Once the root cause is isolated, implement the fix using standard file editing tools, or ask the user if they would prefer to fix it themselves.
+3. After fixing: re-run the failing test to confirm it passes, then run the full suite to check for regressions.
+4. Invoke `verification-before-completion` before declaring the task done.
 
 ### Troubleshooting
 

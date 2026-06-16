@@ -46,7 +46,17 @@ Every plan task carries `Satisfies: REQ-001, SEC-002` linking it to spec IDs. `v
 
 ### Step 1 — Intake
 
-**Trigger spec interview if the user's request does NOT explicitly state all five of:**
+**If a Design Brief from the `brainstorming` skill is present in context**, map its fields directly and skip the corresponding interview questions:
+
+- Brief **Scope** → planning Scope
+- Brief **Constraints** → planning Constraints
+- Brief **Interface** → planning Interface
+- Brief **Acceptance criteria** → planning Success criteria
+- Brief **Chosen approach / Why** → planning Goal (supplement with the approach rationale)
+
+Only ask interview questions for fields that are still missing after mapping.
+
+**Otherwise, trigger spec interview if the user's request does NOT explicitly state all five of:**
 goal · scope · constraints · interface · success criteria
 
 Exception: if all five are inferable from the request text (e.g., a fully specified API contract), proceed directly to scaffold and note what was inferred.

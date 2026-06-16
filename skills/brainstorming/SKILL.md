@@ -212,6 +212,11 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 
 **Chosen approach:** [Approach letter + name, e.g., "Approach B — Event-sourced queue"]
 **Why:** [Key tradeoff in 1-2 sentences; what this gains and what it costs]
+
+**Scope:** [Which system/component this touches; what is explicitly out of scope]
+**Constraints:** [Timeline, existing systems, compliance, tech stack limitations]
+**Interface:** [How users or systems interact with this — input and output]
+
 **Architecture:**
 
 - [Component 1: responsibility]
@@ -232,6 +237,8 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 **First step:** [One concrete action to begin — a file to open, a test to write, an interface to define]
 **Open TBDs:** [Unresolved items with owner and due date, or "None"]
 ```
+
+> **Downstream note:** The `planning` skill reads this brief directly. The **Scope**, **Constraints**, and **Interface** fields map to planning's intake fields of the same name — planning will skip its interview questions for any field already answered here.
 
 ## Command Usage & Troubleshooting
 

@@ -160,16 +160,22 @@ A test suite is complete when it covers the **stated contract** — not when you
 - Combinations of already-tested rules (if length-check tests and uppercase-check tests both pass, you don't need a test for "too short AND no uppercase")
 - Implementation internals — if two inputs produce the same observable output, one test is enough
 
-**Guideline:** 3–6 tests typically cover a focused function. When you're adding a test and you cannot point to which requirement it verifies, stop.
+**Guideline:** 3–6 tests typically cover a focused, single-responsibility function. For complex modules (e.g., payment processing, auth flows), follow the requirements in the plan — do not stop early. When you're adding a test and you cannot point to which requirement it verifies, stop.
 
 ---
 
 ## Workflow Execution
 
+**If a plan file (`plan/NAME.plan.md`) exists in context or was passed by the `planning` skill:**
+
+- Read it before step 1. Each task block's `Validate:` field defines the test command that must pass for that task.
+- Each task block's `Satisfies: REQ-xxx` field links the task to a spec requirement — use the corresponding acceptance criteria from `plan/NAME.specs.md` as the observable behavior your test must verify.
+- Work through tasks in the order listed in the plan. Do not skip tasks or reorder them without user confirmation.
+
 When asked to use TDD, follow this exact sequence via sequential tool calls:
 
 1. Document public interface (names, signatures, errors, examples).
-2. Use file editing tools to add **one** failing test (one scenario only).
+2. Use file editing tools to add **one** failing test (one scenario only). If a plan task's `Validate:` command already defines the test, use that as the target.
 3. Use shell command execution to run the test. Wait for it to fail.
 4. **Analyze the failure** (see "Failure Analysis" section below).
 5. Use file editing tools to implement the minimal fix.
@@ -309,6 +315,12 @@ def test_too_short_password_invalid():
 ```
 
 Implement only the length guard. Once GREEN, start a new test for the uppercase rule.
+
+---
+
+## Completion Handoff
+
+When the final GREEN cycle is confirmed and the REFACTOR phase is done, invoke `verification-before-completion` before declaring the task complete. Do not report success based on the last test run alone — verification checks for debug artifacts, regressions, and diff correctness.
 
 ---
 

@@ -33,10 +33,8 @@ GitHub Actions is a YAML-on-top-of-event-handlers product with a lot of footguns
 
 ### When NOT to use Path A
 
-- A _specific failing CI run_ the user wants triaged from logs → defer to `gh-fix-ci` if present.
-- CodeQL config → `codeql`. Dependabot config → `dependabot`.
-
-If those sibling skills are not present, this path can still answer, but say so.
+- A _specific failing CI run_ the user wants triaged from logs → this path is not optimized for CI log triage; consider using the `diagnose` skill with the CI log as input.
+- CodeQL or Dependabot configuration → this path can handle them but is not specialized; say so and proceed.
 
 ### Workflow
 
