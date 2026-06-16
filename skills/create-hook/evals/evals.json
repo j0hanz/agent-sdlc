@@ -1,0 +1,35 @@
+[
+  {
+    "name": "should-trigger-on-env-block-hook",
+    "prompt": "Block edits to .env files",
+    "should_trigger": true,
+    "assertions": [
+      "create-hook skill is triggered",
+      "Hook uses PreToolUse event (not PostToolUse)",
+      "Matcher specifically targets .env files",
+      "Exit code 2 is specified for denial",
+      "Test command is present to validate hook"
+    ]
+  },
+  {
+    "name": "should-trigger-on-post-save-test-hook",
+    "prompt": "Run tests after every file save",
+    "should_trigger": true,
+    "assertions": [
+      "create-hook skill is triggered",
+      "Hook uses PostToolUse event (post-save execution)",
+      "Scope includes Write and Edit tools",
+      "Async-blocking warning is noted (performance impact)"
+    ]
+  },
+  {
+    "name": "should-not-trigger-on-session-start-event",
+    "prompt": "Inject git log into every session",
+    "should_trigger": false,
+    "assertions": [
+      "create-hook does NOT trigger",
+      "Request is correctly routed to clarification about SessionStart events",
+      "SessionStart event is the correct event for this use case, not PostToolUse"
+    ]
+  }
+]

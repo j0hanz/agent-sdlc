@@ -24,7 +24,7 @@ action: never write, edit, or delete files
 
 rule:   parallelize
 when:   running Glob / Grep / Bash operations
-action: run all independent operations concurrently — never sequentially
+action: Concurrent execution applies to Glob and Grep tool calls only. The `scan_context.py` Bash call is sequential and cannot be parallelized within a single agent turn.
 
 rule:   no-guessing
 when:   a search returns no results

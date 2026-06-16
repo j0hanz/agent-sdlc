@@ -50,3 +50,25 @@ action: Return Status (Pass/Fail), Findings (with reasoning), and Recommendation
 - **Output-Focused:** Is the expected output format defined?
 - **Safety & Security:** Check for least privilege and injection risks.
 - **Brevity:** Ensure findings are concise and factual.
+
+## Output
+
+Return JSON with this exact structure:
+
+```json
+{
+  "issues": [
+    {
+      "severity": "high|medium|low",
+      "description": "What the issue is",
+      "location": "Where in the prompt it occurs"
+    }
+  ],
+  "pass": true|false,
+  "summary": "One-sentence overall verdict"
+}
+```
+
+- **issues[]**: Array of identified problems; empty if pass=true
+- **pass**: true if no high/medium severity issues exist, false otherwise
+- **summary**: Concise one-sentence judgment (e.g., "Prompt is clear and safe with well-defined constraints")

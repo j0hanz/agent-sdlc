@@ -73,6 +73,12 @@ Rank your planned changes before writing a line:
 
 ---
 
+## Parallel Refactoring of Independent Modules
+
+For parallel refactoring of independent modules, use the `multi-agent-dispatch` skill with `coder` agents.
+
+---
+
 ## Step 4: Execute in Small, Verified Steps
 
 **State Checkpoint**: Before touching any code or beginning the refactor, you MUST create a deterministic rollback point using `git commit -am "WIP: pre-refactor checkpoint"` (if there are staged/tracked changes) or ensure you have a clean working tree. If you make a mistake and tests fail, use `git reset --hard HEAD` or `git restore <file>` to revert to your checkpoint instead of trying to manually un-edit the file.
@@ -124,13 +130,19 @@ Suggest running the tool first and only proceed to manual changes for things the
 
 ## Step 5: Communicate the Changes
 
-After refactoring, explain briefly:
+After refactoring, use this exact output structure:
 
-- **What changed**: file/function names, or a short summary ("Extracted `parseDate` from `processOrder`")
-- **Why it matters**: what problem it solves ("It was doing 3 things — validation, transformation, and I/O — so I split those apart")
-- **What's left** (optional): follow-on work worth doing, but don't do it unless asked
+## Changes
 
-Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
+**What changed:** [list of modifications — file renames, function extractions, structural reorganizations]
+
+**Why:** [rationale for each change — what problem does it solve, what becomes easier]
+
+**Deliberately NOT changed:** [what was intentionally preserved and why — decisions made to limit scope or avoid unnecessary refactoring]
+
+---
+
+Keep explanations short. Skip obvious things. Focus on the _why_, not the _what_.
 
 After communicating the changes, invoke `verification-before-completion` before declaring the refactor done. A clean test run before refactoring is not sufficient — VBC confirms no regressions were introduced and no debug artifacts remain.
 

@@ -10,7 +10,8 @@
         "Guard clauses (early returns) are used to exit for None/wrong-status at the top, eliminating the 4-level deep nesting",
         "The duplicated tax+fee calculation block (present 3 times in original) is extracted into a single named helper function",
         "Magic numbers are replaced with named constants: at minimum 0.08 (tax rate), 10000 (high-value threshold), and 25 (high-value fee)",
-        "The response explicitly calls out at least one thing that was deliberately NOT changed (e.g. the print side-effect, in-place mutation) with a reason why it was left alone",
+        "Output includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections",
+        "The 'Deliberately NOT changed' section explicitly mentions at least one thing that was intentionally preserved (e.g. the print side-effect, in-place mutation) with a reason why it was left alone",
         "Behavior is preserved: the refactored code sets final_total, sets processed=True, and returns the order dict with the same logic"
       ]
     },
@@ -22,7 +23,9 @@
       "assertions": [
         "The output explicitly identifies the pre-existing bug: prevPage uses 'page > 0' but should use 'page > 1', causing prevPage=0 instead of null when page=1",
         "The buggy condition 'page > 0' (not 'page > 1') remains present verbatim in any refactored code shown, and the output explicitly asks the user whether to fix it as a separate step",
-        "Structural improvements are still delivered (e.g., const instead of var, object literal return) even while the bug is left in place"
+        "Structural improvements are still delivered (e.g., const instead of var, object literal return) even while the bug is left in place",
+        "Output includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections",
+        "The 'Deliberately NOT changed' section mentions the pre-existing bug and explains why it was not fixed in this refactor"
       ]
     },
     {
@@ -33,7 +36,8 @@
       "assertions": [
         "The output asks for user confirmation before proceeding AND does not include a complete production-ready refactored implementation — it may show a preview or phase plan but the actual signature change requires explicit user approval",
         "The output identifies the specific blast radius: changing the function signature would require updating 15+ call sites",
-        "The output mentions that no test coverage exists as a risk factor for applying this structural change"
+        "The output mentions that no test coverage exists as a risk factor for applying this structural change",
+        "If the output eventually provides refactored code, it includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections"
       ]
     },
     {
@@ -43,7 +47,8 @@
       "files": [],
       "assertions": [
         "The output asks a clarifying question about what the user finds hardest before making any changes — not a generic question, but one specifically scoped to understanding the user's pain with this code",
-        "The output produces no refactored code at all — not as a main response, not as a preview, not as 'here's what I'd do while I wait for your answer'"
+        "The output produces no refactored code at all — not as a main response, not as a preview, not as 'here's what I'd do while I wait for your answer'",
+        "Once refactoring proceeds, output includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections"
       ]
     },
     {
@@ -53,7 +58,8 @@
       "files": [],
       "assertions": [
         "The output recommends running an automated formatting tool (ruff, black, or equivalent) as the first or primary step, before presenting any manually-edited code",
-        "If the output shows reformatted code, it is explicitly attributed to the automated tool (e.g. 'after running ruff format') — not presented as manual edits the agent made line by line"
+        "If the output shows reformatted code, it is explicitly attributed to the automated tool (e.g. 'after running ruff format') — not presented as manual edits the agent made line by line",
+        "If additional refactoring follows the formatting step, output includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections"
       ]
     },
     {
@@ -64,7 +70,8 @@
       "assertions": [
         "The output explicitly argues the case AGAINST extraction — giving at least one concrete scenario in which shipping and billing validation would need to diverge (e.g. VAT rules, international formats, different compliance requirements)",
         "The output does not treat extraction as obviously correct — it acknowledges the business-concept distinction between shipping and billing addresses, even if it ultimately decides to extract",
-        "If the output proposes extraction, it names a specific condition that makes it safe (e.g. 'only if both address types will always share the same field validation rules') rather than declaring extraction unconditionally correct"
+        "If the output proposes extraction, it names a specific condition that makes it safe (e.g. 'only if both address types will always share the same field validation rules') rather than declaring extraction unconditionally correct",
+        "If extraction is applied, output includes a '## Changes' block with 'What changed:', 'Why:', and 'Deliberately NOT changed:' sections, noting the condition under which extraction is safe"
       ]
     }
   ]

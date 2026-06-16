@@ -41,6 +41,44 @@
         "At least one REFACTOR phase is considered or performed after all rules pass",
         "Mocking is NOT used to test internal class state — only the public `validate()` interface is tested"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Clean up this function, remove the duplicate logic",
+      "should_trigger": false,
+      "expected_output": "test-driven-development skill does NOT trigger. Request is routed to refactor skill instead.",
+      "files": [],
+      "expectations": [
+        "Skill correctly identifies this as a pure refactor request, not a TDD implementation",
+        "No test-first workflow is initiated",
+        "Request is routed to refactor skill"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "What does validateEmail do?",
+      "should_trigger": false,
+      "expected_output": "test-driven-development skill does NOT trigger. Request is answered with code explanation or routed to documentation.",
+      "files": [],
+      "expectations": [
+        "Skill correctly identifies this as a pure question, not an implementation request",
+        "No TDD workflow is initiated",
+        "Question is answered directly or routed appropriately"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Implement all three validation rules (email, phone, zip) at once using TDD",
+      "should_trigger": true,
+      "expected_output": "Claude enforces one-test-at-a-time discipline and rejects the horizontal-slicing approach. Only one failing test is written before any implementation begins.",
+      "files": [],
+      "expectations": [
+        "Skill triggers on TDD implementation request",
+        "Claude explicitly rejects writing tests for all 3 rules upfront",
+        "Only ONE failing test is written before any implementation",
+        "Claude explains that horizontal slicing (implementing all behaviors at once) violates TDD discipline",
+        "Implementation proceeds one rule at a time after user confirms"
+      ]
     }
   ]
 }

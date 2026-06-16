@@ -1,5 +1,5 @@
 ---
-name: agents-maintainer-reviewer
+name: reviewer
 description: |
   AGENTS.md quality auditor. Performs semantic reviews of agent instructions, scores them across five dimensions, and provides concrete improvement suggestions.
 
@@ -17,7 +17,6 @@ color: yellow
 model: sonnet
 effort: medium
 maxTurns: 10
-isolation: 'worktree'
 tools:
   - Read
   - Glob

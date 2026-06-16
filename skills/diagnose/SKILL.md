@@ -62,7 +62,7 @@ Use semantic search or `grep_search` on `references/feedback-loops.md` to retrie
 - **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
 - **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). Spawn multiple subagents concurrently (e.g., using `invoke_agent` with the `generalist` or `codebase_investigator` agent, setting `wait_for_previous` to `false`) to falsify each distinct hypothesis simultaneously via targeted instrumentation.
+- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). For parallel investigation, invoke the `multi-agent-dispatch` skill. Dispatch one `detective` agent (read-only) per ranked hypothesis to falsify each distinct hypothesis simultaneously via targeted instrumentation.
 
 **GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and dispatched the subagents to test them in parallel. Testing hypotheses sequentially when parallel subagents can be used is an anti-pattern.
 

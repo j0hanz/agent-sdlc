@@ -46,6 +46,12 @@ Code review is not verification (does it work?) and not architecture (is it well
 
 ---
 
+## Parallel Per-Module Review
+
+For parallel per-module review, use the `multi-agent-dispatch` skill with `explorer` agents.
+
+---
+
 ## Phase 1: Get the Diff
 
 Get the exact diff that is being reviewed. Use the argument if provided; otherwise default to comparing against the main branch.
@@ -227,11 +233,6 @@ Do not merge or submit the pull request until code review returns PASS with zero
 ---
 
 ## Reference Files (Conditional Loading)
-
-Do NOT load these by default. Load only when needed:
-
-- **Extended pattern catalog with code examples:** Use semantic search or `grep_search` on `references/patterns.md` to retrieve the specific pattern you need, rather than reading the whole file.
-  ional Loading)
 
 Do NOT load these by default. Load only when needed:
 

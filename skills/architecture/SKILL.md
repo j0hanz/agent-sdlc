@@ -106,10 +106,10 @@ Agent(
   description: "Architecture scan of [target_dir]",
   prompt: |
     target_dir: [the directory you scanned]
-    locality_output: [paste full stdout of check-locality.mjs here]
-    bleed_output: [paste full stdout of detect-bleed.mjs here]
-    git_coupling_output: [paste full stdout of git-coupling.mjs here, or "skipped"]
-    hotspot_output: [paste full stdout of detect-hotspots.mjs here, or "skipped"]
+    locality_output: [paste full stdout of check_locality.py here]
+    bleed_output: [paste full stdout of detect_bleed.py here]
+    git_coupling_output: [paste full stdout of git_coupling.py here, or "skipped"]
+    hotspot_output: [paste full stdout of detect_hotspots.py here, or "skipped"]
 )
 ```
 
@@ -171,7 +171,9 @@ Once the user picks a candidate, do NOT start writing code immediately.
 3. **Apply the Deletion Test aloud**, using the Decision Protocol: "If we deleted this module, what happens to its logic?"
 4. Wait for user approval before modifying files.
 5. **Migration Path:** Recommend the appropriate strategy (Strangler Fig, Branch by Abstraction) from **MIGRATION_STRATEGIES.md**.
-6. **Handoff:** Invoke the `refactor` or `planning` skill for implementation.
+6. **Write Handoff Artifact**: Before invoking the next skill, write `architecture-brief.json` with these fields: `chosen_approach` (the pattern/strategy), `scope` (which files/modules change), `constraints` (what must stay the same), `interface` (the new boundary shape), `first_step` (the first concrete code change).
+7. **Handoff:** Invoke the `refactor` or `planning` skill for implementation.
+8. After any code change is implemented, invoke `verification-before-completion` before declaring done.
 
 ---
 
@@ -202,12 +204,16 @@ Before proposing a structure, run this diagnosis:
 
 #### Step 4: Scaffold (after user approves the design)
 
+**Write Handoff Artifact**: Before scaffolding, write `architecture-brief.json` with these fields: `chosen_approach` (the pattern selected), `scope` (which new modules/files), `constraints` (what constraints apply), `interface` (public API shape), `first_step` (the first implementation task).
+
 Load **MIGRATION_STRATEGIES.md** and name the appropriate strategy. Then offer to scaffold the boundary skeleton:
 
 ```bash
 python <skill-dir>/scripts/scaffold_boundary.py <domain> <pattern> [output-dir]
 # patterns: hexagonal | vertical-slice | layered | clean-architecture | cqrs
-````
+```
+
+After any code change is implemented, invoke `verification-before-completion` before declaring done.
 
 ### Expert Principles
 
@@ -219,3 +225,4 @@ python <skill-dir>/scripts/scaffold_boundary.py <domain> <pattern> [output-dir]
 ### When to Simplify (The YAGNI Threshold)
 
 Do NOT escalate to architecture if the code is a throwaway script, has zero external dependencies, or is a simple Proof of Concept.
+````

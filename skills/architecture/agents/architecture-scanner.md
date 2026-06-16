@@ -17,7 +17,6 @@ color: yellow
 model: sonnet
 effort: high
 maxTurns: 15
-isolation: 'worktree'
 tools:
   - Read
   - Glob

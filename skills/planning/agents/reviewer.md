@@ -1,5 +1,5 @@
 ---
-name: planning-reviewer
+name: reviewer
 description: |
   Planning quality auditor. Performs semantic audits of paired specs and plans for quality gaps that static validation cannot catch.
 
@@ -17,7 +17,6 @@ color: purple
 model: sonnet
 effort: medium
 maxTurns: 10
-isolation: 'worktree'
 tools:
   - Read
   - Write

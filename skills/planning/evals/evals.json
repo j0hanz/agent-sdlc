@@ -4,22 +4,22 @@
     {
       "id": 1,
       "prompt": "I want to add authentication to my app. Can you help me write a spec and a plan?",
-      "expected_output": "Skill runs the spec interview (asks about goal, scope, constraints, interface, success criteria), scaffolds both plan/<name>.specs.md and plan/<name>.plan.md, authors a Contract-level spec with at minimum Goal/Requirements/Interfaces sections, runs validate.py --spec, runs sync.py to populate plan stubs with Satisfies: fields, then runs validate.py --cross to confirm coverage.",
+      "expected_output": "Skill runs the spec interview (asks about goal, scope, constraints, interface, success criteria), scaffolds both plan/<name>.specs.md and plan/<name>.plan.md, authors a Contract-level spec with at minimum Goal/Requirements/Interfaces sections, runs validate.py --spec, runs execute_plan_pipeline.py to populate plan stubs with Satisfies: fields and validate.py --review passes with ready_for_execution: true.",
       "files": [],
       "expectations": [
         "Skill asks at least one clarifying question before scaffolding (spec interview step)",
         "scaffold.py is run to produce both paired files",
         "Produced spec includes a Goal section with one sentence and a measurable completion signal",
         "Produced spec includes at least one SEC-### requirement",
-        "sync.py is run to populate plan stubs — plan contains Satisfies: fields",
-        "validate.py --cross is run and coverage matrix is reported",
+        "execute_plan_pipeline.py is run to populate plan stubs — plan contains Satisfies: fields",
+        "validate.py --review is run and returns ready_for_execution: true",
         "Skill does not jump straight to implementation or coder"
       ]
     },
     {
       "id": 2,
       "prompt": "Write a contract-level spec and plan for a REST API endpoint: POST /api/v1/users that creates a new user account. Request body: email (string, required) and password (string, required, min 8 chars). Returns the created user object (id, email, createdAt). Requires Bearer token auth. Must respond within 300ms. Cannot use the existing users_legacy table.",
-      "expected_output": "A complete Contract-level spec (all 7 mandatory sections, validate.py --spec returns 0 errors) paired with a plan (sync.py populated Satisfies: fields, validate.py --cross returns 0 errors, coverage matrix shows all REQs covered).",
+      "expected_output": "A complete Contract-level spec (all 7 mandatory sections, validate.py --spec returns 0 errors) paired with a plan (execute_plan_pipeline.py populated Satisfies: fields, validate.py --cross returns 0 errors, coverage matrix shows all REQs covered).",
       "files": [],
       "expectations": [
         "Spec includes all 7 mandatory Contract sections: Goal, Requirements, Constraints, Interfaces, Context, Acceptance Criteria & Validation, Examples & Edge Cases",
@@ -28,7 +28,7 @@
         "CON-### constraint captures the users_legacy table exclusion",
         "Interfaces section includes 400, 401, and at least one 5xx error case",
         "validate.py --spec is run with --level contract and returns 0 errors",
-        "sync.py is run and plan contains Satisfies: fields mapping tasks to REQ/SEC/PERF IDs",
+        "execute_plan_pipeline.py is run and plan contains Satisfies: fields mapping tasks to REQ/SEC/PERF IDs",
         "validate.py --cross returns 0 errors with full coverage matrix",
         "Reviewer subagent is spawned after cross-validation passes"
       ]
@@ -52,13 +52,13 @@
     {
       "id": 4,
       "prompt": "/planning --from-spec plan/auth-jwt.specs.md",
-      "expected_output": "Skill skips spec authoring, runs sync.py on the existing spec to generate plan stubs with Satisfies: fields, then validates with validate.py --plan and validate.py --cross.",
+      "expected_output": "Skill skips spec authoring, runs execute_plan_pipeline.py on the existing spec to generate plan stubs with Satisfies: fields, then validates with validate.py --review which passes with ready_for_execution: true.",
       "files": ["evals/fixtures/plan/auth-jwt.specs.md"],
       "expectations": [
         "Skill does not re-author or overwrite the existing spec file",
-        "sync.py is run on the existing spec to populate plan/<name>.plan.md",
+        "execute_plan_pipeline.py is run on the existing spec to populate plan/<name>.plan.md",
         "Plan contains Satisfies: fields",
-        "validate.py --plan and validate.py --cross are run",
+        "validate.py --review is run and passes with ready_for_execution: true",
         "Skill reports coverage matrix before handoff"
       ]
     },
@@ -77,13 +77,13 @@
     {
       "id": 6,
       "prompt": "/planning --spec-only \"Define the API contract for a password reset flow: user submits email, receives a time-limited reset link, clicks link to set a new password.\"",
-      "expected_output": "Skill produces only plan/<name>.specs.md (Contract depth by default). No plan file is created. validate.py --spec is run and returns 0 errors. Skill explicitly stops at Step 3 and does not proceed to sync.py or plan authoring.",
+      "expected_output": "Skill produces only plan/<name>.specs.md (Contract depth by default). No plan file is created. validate.py --spec is run and returns 0 errors. Skill explicitly stops at Step 3 and does not proceed to execute_plan_pipeline.py or plan authoring.",
       "files": [],
       "expectations": [
         "Only the spec file (plan/<name>.specs.md) is written — no plan file",
         "scaffold.py is run to create the spec file",
         "validate.py --spec is run and returns 0 errors",
-        "Skill stops after spec authoring and does not invoke sync.py or validate.py --plan",
+        "Skill stops after spec authoring and does not invoke execute_plan_pipeline.py or validate.py --review",
         "Skill communicates clearly that --spec-only mode stopped before planning"
       ]
     },
@@ -95,7 +95,7 @@
       "expectations": [
         "Skill does not create any new files",
         "Skill outputs the specified error message",
-        "Skill does not proceed to scaffold.py or sync.py"
+        "Skill does not proceed to scaffold.py or execute_plan_pipeline.py"
       ]
     },
     {
@@ -113,12 +113,12 @@
     {
       "id": 9,
       "prompt": "We have an existing spec plan/auth.specs.md with two requirements: REQ-001 (JWT issuance) and REQ-002 (rejecting invalid token). Now add a new requirement: SEC-001 (tokens must expire in 3600s). Re-sync the plan and show the updated cross-validation matrix.",
-      "expected_output": "Skill runs sync.py to add the new stub for SEC-001 without manual modifications to Satisfies fields, and verifies with validate.py --cross.",
+      "expected_output": "Skill runs execute_plan_pipeline.py to add the new stub for SEC-001 without manual modifications to Satisfies fields, and verifies with validate.py --review which passes with ready_for_execution: true.",
       "files": ["evals/fixtures/plan/auth.specs.md", "evals/fixtures/plan/auth.plan.md"],
       "expectations": [
         "Skill does not manually edit the Satisfies: field of the tasks",
-        "Skill runs sync.py to add the new stub for SEC-001",
-        "Skill runs validate.py --cross to check the updated coverage"
+        "Skill runs execute_plan_pipeline.py to add the new stub for SEC-001",
+        "Skill runs validate.py --review to check the updated coverage and returns ready_for_execution: true"
       ]
     },
     {

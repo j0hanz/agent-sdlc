@@ -1,0 +1,34 @@
+[
+  {
+    "name": "should-trigger-on-parallel-hypotheses",
+    "prompt": "Investigate these 3 independent bug hypotheses simultaneously",
+    "should_trigger": true,
+    "assertions": [
+      "multi-agent-dispatch skill is triggered",
+      "Dispatch Gate passes (independent hypotheses detected)",
+      "3 detective agents are dispatched (one per hypothesis)",
+      "All 5 prompt-contract fields present (SCOPE, OBJECTIVE, CONTEXT, CONSTRAINTS, OUTPUT)"
+    ]
+  },
+  {
+    "name": "should-trigger-on-parallel-module-exploration",
+    "prompt": "Explore auth and payment modules in parallel for the same pattern",
+    "should_trigger": true,
+    "assertions": [
+      "multi-agent-dispatch skill is triggered",
+      "2 explorer agents are dispatched",
+      "Parallel execution is coordinated",
+      "Results are aggregated from both agents"
+    ]
+  },
+  {
+    "name": "should-not-trigger-on-grep-search",
+    "prompt": "Find all usages of getUserById",
+    "should_trigger": false,
+    "assertions": [
+      "multi-agent-dispatch does NOT trigger",
+      "Grep tool is used directly instead",
+      "Single-agent problem does not warrant dispatch"
+    ]
+  }
+]

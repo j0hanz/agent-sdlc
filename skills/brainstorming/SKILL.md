@@ -61,6 +61,8 @@ Spawn via Agent tool. Do not redo their work manually.
 | `codebase-scanner` | `agents/codebase-scanner.md` | Start of Phase 1, before asking any questions  |
 | `design-proposer`  | `agents/design-proposer.md`  | Start of Phase 4, before presenting approaches |
 
+For parallel codebase scanning across multiple hypotheses, use the `multi-agent-dispatch` skill.
+
 ## Phase 1: Discovery (Read Before Asking)
 
 **Stakeholder probe:** If who will use the feature is not evident from context, ask this one question while the scanner runs: "Who interacts with this feature most — end users, internal teams, or other systems?" This single answer changes Phase 4 design tradeoffs significantly.

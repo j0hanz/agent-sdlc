@@ -17,7 +17,6 @@ color: yellow
 model: sonnet
 effort: high
 maxTurns: 10
-isolation: 'worktree'
 tools:
   - Read
   - Glob
@@ -54,4 +53,4 @@ action: Return JSON ONLY — no prose, no markdown wrappers, no explanations
 - **Blast Radius:** Over-scoped tokens or secrets.
 - **Injection:** Unsanitized dispatch inputs or artifact names.
 
-Use the provided JSON schema.
+Use the schema defined in `<skill-dir>/references/schemas.md`.

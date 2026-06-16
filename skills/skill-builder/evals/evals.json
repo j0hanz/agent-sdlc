@@ -1,0 +1,31 @@
+[
+  {
+    "name": "should-trigger-on-make-skill",
+    "prompt": "Make a skill that helps me write database queries",
+    "should_trigger": true,
+    "assertions": [
+      "skill-builder skill is triggered",
+      "Skill interview is conducted",
+      "eval pipeline is started or offered"
+    ]
+  },
+  {
+    "name": "should-trigger-on-skill-improvement",
+    "prompt": "My code-review skill trigger isn't working, improve it",
+    "should_trigger": true,
+    "assertions": [
+      "skill-builder skill is triggered",
+      "Improvement/diagnosis path is taken (not fresh creation)",
+      "Existing skill is analyzed before proposing changes"
+    ]
+  },
+  {
+    "name": "should-not-trigger-on-sql-question",
+    "prompt": "How do I write a SQL JOIN?",
+    "should_trigger": false,
+    "assertions": [
+      "skill-builder does NOT trigger",
+      "Request is answered directly or routed to documentation/web search"
+    ]
+  }
+]
