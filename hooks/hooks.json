@@ -6,17 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" session start",
-            "timeout": 10
-          },
-          {
-            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" explorer replay",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skills announce",
             "timeout": 10
           }
         ]
@@ -42,17 +32,6 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" shell-safety check",
             "timeout": 5,
-            "async": false
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard protect",
-            "timeout": 10,
             "async": false
           }
         ]
@@ -88,31 +67,6 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" format onWrite",
             "timeout": 45
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" debug scan",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skill-transitions checkWrite",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard expand",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash|run_shell_command",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skill-transitions checkBash",
-            "timeout": 10
           }
         ]
       },
@@ -147,11 +101,6 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" debug scan",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard restore",
             "timeout": 15
           }
         ]
