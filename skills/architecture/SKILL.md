@@ -2,7 +2,7 @@
 name: architecture
 description: "Use when a codebase has structural problems (circular deps, God modules, testability issues) or when designing new systems. Trigger on 'architecture review', 'where should this code live', 'too coupled', 'God class', 'design this system'."
 disable-model-invocation: false
-allowed-tools: Bash(node *), AskUserQuestion
+allowed-tools: Bash(node *), Bash(python *), AskUserQuestion
 ---
 
 # Architecture
@@ -93,10 +93,10 @@ Architectural refactoring fails when it adds indirection without adding depth. *
 Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files. All scripts support TypeScript, JavaScript, and Python projects — no configuration needed.
 
 - **INTELLIGENT PRE-CHECK**: First inspect the project dependencies (`package.json`, `pyproject.toml`, `requirements.txt`, or `setup.py`) to auto-detect the web framework, ORM, database client, and libraries (e.g., Express, Prisma, Django, FastAPI, SQLAlchemy, Stripe, etc.). Use these identified names in the scripts below instead of guessing.
-- **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node <skill-dir>/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out).
-- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` using the detected dependencies.
-- **RECOMMENDED — RUN SCRIPT**: **Git Coupling**: Run `node <skill-dir>/scripts/git-coupling.mjs [dir]` to find files that always change together in git history — the hidden coupling that import graphs cannot reveal.
-- **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `node <skill-dir>/scripts/detect-hotspots.mjs [dir] [infra_packages]` using the detected dependencies.
+- **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `python <skill-dir>/scripts/check_locality.py [dir]` to find circular dependencies and "God modules" (high fan-out).
+- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `python <skill-dir>/scripts/detect_bleed.py [domain_dir] [infra_packages]` using the detected dependencies.
+- **RECOMMENDED — RUN SCRIPT**: **Git Coupling**: Run `python <skill-dir>/scripts/git_coupling.py [dir]` to find files that always change together in git history — the hidden coupling that import graphs cannot reveal.
+- **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `python <skill-dir>/scripts/detect_hotspots.py [dir] [infra_packages]` using the detected dependencies.
 - **PATH & EXISTENCE VERIFICATION**: Before presenting any candidate paths to the user in Phase 2, verify that the files actually exist on the filesystem using read or find tools.
 
 **After scripts complete — spawn the `architecture-scanner` subagent** (`agents/architecture-scanner.md`):
@@ -205,7 +205,7 @@ Before proposing a structure, run this diagnosis:
 Load **MIGRATION_STRATEGIES.md** and name the appropriate strategy. Then offer to scaffold the boundary skeleton:
 
 ```bash
-node <skill-dir>/scripts/scaffold-boundary.mjs <domain> <pattern> [output-dir]
+python <skill-dir>/scripts/scaffold_boundary.py <domain> <pattern> [output-dir]
 # patterns: hexagonal | vertical-slice | layered | clean-architecture | cqrs
 ````
 
