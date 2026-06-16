@@ -28,22 +28,23 @@ Any thought like "this is simple", "I already know this", "just a quick question
 
 ## Routing Table
 
-| Task signal                                                                        | Skill                            |
-| :--------------------------------------------------------------------------------- | :------------------------------- |
-| "let's build X", "add feature", ambiguous design, unclear terminology              | `brainstorming`                  |
-| "write a spec", "create a plan", "define requirements"                             | `planning`                       |
-| Implementing code, writing functions, any non-trivial implementation               | `test-driven-development` ⚠️     |
-| "broken", "debug", "why is X failing", unexpected output, production error         | `diagnose`                       |
-| "review this", "check for bugs", before opening a PR (not yet open)                | `code-review`                    |
-| "clean up", "refactor", "simplify", "hard to read"                                 | `refactor`                       |
-| "architecture review", "too coupled", "where should this live", "God class"        | `architecture`                   |
-| "add hook", "block a tool", "auto-format", lifecycle guarantees                    | `create-hook`                    |
-| "build an agent", "create subagent", "agent prompt", "agent not working"           | `create-agent`                   |
-| "make a skill", "build skill", "skill not working", "turn workflow into skill"     | `skill-builder`                  |
-| "add CI", "set up release", GitHub Actions, `gh` CLI scripting                     | `github-automation`              |
-| PR already open and "ready for review"                                             | `code-review`                    |
-| "done", "ready to merge", "looks good" — PR not yet reviewed                       | `verification-before-completion` |
-| "update AGENTS.md", "improve agent instructions", "onboard me", trimming CLAUDE.md | `agents-maintainer`              |
+| Task signal                                                                         | Skill                            |
+| :---------------------------------------------------------------------------------- | :------------------------------- |
+| "let's build X", "add feature", ambiguous design, unclear terminology               | `brainstorming`                  |
+| "write a spec", "create a plan", "define requirements"                              | `planning`                       |
+| Implementing code, writing functions, any non-trivial implementation                | `test-driven-development` ⚠️     |
+| "broken", "debug", "why is X failing", unexpected output, production error          | `diagnose`                       |
+| "review this", "check for bugs", before opening a PR (not yet open)                 | `code-review`                    |
+| "clean up", "refactor", "simplify", "hard to read"                                  | `refactor`                       |
+| "architecture review", "too coupled", "where should this live", "God class"         | `architecture`                   |
+| "add hook", "block a tool", "auto-format", lifecycle guarantees                     | `create-hook`                    |
+| "build an agent", "create subagent", "agent prompt", "agent not working"            | `create-agent`                   |
+| "in parallel", "fan out", "dispatch agents", "scatter-gather", 2+ independent tasks | `multi-agent-dispatch`           |
+| "make a skill", "build skill", "skill not working", "turn workflow into skill"      | `skill-builder`                  |
+| "add CI", "set up release", GitHub Actions, `gh` CLI scripting                      | `github-automation`              |
+| PR already open and "ready for review"                                              | `code-review`                    |
+| "done", "ready to merge", "looks good" — PR not yet reviewed                        | `verification-before-completion` |
+| "update AGENTS.md", "improve agent instructions", "onboard me", trimming CLAUDE.md  | `agents-maintainer`              |
 
 > ⚠️ **Agentic skills** (`test-driven-development`, `code-review` execution mode) run autonomously for many tool calls. Before invoking, output: `This will start an autonomous session (~N tool calls). Proceed?` and wait for confirmation. Skip confirmation in subagent context.
 
@@ -80,6 +81,7 @@ Side paths — invoke at any stage when the signal matches:
 | Code is hard to follow or change       | `architecture` or `refactor` |
 | Building a new skill                   | `skill-builder`              |
 | Building a new agent or subagent       | `create-agent`               |
+| Independent tasks can run concurrently | `multi-agent-dispatch`       |
 | Adding a lifecycle hook                | `create-hook`                |
 | Updating project or agent instructions | `agents-maintainer`          |
 
