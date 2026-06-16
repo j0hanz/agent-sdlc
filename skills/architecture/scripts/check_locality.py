@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict, Any
 from utils.extractor import extract_imports, detect_lang
 from utils.graph import find_cycles
 from utils.walk import walk_dir
@@ -62,7 +62,9 @@ def import_candidates(from_file: str, imp: str, lang: str) -> List[str]:
     return candidates
 
 
-def run_locality_check(target_dir: str, exclude: Optional[List[str]] = None):
+def run_locality_check(
+    target_dir: str, exclude: Optional[List[str]] = None
+) -> Tuple[List[List[str]], List[Dict[str, Any]]]:
     if exclude is None:
         exclude = [
             "node_modules",

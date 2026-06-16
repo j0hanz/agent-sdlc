@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import List
+from typing import List, Dict, Any
 from utils.extractor import extract_imports_with_positions, detect_lang
 from utils.walk import walk_dir
 
@@ -39,7 +39,9 @@ DEFAULT_EXCLUDE = [
 ]
 
 
-def run_bleed_detection(target_dir: str, infra_packages: List[str]):
+def run_bleed_detection(
+    target_dir: str, infra_packages: List[str]
+) -> List[Dict[str, Any]]:
     files = walk_dir(target_dir, DEFAULT_EXCLUDE)
     violations = []
 

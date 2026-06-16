@@ -1,12 +1,12 @@
 import os
 import sys
 import subprocess
-from typing import List
+from typing import List, Dict, Any
 from utils.extractor import extract_imports, detect_lang
 from utils.walk import walk_dir
 
 
-def estimate_risk(target_files: List[str], root_dir: str):
+def estimate_risk(target_files: List[str], root_dir: str) -> List[Dict[str, Any]]:
     abs_root = os.path.abspath(root_dir)
     all_files = walk_dir(abs_root)
 

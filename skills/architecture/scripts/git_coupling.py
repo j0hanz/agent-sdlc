@@ -1,11 +1,13 @@
 import subprocess
 import os
 import sys
+from typing import Dict, Any
+from collections import Counter
 
 
 def run_git_coupling(
     target_dir: str, min_count: int = 3, top_n: int = 20, since: str = "6 months ago"
-):
+) -> Dict[str, Any]:
     abs_dir = os.path.abspath(target_dir)
 
     try:
@@ -42,23 +44,20 @@ def run_git_coupling(
         commits.append(current_commit)
 
     # Count co-occurrences
-    pair_counts = {}
-    file_counts = {}
+    pair_counts = Counter()
+    file_counts = Counter()
 
     for files in commits:
-        unique_files = sorted(
-            list(set(files))
-        )  # Ensure no duplicates in a single commit
-        for f in unique_files:
-            file_counts[f] = file_counts.get(f, 0) + 1
+        unique_files = sorted(list(set(files)))
+        file_counts.update(unique_files)
 
         if len(unique_files) < 2:
             continue
 
         for i in range(len(unique_files)):
             for j in range(i + 1, len(unique_files)):
-                key = tuple(sorted([unique_files[i], unique_files[j]]))
-                pair_counts[key] = pair_counts.get(key, 0) + 1
+                key = (unique_files[i], unique_files[j])
+                pair_counts[key] += 1
 
     # Format results
     pairs = []

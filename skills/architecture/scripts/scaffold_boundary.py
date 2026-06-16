@@ -141,7 +141,7 @@ def to_pascal(s: str) -> str:
     return "".join(w.capitalize() for w in words if w)
 
 
-def scaffold(domain: str, pattern: str, output_dir: str, force: bool = False):
+def scaffold(domain: str, pattern: str, output_dir: str, force: bool = False) -> None:
     if pattern not in PATTERNS:
         print(
             f"Unknown pattern: {pattern}. Available: {', '.join(PATTERNS.keys())}",

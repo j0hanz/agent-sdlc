@@ -1,15 +1,15 @@
 import os
 import sys
 import subprocess
-from typing import List
+from typing import List, Optional, Dict, Any
 from check_locality import run_locality_check
 from detect_bleed import run_bleed_detection
 from git_coupling import run_git_coupling
 
 
 def run_hotspot_detection(
-    dir_path: str, infra_pkgs: List[str] = None, since: str = "6 months ago"
-):
+    dir_path: str, infra_pkgs: Optional[List[str]] = None, since: str = "6 months ago"
+) -> List[Dict[str, Any]]:
     if infra_pkgs is None:
         infra_pkgs = []
 
@@ -42,7 +42,7 @@ def run_hotspot_detection(
         bleed_map[v["file"]] = bleed_map.get(v["file"], 0) + 1
 
     churn_map = {to_abs(f["file"]): f["commits"] for f in file_churn}
-    max_churn = max([f["commits"] for f in file_churn]) if file_churn else 1
+    max_churn = max((f["commits"] for f in file_churn), default=1)
 
     # Union of all files
     all_files = set(
