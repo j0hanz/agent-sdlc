@@ -5,7 +5,7 @@
 // debugging, surfaces them on stderr. The agent sees the report on the next
 // SessionStart-style review, and a human can read the log.
 
-import { sh, appendJsonl, debug as dbg } from '../utils.mjs';
+import { sh, appendJsonl, debug as dbg } from '../io.mjs';
 
 // pattern → human label. Kept conservative to minimize false positives.
 const PROBES = [

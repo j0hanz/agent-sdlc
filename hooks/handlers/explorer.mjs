@@ -3,7 +3,7 @@
 // turns. PreToolUse records a breadcrumb (side effect, async); SessionStart
 // replays recent breadcrumbs as context; SessionEnd flushes/rotates the trail.
 
-import { appendJsonl, readJsonlTail, getProjectDir } from '../utils.mjs';
+import { appendJsonl, readJsonlTail, getProjectDir } from '../io.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

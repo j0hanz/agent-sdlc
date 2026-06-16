@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { debug } from '../utils.mjs';
+import { debug } from '../io.mjs';
 
 // Resolved relative to this file so it works regardless of process cwd.
 const PLUGIN_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');

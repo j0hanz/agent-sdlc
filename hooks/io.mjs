@@ -1,4 +1,4 @@
-// Shared utilities for agent-dev hooks.
+// I/O adapters and environment helpers for agent-dev hooks.
 //
 // Every hook in this plugin is *additive-only*: it may inject context (stdout)
 // or perform a side effect, then exits 0. Hooks never block a tool, never open a
@@ -53,14 +53,6 @@ export function debug(...args) {
   if (isDebug()) process.stderr.write(`[hook] ${args.join(' ')}\n`);
 }
 
-/**
- * Telemetry honors the `telemetry_enabled` plugin config, surfaced as an env
- * var. Defaults on; set AGENT_DEV_TELEMETRY=0 to silence.
- */
-export function telemetryEnabled() {
-  return process.env.AGENT_DEV_TELEMETRY !== '0';
-}
-
 /** Append a JSON record as one line to a file under the project dir. Best-effort. */
 export function appendJsonl(relPath, record) {
   try {
@@ -108,12 +100,6 @@ export function trimJsonl(relPath, max) {
   }
 }
 
-/** Write a telemetry record (gated by config). Side effect only. */
-export function writeTelemetry(record) {
-  if (!telemetryEnabled()) return;
-  appendJsonl('.claude/telemetry.log', { timestamp: new Date().toISOString(), ...record });
-}
-
 /**
  * Run a command synchronously and return trimmed stdout, or null on any failure.
  * Used for read-only probes (git status, formatters) — never let a failed probe
@@ -133,22 +119,4 @@ export function sh(file, args, opts = {}) {
     debug(`sh ${file} failed`, String(err?.message || err));
     return null;
   }
-}
-
-/** Events whose plain `additionalContext` is injected into Claude's context. */
-const CONTEXT_EVENTS = new Set([
-  'SessionStart',
-  'UserPromptSubmit',
-  'PostToolUse',
-  'PostToolUseFailure',
-]);
-
-/**
- * Build the correct additive output object for an event so a handler can just
- * return a string. Returns null when the event can't inject context additively
- * (e.g. Stop, where injection requires blocking — which we never do).
- */
-export function asContext(event, text) {
-  if (!text || !CONTEXT_EVENTS.has(event)) return null;
-  return { hookSpecificOutput: { hookEventName: event, additionalContext: text } };
 }

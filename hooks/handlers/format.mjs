@@ -4,7 +4,7 @@
 // Python). Pure side effect: it never blocks (the write already happened) and
 // stays silent unless debugging.
 
-import { sh, debug, getProjectDir } from '../utils.mjs';
+import { sh, debug, getProjectDir } from '../io.mjs';
 import { existsSync } from 'node:fs';
 import { extname, join } from 'node:path';
 

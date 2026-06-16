@@ -4,7 +4,7 @@
 // uses additionalContext, never blocks, fires only on repeated failures to avoid
 // noise on one-off typos.
 
-import { appendJsonl, readJsonlTail, trimJsonl } from '../utils.mjs';
+import { appendJsonl, readJsonlTail, trimJsonl } from '../io.mjs';
 
 const STATE = '.claude/state/diagnose-nudge.jsonl';
 const THRESHOLD = 2; // nudge once this many Bash failures pile up in a session

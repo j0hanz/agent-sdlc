@@ -3,7 +3,7 @@
 // git. This belongs in a hook (not CLAUDE.md) because the content changes every
 // session: branch, uncommitted work, and recent commits.
 
-import { sh } from '../utils.mjs';
+import { sh } from '../io.mjs';
 
 /**
  * Build a compact orientation block for the current repo state.

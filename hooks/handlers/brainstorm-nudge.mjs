@@ -3,7 +3,7 @@
 // Additive only: it adds one line of context, never erases the prompt, fires at
 // most once per session, and honors the `brainstorm_nudge` plugin config.
 
-import { appendJsonl, readJsonlTail, trimJsonl } from '../utils.mjs';
+import { appendJsonl, readJsonlTail, trimJsonl } from '../io.mjs';
 
 const STATE = '.claude/state/brainstorm-nudge.jsonl';
 const WINDOW = 2000; // read window — large enough that a session marker can't scroll out

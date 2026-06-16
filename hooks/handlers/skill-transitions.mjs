@@ -1,4 +1,4 @@
-import { debug } from '../utils.mjs';
+import { debug } from '../io.mjs';
 
 /**
  * Hook handler to automate transitions between skills.

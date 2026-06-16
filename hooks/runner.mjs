@@ -17,7 +17,9 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { readStdin, writeTelemetry, debug, asContext } from './utils.mjs';
+import { readStdin, debug } from './io.mjs';
+import { writeTelemetry } from './telemetry.mjs';
+import { asContext } from './context.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
