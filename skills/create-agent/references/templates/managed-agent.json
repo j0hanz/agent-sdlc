@@ -3,7 +3,7 @@
   "//beta_header": "managed-agents-2026-04-01",
   "name": "my-managed-agent",
   "model": "claude-sonnet-4-6",
-  "system_prompt": "You are <role>. You <single job>. You never <forbidden action>.\n\nProcedure:\n1. ...\n\nBoundaries:\n- Do not ...\n\nOutput:\nReturn <exact final-message shape>.",
+  "system_prompt": "Role: <role>\nObjective: <goal>\nProcedure:\n  - Step 1: ...\nBoundaries:\n  - Limit: ...\nOutput:\n  - Format: ...",
   "tools": ["Read", "Grep", "Glob"],
   "skills": [
     {
