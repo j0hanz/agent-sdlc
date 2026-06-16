@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" explorer replay",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/explorer-replay.sh\"",
             "timeout": 10
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" brainstorm-nudge nudge",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/brainstorm-nudge.sh\"",
             "timeout": 10
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" shell-safety check",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/shell-safety.sh\"",
             "timeout": 5,
             "async": false
           }
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" webcache check",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/webcache-check.sh\"",
             "timeout": 10,
             "async": false
           }
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" explorer breadcrumb",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/explorer-breadcrumb.sh\"",
             "timeout": 10,
             "async": true
           }
@@ -61,21 +61,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit|write_file|replace",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" format onWrite",
-            "timeout": 45
-          }
-        ]
-      },
-      {
         "matcher": "WebFetch",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" webcache store",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/webcache-store.sh\"",
             "timeout": 15,
             "async": true
           }
@@ -88,7 +78,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" diagnose-nudge onFailure",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/diagnose-nudge.sh\"",
             "timeout": 10
           }
         ]
@@ -100,7 +90,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" debug scan",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/debug.sh\"",
             "timeout": 15
           }
         ]
@@ -112,7 +102,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" explorer flush",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/explorer-flush.sh\"",
             "timeout": 10
           }
         ]

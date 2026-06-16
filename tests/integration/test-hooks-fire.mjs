@@ -54,30 +54,3 @@ skipIfNoClaude('session hook writes telemetry log', async () => {
     cleanupProject(dir);
   }
 });
-
-skipIfNoClaude('format hook runs without error on a JS file', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'format-test-'));
-  const jsFile = join(dir, 'test.js');
-  writeFileSync(jsFile, 'const x=1;const y=2;\n', 'utf-8');
-
-  try {
-    const pluginRoot = process.cwd();
-    const input = JSON.stringify({ tool_name: 'Write', tool_input: { file_path: jsFile } });
-    // format.onWrite should exit 0 even if prettier is not installed (it is installed here)
-    execSync(
-      `echo ${JSON.stringify(input)} | node "${join(pluginRoot, 'hooks/runner.mjs')}" format onWrite`,
-      {
-        cwd: dir,
-        env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      },
-    );
-    // No assertion on content — just must not throw (exit non-zero)
-    assert.ok(true, 'format hook ran without error');
-  } catch (err) {
-    assert.fail(`format hook exited non-zero: ${err.stderr}`);
-  } finally {
-    cleanupProject(dir);
-  }
-});

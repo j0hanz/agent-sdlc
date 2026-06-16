@@ -115,7 +115,6 @@ Lifecycle hooks fire automatically during every Claude Code session.
 | `SessionStart`                                   | session, explorer, skills | Injects session context, explorer history, and skill list      |
 | `UserPromptSubmit`                               | brainstorm-nudge          | Encourages requirements discovery before implementation starts |
 | `PreToolUse` (Grep/Glob/Read/WebFetch/WebSearch) | explorer                  | Logs search breadcrumbs for context replay                     |
-| `PostToolUse` (Write/Edit/MultiEdit)             | format                    | Runs Prettier on every saved file                              |
 | `PostToolUse` (Write/Edit/MultiEdit)             | debug                     | Scans for new issues after each change                         |
 | `PostToolUseFailure` (Bash)                      | diagnose-nudge            | Prompts structured debugging when a command fails              |
 | `Stop`                                           | debug                     | Final scan before Claude stops                                 |
