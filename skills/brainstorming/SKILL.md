@@ -208,7 +208,7 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 
 1. Summarize the approved approach in one short paragraph: chosen option and key tradeoffs.
 2. If Phase 2 captured terms or Phase 3 captured risks: offer to write to `glossary.md` or `CONTEXT.md`. **If there are Open TBDs, offer to save them to `TODO.md` or a tracker.**
-3. **MANDATORY**: Produce the Design Brief below and write a corresponding `design-brief.json` file to disk. This JSON file is the standardized handoff artifact for the `planning` skill. Stop — do not invoke `/plan` or write code automatically. Conclude: "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
+3. **MANDATORY**: Produce the Design Brief below. Stop — do not invoke `/plan` or write code automatically. Conclude: "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
 
 **Required Markdown output format:**
 
@@ -241,24 +241,6 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 
 **First step:** [One concrete action to begin — a file to open, a test to write, an interface to define]
 **Open TBDs:** [Unresolved items with owner and due date, or "None"]
-```
-
-**Required JSON output format (`design-brief.json`):**
-Write this structure to `design-brief.json` to make inter-skill data extraction deterministic:
-
-```json
-{
-  "chosen_approach": "Approach letter + name",
-  "why": "Key tradeoff",
-  "scope": "System/component touched",
-  "constraints": ["Constraint 1", "Constraint 2"],
-  "interface": "Input and output description",
-  "architecture": ["Component 1: responsibility"],
-  "acceptance_criteria": ["Given [context], when [action], then [observable result]"],
-  "risks": [{ "risk": "Description", "likelihood": "H/M/L", "mitigation": "Action" }],
-  "first_step": "Action",
-  "open_tbds": ["Unresolved items"]
-}
 ```
 
 > **Downstream note:** The `planning` skill reads this brief directly. The **Scope**, **Constraints**, and **Interface** fields map to planning's intake fields of the same name — planning will skip its interview questions for any field already answered here.

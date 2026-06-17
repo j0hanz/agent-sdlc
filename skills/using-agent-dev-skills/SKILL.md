@@ -96,6 +96,8 @@ Side paths — invoke at any stage when the signal matches:
 | **Rigid** — phase gates, no skipping | `test-driven-development`, `diagnose`, `planning`, `verification-before-completion` | Every phase in order. Gates block. Never skip.     |
 | **Flexible** — adapt to context      | `brainstorming`, `refactor`, `code-review`, `architecture`                          | Apply judgment within phases. Complete all phases. |
 
+> **Excluded from this classification:** `multi-agent-development`, `multi-agent-dispatch`, and `using-agent-dev-skills` itself are orchestration/meta skills — they coordinate or dispatch to other skills rather than prescribing a single fixed procedure, so neither tier fits. `create-agent`, `create-hook`, `skill-builder`, and `agents-maintainer` are scoped builder/maintenance skills whose rigor is internal to the artifact they produce (an agent, hook, skill, or instruction file) rather than a Rigid/Flexible execution style; `github-automation` similarly wraps external tooling (`gh` CLI, CI config) rather than an internal procedure. None of these are missing — they just aren't binary-classifiable the way the table above requires.
+
 ---
 
 ## If a Routed Skill Is Missing

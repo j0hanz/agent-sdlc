@@ -1,6 +1,6 @@
 ---
 name: multi-agent-development
-description: "Orchestrate sequential implementation of a multi-task plan by delegating each task to a focused general-purpose implementer subagent and running two review gates (spec compliance, then code quality) before advancing. Trigger on 'implement the plan', 'execute this spec', 'build all tasks', 'work through the plan tasks', 'delegate implementation', 'agentic development', 'orchestrate these tasks', 'build each task with review', or whenever a planning output exists and implementation needs structured gate-checked execution. Distinct from multi-agent-dispatch: this skill runs tasks sequentially with per-task quality gates; use multi-agent-dispatch for concurrent fan-out of independent work."
+description: "For tasks with dependencies between them: execute a multi-task plan one task at a time, delegating each to a focused general-purpose implementer subagent and running two review gates (spec compliance, then code quality) before advancing. Trigger on 'implement the plan', 'execute this spec', 'build all tasks', 'work through the plan tasks', 'delegate implementation', 'agentic development', 'orchestrate these tasks', 'build each task with review', or whenever a planning output exists and implementation needs structured gate-checked execution. Distinct from multi-agent-dispatch: this skill runs tasks one after another with per-task quality gates, for work that depends on prior steps; use multi-agent-dispatch when tasks have no shared mutable state and can run concurrently."
 disable-model-invocation: false
 argument-hint: '[path to plan file OR paste plan tasks]'
 ---
@@ -118,6 +118,7 @@ Reviewer checks:
 - Tests cover error paths, not just happy path
 - No silent failures — every error path is handled or explicitly propagated
 - No single file grew by >150 lines due to this task alone
+- At least one test file/case exists for this task, OR the implementer's output contains an explicit written justification for zero tests (e.g. pure config/docs change with no testable surface) — neither present → CRITICAL, fails the gate
 
 **Fix loop:**
 

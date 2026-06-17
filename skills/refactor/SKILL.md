@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: "Trigger on 'clean up', 'refactor', 'simplify', 'improve', 'modernize', 'messy', 'hard to read', 'hard to test'. Also: API changes, discovered bugs, structural problems, proactive cleanup."
+description: "Trigger on 'clean up', 'refactor', 'simplify', 'improve', 'modernize', 'messy', 'hard to read'. Also: API changes, discovered bugs, single-file complexity, messy functions, proactive cleanup."
 disable-model-invocation: false
 ---
 
@@ -95,7 +95,7 @@ Announce non-trivial changes before making them. If tests fail after a step, sto
 
 1. Surface the bug clearly — describe what it is, what triggers it, and what the correct behavior should be.
 2. Do **not** fix it — not in this turn, not in a "separate section," not even in a clearly labeled step. Leave the buggy line intact in any refactored code you produce.
-3. Ask the user how to proceed: "I found a bug. Want me to fix it in a dedicated step after the refactor, or separately?"
+3. If the issue is a discrete logic/correctness bug, invoke the `diagnose` skill before continuing the refactor. Otherwise, ask the user how to proceed: "I found a bug. Want me to fix it in a dedicated step after the refactor, or separately?"
 
 Why: mixing structural and behavioral changes makes regressions undiagnosable. If a test fails after the refactor, you need to know whether the refactor broke it or the bug fix broke it. That is only possible when they are in separate changes.
 

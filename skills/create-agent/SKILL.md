@@ -1,6 +1,6 @@
 ---
 name: create-agent
-description: "Design, write, test agents and subagents. Trigger on 'build agent', 'create subagent', 'agent prompt', 'multi-agent', 'managed agent', 'agent not working', 'agent keeps triggering wrong thing'. Also: agent role selection, permission scoping, tool surface design, choosing between subagent/team/workflow/managed agent."
+description: "Design, write, test agents and subagents. Trigger on 'build agent', 'create subagent', 'agent prompt', 'multi-agent system design', 'managed agent', 'agent not working', 'agent keeps triggering wrong thing'. Also: agent role selection, permission scoping, tool surface design, choosing between subagent/team/workflow/managed agent."
 disable-model-invocation: false
 argument-hint: '[what the agent should do]'
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -75,6 +75,10 @@ Agent instructions MUST be generated in strict `markdown-kv` format.
 2. **Validate:** Run `python <skill-dir>/scripts/validate_agent.py path/to/your-agent.md`. MUST yield zero ERRORs before presentation.
 3. **Test Prompt:** Provide a concrete test input and expected output schema.
 4. **Verification:** **Invoke `verification-before-completion`** to ensure the new agent performs its role correctly and adheres to its defined boundaries.
+5. **Trigger Reliability Check:** Before considering delivery complete, inspect the new agent's or skill's frontmatter `description` field directly:
+   - **Concrete phrases:** It must list specific quoted trigger phrases a user would actually type (e.g., `'build agent'`), not vague verbs like "helps with" or "manages."
+   - **No collision:** Confirm none of its trigger phrases overlap with or could be mistaken for triggers belonging to sibling agent-dev skills (`agents-maintainer`, `architecture`, `brainstorming`, `code-review`, `create-hook`, `diagnose`, `github-automation`, `multi-agent-development`, `multi-agent-dispatch`, `planning`, `refactor`, `skill-builder`, `test-driven-development`, `using-agent-dev-skills`, `verification-before-completion`). If a phrase is ambiguous between two skills, narrow it to the scope this agent/skill actually owns.
+   - **Scope match:** The phrases must describe what the agent/skill _does_, not adjacent orchestration or execution concerns owned elsewhere.
 
 ---
 

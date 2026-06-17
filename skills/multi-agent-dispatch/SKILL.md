@@ -1,6 +1,6 @@
 ---
 name: multi-agent-dispatch
-description: "Fan out independent work to general-purpose subagents running concurrently in one batch, then integrate their results. Trigger on 'in parallel', 'dispatch agents', 'fan out', 'run these at once', 'split across agents', 'parallelize this', 'multiple agents', 'scatter-gather', or whenever 2+ independent domains (separate files, separate bugs, separate research questions, separate hypotheses) can progress with no shared mutable state. Canonical how-to for the parallel-execution step inside diagnose, brainstorming, code-review, refactor, and any skill that used to spawn its own custom subagent. Spawn only when the user asks for parallel/agent work or a parent skill phase calls for it."
+description: "For tasks with no shared mutable state: fan out to general-purpose subagents running concurrently in one batch, then integrate their results. Trigger on 'in parallel', 'dispatch agents', 'fan out', 'run these at once', 'split across agents', 'parallelize this', 'multiple agents', 'scatter-gather', or whenever 2+ independent domains (separate files, separate bugs, separate research questions, separate hypotheses) can progress without depending on each other. Canonical how-to for the parallel-execution step inside diagnose, brainstorming, code-review, refactor, and any skill that used to spawn its own custom subagent. Spawn only when the user asks for parallel/agent work or a parent skill phase calls for it."
 disable-model-invocation: false
 argument-hint: '[the independent tasks to split across agents]'
 ---
