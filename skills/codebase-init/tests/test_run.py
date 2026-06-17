@@ -74,3 +74,37 @@ def test_hard_rules_marker_malformed_warns(tmp_path: Path) -> None:
     result = validate_agents_md_file(path)
     assert result.success is True
     assert any("marker" in str(issue).lower() for issue in result.issues)
+
+
+def test_well_formed_marker_does_not_trigger_generic_advice_warn(
+    tmp_path: Path,
+) -> None:
+    # testing=always must not be flagged by the generic-advice heuristic,
+    # which otherwise matches the bare word "always".
+    body = _BASE_BODY.replace(
+        "## Commit Attribution",
+        "## Hard Rules\n\n"
+        "- **Commit policy:** placeholder\n"
+        "- **Project maturity:** placeholder\n"
+        "- **Testing rigor:** placeholder\n\n"
+        "<!-- codebase-init:hard-rules v1 commit=strict maturity=production testing=always -->\n\n"
+        "## Commit Attribution",
+    )
+    path = _write_agents_md(tmp_path, body)
+    result = validate_agents_md_file(path)
+    assert not any("generic advice" in str(issue).lower() for issue in result.issues)
+
+
+def test_generic_advice_inside_code_fence_is_ignored(tmp_path: Path) -> None:
+    body = _BASE_BODY.replace(
+        "## Commit Attribution",
+        "## Hard Rules\n\n"
+        "- **Commit policy:** placeholder\n"
+        "- **Project maturity:** placeholder\n"
+        "- **Testing rigor:** placeholder\n\n"
+        "```\n// always validate input\n```\n\n"
+        "## Commit Attribution",
+    )
+    path = _write_agents_md(tmp_path, body)
+    result = validate_agents_md_file(path)
+    assert not any("generic advice" in str(issue).lower() for issue in result.issues)

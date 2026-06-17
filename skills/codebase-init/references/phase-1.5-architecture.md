@@ -1,6 +1,6 @@
 # Phase 1.5 — Architecture & Convention Mapping
 
-From the Phase 1 reconnaissance data, extract these specific signals **before** proceeding to Phase 2.
+From the Phase 1 Environment Discovery data, extract these specific signals **before** proceeding to Phase 2 (Draft).
 
 ## Architecture Pattern Detection
 
@@ -39,24 +39,24 @@ Document these findings concisely (not as prose):
 
 ### Decision 2: What's the primary language?
 
-| Language              | Marker Files                                         | Template                                  |
-| --------------------- | ---------------------------------------------------- | ----------------------------------------- |
-| JavaScript/TypeScript | `package.json` (Node env)                            | **Base Template**                         |
-| Python                | `pyproject.toml`, `.venv/`, `poetry.lock`, `uv.lock` | **Python/uv Template**                    |
-| Go                    | `go.mod`, `go.sum`                                   | **Go Template**                           |
-| Rust                  | `Cargo.toml`, `Cargo.lock`                           | **Rust Template**                         |
-| Java                  | `pom.xml`, `build.gradle`                            | **Spring Boot Template**                  |
-| C# / .NET             | `.csproj`, `.sln`                                    | **.NET Template**                         |
-| JavaScript (Bun)      | `bun.lockb`                                          | **Bun Template**                          |
-| Multiple languages    | Various (2+ languages)                               | **Polyglot guidance** (separate sections) |
+| Language              | Marker Files                                         | guide.md §1 Template                     |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| JavaScript/TypeScript | `package.json` (Node env)                            | **Base template (single-package JS/TS)** |
+| Python                | `pyproject.toml`, `.venv/`, `poetry.lock`, `uv.lock` | **Python (uv / poetry / pip)**           |
+| Go                    | `go.mod`, `go.sum`                                   | **Go**                                   |
+| Rust                  | `Cargo.toml`, `Cargo.lock`                           | **Rust (Cargo)**                         |
+| Java                  | `pom.xml`, `build.gradle`                            | **Spring Boot (Java)**                   |
+| C# / .NET             | `.csproj`, `.sln`                                    | **.NET / C#**                            |
+| JavaScript (Bun)      | `bun.lockb`                                          | **Bun**                                  |
+| Multiple languages    | Various (2+ languages)                               | **Polyglot / Multi-Language Projects**   |
 
 ### Decision 3: Customize for Your Project
 
 Once you've selected a template:
 
-1. Keep all **required sections** (see "Required sections" in SKILL.md)
-2. Include **optional sections** that apply (API Patterns, CLI Commands, etc.)
-3. Delete optional sections that don't apply
+1. Keep all **required sections** (see "Required Sections" in SKILL.md Phase 2)
+2. Add any extra sections the project genuinely needs beyond the template (e.g., a deployment-specific section) — only if grounded in real repo signals, never speculative
+3. Drop template sections that don't apply to this project (e.g., a monorepo section in a single-package repo)
 4. Add **project-specific conventions** (3-7 bullets; see [guide.md](guide.md))
 
 For **monorepos specifically:**

@@ -1,6 +1,6 @@
 ---
 name: codebase-init
-description: "Generate, audit, or onboard a repo with a fresh AGENTS.md (wired to CLAUDE.md/GEMINI.md). Trigger on 'init agents.md', 'generate AGENTS.md', 'onboard this repo', 'setup AGENTS.md', 'this repo has no agent instructions'."
+description: 'Generate, audit, or onboard a repo with a fresh AGENTS.md (wired to CLAUDE.md/GEMINI.md). User-invoked only (not auto-triggered).'
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -35,7 +35,7 @@ Read `references/hard-rules.md` for the exact option wording and headers each pr
 Run all analysis subcommands to ground instructions in project reality:
 
 ```bash
-python <skill-dir>/scripts/run.py analyze-all . --max-depth 2
+python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" analyze-all . --max-depth 2
 ```
 
 This sequentially runs `analyze-env` (package manager, test runner, linter, monorepo structure), `find-dependencies` (installed dependency directories), and `scan-structure` (directory tree, respecting `.gitignore`).
@@ -46,14 +46,30 @@ This sequentially runs `analyze-env` (package manager, test runner, linter, mono
 
 **Required:** Read `references/phase-1.5-architecture.md` to select the project-specific template and detect tech stack patterns.
 
-## Required Sections
+## Phase 2: Draft
 
-| Section           | Requirement                                                                                                                         |
-| :---------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
-| **H1 Header**     | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                          |
-| **Description**   | Single sentence immediately following H1.                                                                                           |
-| **Toolchain**     | Package manager and critical environment commands.                                                                                  |
-| **File Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                |
-| **Conventions**   | 3-7 specific, actionable bullets (e.g., "Use AppError for all rethrows").                                                           |
-| **Hard Rules**    | Exactly 3 imperative bullets covering commit policy, project maturity, and testing rigor — derived from the Phase 0 survey answers. |
-| **Attribution**   | `Co-Authored-By: <Model Name>` at end of file.                                                                                      |
+**Required:** Read `references/guide.md` §1 for the template matching the language/framework selected in Phase 1.5, and §2 for the conventions and anti-patterns checklist. Fill in the template using only facts grounded in Phase 1/1.5 output — never invent commands or conventions.
+
+Every drafted `AGENTS.md` must satisfy the Required Sections below, including a `<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->` marker comment immediately after the Hard Rules section (values from the Phase 0 survey answers — see `references/hard-rules.md` for the value encoding) — this marker is what lets a future run skip Phase 0.
+
+### Required Sections
+
+| Section                  | Requirement                                                                                                                                                                          |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **H1 Header**            | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                                                                           |
+| **Description**          | Single sentence immediately following H1.                                                                                                                                            |
+| **Toolchain**            | Package manager and critical environment commands.                                                                                                                                   |
+| **File-Scoped Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                                                                 |
+| **Conventions**          | 3-7 specific, actionable bullets (e.g., "Use AppError for all rethrows").                                                                                                            |
+| **Hard Rules**           | Exactly 3 imperative bullets covering commit policy, project maturity, and testing rigor — derived from the Phase 0 survey answers, followed by the hard-rules marker comment above. |
+| **Attribution**          | `Co-Authored-By: <Model Name>` at end of file.                                                                                                                                       |
+
+## Phase 3: Write, Wire, Validate
+
+1. Write the drafted content to the root `AGENTS.md`.
+2. Run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" wire-agents AGENTS.md CLAUDE.md GEMINI.md` to symlink (falling back to hardlink/copy) the variant filenames.
+3. Run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md` and fix any FAIL-level issues before finishing. If a `PostToolUse` hook already runs `scripts/run_lint.sh` on save, this step is redundant but harmless.
+
+## Audit Mode
+
+If the user only wants to validate an existing `AGENTS.md` (no regeneration), skip Phases 0/1/1.5/2 entirely: run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md` and report the issues found.

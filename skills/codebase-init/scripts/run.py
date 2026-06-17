@@ -10,6 +10,7 @@ import fnmatch
 import json
 import os
 import re
+import shlex
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -484,8 +485,16 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 )
             )
 
+        in_code_block = False
         for index, line in enumerate(lines):
             line_num = index + 1
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                continue
+            if in_code_block:
+                continue
+            if line.strip().startswith("<!--") and line.strip().endswith("-->"):
+                continue
             if _FILLER_RE.search(line):
                 issues.append(
                     ValidationIssue(
@@ -594,7 +603,7 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                     continue
 
                 if "runner.mjs" in cmd:
-                    parts = cmd.split()
+                    parts = shlex.split(cmd)
                     try:
                         domain_idx = (
                             next(i for i, p in enumerate(parts) if "runner.mjs" in p)
@@ -620,7 +629,7 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                         )
 
                 elif "scripts" in cmd:
-                    script_path_str = cmd.split()[-1].replace(
+                    script_path_str = shlex.split(cmd)[-1].replace(
                         "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
                     )
                     if not Path(script_path_str).exists():

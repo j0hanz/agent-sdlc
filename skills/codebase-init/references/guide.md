@@ -39,6 +39,8 @@ Use **pnpm** — `pnpm install`, `pnpm dev`, `pnpm test`. `npm install` will bre
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
 
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
+
 ## Commit Attribution
 
 AI commits MUST include a `Co-Authored-By:` trailer with the agent model's name and byline.
@@ -131,6 +133,8 @@ Use **uv** — `uv sync`, `uv run pytest`, `uv add <pkg>`. Don't use raw `pip in
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
 
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
+
 ## Commit Attribution
 
 AI commits MUST include a `Co-Authored-By:` trailer.
@@ -168,6 +172,8 @@ Use **Go Modules** — `go mod tidy`, `go build`, `go test`.
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
 
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
+
 ## Commit Attribution
 
 AI commits MUST include a `Co-Authored-By:` trailer.
@@ -203,6 +209,8 @@ Use **Cargo** — `cargo build`, `cargo test`, `cargo clippy`.
 - **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
+
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
 
 ## Commit Attribution
 
@@ -243,6 +251,8 @@ Use **Maven** — `mvn clean install`, `mvn test`. Or **Gradle** — `gradle bui
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
 
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
+
 ## Commit Attribution
 
 AI commits MUST include a `Co-Authored-By:` trailer.
@@ -282,6 +292,8 @@ Use **dotnet** — `dotnet restore`, `dotnet build`, `dotnet test`.
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
 
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
+
 ## Commit Attribution
 
 AI commits MUST include a `Co-Authored-By:` trailer.
@@ -318,6 +330,8 @@ Use **bun** — `bun install`, `bun run`, `bun test`. Fast JavaScript runtime.
 - **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
 - **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
 - **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
+
+<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
 
 ## Commit Attribution
 
