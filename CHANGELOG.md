@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Replaced `agents-maintainer` with `codebase-init`: the detection/generation engine (`scripts/run.py`, `references/guide.md`, `references/phase-1.5-architecture.md`) was migrated unchanged, and a first-run 3-question hard-rule survey (commit & attribution policy, project maturity, testing rigor) was added. Survey answers render into a required `## Hard Rules` section in generated `AGENTS.md` files and are remembered via a trailing marker comment so re-runs don't re-ask.
+
 ## [1.0.0] - 2026-06-03
 
 ### Added
