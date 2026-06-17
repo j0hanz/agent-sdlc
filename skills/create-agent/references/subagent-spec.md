@@ -95,6 +95,16 @@ Common profiles:
 
 ---
 
+## Advanced Role Profiles
+
+Specialized agent configurations for complex workflows and "Team of Teams" orchestration.
+
+| Role          | Responsibilities                                                                                                                                                  | Capabilities                                                                                                                                                                 |
+| :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FeatureLead` | Orchestrates complex features by breaking them down into sub-tasks. Manages worker agents through hierarchical dispatch. Ensures alignment across multiple agents. | Permitted to use `multi-agent-dispatch` and `multi-agent-development` skills. Utilizes the **Shared Context Blackboard** for inter-agent communication and state management. |
+
+---
+
 ## Restricting which agents it can spawn
 
 Applies only when the agent runs as the main thread (via `--agent`).
