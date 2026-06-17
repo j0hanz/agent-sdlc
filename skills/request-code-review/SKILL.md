@@ -1,6 +1,6 @@
 ---
 name: request-code-review
-description: "Mandatory quality gate before delivery. Trigger on 'code review', 'review this diff', 'any issues with this', 'check for bugs', 'quality review'. ALSO trigger automatically: (1) after verification-before-completion confirms tests pass, (2) before opening a PR/shipping the change, (3) on any non-trivial change that will be committed. Do not skip — correctness bugs and security issues discovered here are cheaper to fix than after merge."
+description: "Mandatory quality gate before delivery. Trigger on 'code review', 'review this diff', 'check for bugs', 'quality review'. ALSO trigger automatically: (1) after verification-before-completion confirms tests pass, (2) before opening a PR, (3) before any non-trivial change is committed — this only surfaces the confirmation gate in Step 0, it does not start the scan unprompted."
 disable-model-invocation: false
 argument-hint: '[target: branch, commit, file, or "current diff"]'
 allowed-tools: Bash(git *), Agent
@@ -9,31 +9,28 @@ disallowed-tools: Write, Edit
 
 # request-code-review
 
-Get an unbiased review by dispatching a fresh-context subagent — never review your own work in the same thread that wrote it.
+Get an unbiased review by dispatching a fresh-context subagent. Never review your own work in the same thread that wrote it — you already rationalized every decision once; a subagent with no memory of the implementation reads the diff cold, the way a human reviewer would.
 
 ## Step 0: Confirm
 
-This will start an autonomous session (~N calls). Proceed? Wait for explicit user confirmation before scanning.
+State that this starts an autonomous review session and wait for explicit user confirmation before scanning.
 
 ## Pre-Review Checkpoint
 
 1. **Verification:** Confirm unit tests passed (`verification-before-completion`).
 2. **Gather context:** Get the commit range (`git log --oneline -10` if unsure which commit started this work) and a one-paragraph summary of what was supposed to be built (from the plan/spec if one exists, otherwise from the user's original request).
-
-## Why a fresh subagent
-
-The agent that wrote the code is biased toward believing it's correct — it already rationalized every decision once. A subagent with zero memory of the implementation will read the diff cold, the same way a human reviewer would. This matters most after `multi-agent-development`/`multi-agent-dispatch` work, but applies even to single-thread changes.
+3. **Diffable?** If there's nothing to diff against (e.g. uncommitted scratch work), skip dispatch — request `Before/After` blocks for each file and review inline instead. A subagent can't read code that isn't on disk or in git.
 
 ## Phase 1: Dispatch
 
-1. **Stat Check:** `git diff --stat {{base}}..{{head}}` to confirm the range is what you expect before dispatching.
-2. **Build the prompt:** Fill in `references/reviewer-dispatch-prompt.md` with the base commit, head commit, repo path, and the requirements summary. Point it at `references/patterns.md` for the pattern catalog.
-3. **Dispatch:** `Agent(subagent_type: general-purpose, description: "Code review of <range>", prompt: <filled template>)`. Do not run the scan yourself — the subagent does the reading and judging.
-4. **No git, no diff:** If there's nothing to diff against (e.g. uncommitted scratch work), request `Before/After` blocks for each file and review inline instead of dispatching — a subagent can't read code that isn't on disk or in git.
+1. **Stat check:** `git diff --stat {{base}}..{{head}}` to confirm the range is what you expect before dispatching.
+2. **Build the prompt:** Fill in `references/reviewer-dispatch-prompt.md` with the base commit, head commit, repo path, requirements summary, and the path to `references/patterns.md`.
+3. **Dispatch read-only:** `Agent(subagent_type: general-purpose, description: "Code review of <range>", prompt: <filled template>)`. Restrict the subagent's tools to exclude Write/Edit if the harness supports passing tool restrictions to the call — the prompt template's "read-only" instruction is not a substitute for an enforced restriction. Do not run the scan yourself; the subagent does the reading and judging.
+4. **Malformed output:** If the response is not a well-formed `## Code Review Result` block (truncated, crashed, wrong shape), re-dispatch once with the same prompt. If the retry also fails, tell the user the review could not complete and ask how to proceed — never treat a malformed response as PASS.
 
-## Phase 2: Receive the Result
+## Phase 2: Hand Off
 
-Take the subagent's `## Code Review Result` output verbatim — do not edit, soften, or re-summarize its findings before deciding what to do with them. Hand it directly to `receive-code-review` for processing (verification, pushback, and implementation order are that skill's job, not this one's).
+Take the subagent's `## Code Review Result` output verbatim — do not edit, soften, or re-summarize it. Hand it to `receive-code-review` for verification and implementation.
 
 ## Transition
 
@@ -42,7 +39,7 @@ Take the subagent's `## Code Review Result` output verbatim — do not edit, sof
 
 ## NEVER
 
-- Never review your own diff in the same thread you wrote it in — dispatch a subagent.
-- Never let the dispatched subagent edit files; it is read-only.
-- Never accept "looks good" without a stated `## Code Review Result` block.
+- Never review your own diff in the same thread you wrote it in.
+- Never let the dispatched subagent edit files — restrict its tools where possible; the prompt's read-only instruction alone is not enforcement.
+- Never accept a response without a stated `## Code Review Result` block; retry once, then escalate to the user.
 - Never review in isolation; always require a diff or explicit before/after blocks.

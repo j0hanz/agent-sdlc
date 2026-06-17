@@ -305,6 +305,8 @@ git grep -n "formatDate\|format_date\|toISO" --
 
 ## Plugin-Specific Patterns
 
+Tier 4 (Hygiene) checks, scoped to reviewing Claude Code plugin/skill/agent/hook files specifically — skip this section when the repo under review isn't a Claude Code plugin.
+
 ### Invalid Agent Color
 
 **What it is:** Agent frontmatter uses a hex code instead of a named color, which the Claude Code runtime does not support.
