@@ -70,6 +70,21 @@
         "Design Brief includes 'First step' field with a concrete action (not 'start coding')",
         "Design Brief includes 'Open TBDs' field"
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "We need to let users permanently delete their account and all associated data, triggered from a public-facing settings page.",
+      "expected_output": "Skill flags the design for Phase 5 Structured Review during Phase 1 (high blast radius: data deletion, external-facing). After Phase 4's Approval Gate, it dispatches Skeptic, Constraint Guardian, and User Advocate as separate general-purpose subagents in sequence, maintains a Decision Log, then dispatches an Arbiter subagent that returns APPROVED/REVISE/REJECT before producing the Design Brief.",
+      "files": [],
+      "expectations": [
+        "Skill flags the design for Phase 5 during Phase 1 or Phase 3 due to high blast radius (data deletion, public-facing)",
+        "Skill does NOT skip Phase 5 despite being confident in the chosen approach",
+        "Skill dispatches Skeptic, Constraint Guardian, and User Advocate as separate general-purpose subagent calls, in that order, not as one combined call",
+        "Skill maintains and updates a Decision Log with objections and resolutions between reviewer dispatches",
+        "Skill dispatches a separate Arbiter subagent rather than self-approving the design",
+        "Design Brief is only produced after the Arbiter returns APPROVED",
+        "Skill does NOT invent or use any custom agent type other than general-purpose"
+      ]
     }
   ]
 }

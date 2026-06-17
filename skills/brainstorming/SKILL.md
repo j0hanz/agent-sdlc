@@ -19,6 +19,7 @@ Structured discovery to prevent rework. Always run for new features or ambiguous
    - **Scope S + No Unknowns:** Jump to Phase 4 (Design).
    - **Scope XL:** Offer to split into sub-features.
    - **Ambiguous Terms:** Run Phase 2 (Clarity).
+   - **Scope L/XL or High Blast Radius** (auth, payments, data deletion, external-facing API): Flag now for Phase 5 (Structured Review) — confirm the flag before Phase 4 so the user isn't surprised by the extra step later.
 
 ## Phase 2: Domain Clarity (Term Definition)
 
@@ -34,7 +35,7 @@ Select 1-2 techniques (max 4 questions total):
 - **Premortem:** Imagine failure — what went wrong?
 - **Success Logic:** Define success behavior without using "functional".
 - **Anti-Scope:** Explicitly what we are NOT building.
-- **Trust Breach:** How would an attacker abuse this?
+- **Trust Breach:** How would an attacker abuse this? If this surfaces a concrete attack surface or sensitive data flow, flag for Phase 5 (Structured Review).
 
 ## Creative Checkpoint (Before Design)
 
@@ -47,8 +48,26 @@ Select 1-2 techniques (max 4 questions total):
 1. **Dispatch:** Spawn `design-proposer` agent (`references/design-proposer-prompt.md`) with compressed scan report and discovery findings.
 2. **Present:** Offer competing approaches with grounded tradeoffs.
 3. **Approval Gate:** Wait for explicit commitment to one approach. Do not guess.
+4. **Review Check:** If Phase 1 or Phase 3 flagged this design (Scope L/XL, high blast radius, or concrete attack surface), proceed to Phase 5 before the brief. Otherwise skip to Phase 6.
 
-## Phase 5: Transition (Design Brief)
+## Phase 5: Structured Review (Conditional)
+
+Only runs when flagged in Phase 1 or Phase 3, or when the user explicitly asks to "stress test" or "review" the design. Skip straight to Phase 6 otherwise — most S/M features don't need this.
+
+**Why a separate phase, not more questions to the user:** the chosen design needs an adversarial check that isn't biased toward the approach you just picked. A single agent reviewing its own work tends to rubber-stamp it, so each role below is a fresh `general-purpose` dispatch that only sees the design and the Decision Log — never the reasoning that produced the design — and **must** be invoked even if you're confident the design is sound. No custom agent definitions are used (per `AGENTS.md`); every dispatch is `general-purpose` configured by the prompt in `references/structured-review-prompt.md`.
+
+1. **Initialize the Decision Log** with the chosen approach as the first row (Decision / Alternatives / Objections / Resolution).
+2. **Dispatch in fixed order**, one at a time, each reading the current design + Decision Log so far:
+   - **Skeptic** — assumes the design fails in production; surfaces weaknesses, edge cases, YAGNI violations. May not propose redesigns.
+   - **Constraint Guardian** — checks performance, scalability, security/privacy, operational cost against the Codebase Context Report's Technical Constraints. May not debate product goals.
+   - **User Advocate** — checks usability, cognitive load, error handling from the end user's view. May not add features.
+3. **After each reviewer:** explicitly accept and revise, or reject with stated rationale. Append the outcome to the Decision Log before dispatching the next reviewer.
+4. **Dispatch the Arbiter** with the final design and the complete Decision Log. It returns one of `APPROVED` / `REVISE` / `REJECT` with rationale — this is the unbiased check that you, having designed the thing, should not perform on yourself.
+   - `REVISE`: apply the required changes, log them, re-dispatch the Arbiter only (not the full reviewer loop) to confirm.
+   - `REJECT`: return to Phase 4 with the Arbiter's rationale. Do not proceed to Phase 6.
+5. **Exit gate (all must hold before Phase 6):** all three reviewers were invoked; every objection is resolved or explicitly rejected with rationale; the Decision Log is complete; the Arbiter's disposition is `APPROVED`.
+
+## Phase 6: Transition (Design Brief)
 
 Produce mandatory `markdown-kv` brief:
 
@@ -58,7 +77,8 @@ Produce mandatory `markdown-kv` brief:
 - **Constraints:** [Stack, Timeline, Compliance]
 - **Interface:** [Input/Output surface]
 - **Architecture:** [Components + Responsibilities]
-- **Risk Register:** [Risk/Likelihood/Mitigation table]
+- **Risk Register:** [Risk/Likelihood/Mitigation table — pull rows from the Decision Log if Phase 5 ran]
+- **Review Disposition:** [Arbiter's APPROVED + date, or "Phase 5 not triggered"]
 - **First Step:** [Single concrete action]
 
 ## Red Flags
@@ -66,5 +86,6 @@ Produce mandatory `markdown-kv` brief:
 - Skipping brainstorming because "it's obvious".
 - Assumed terminology (e.g., Account vs. Customer).
 - Capturing "HOW" (code) before "WHAT" (domain).
-  mization and rigid designs.
+- Skipping Phase 5 for a flagged design because you're confident it's correct — confidence is exactly what the Arbiter exists to check.
+- Letting the Primary Designer (you) self-approve a flagged design instead of dispatching the Arbiter.
 - **NEVER** proceed without an explicit Approval Gate: Proceeding on assumptions guarantees misalignment with user intent.
