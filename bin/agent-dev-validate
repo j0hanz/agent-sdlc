@@ -2,4 +2,4 @@
 # Scans plugin structure for convention violations.
 # Usage: agent-dev-validate
 PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-exec python "${PLUGIN_ROOT}/skills/agents-maintainer/scripts/run.py" scan-structure
+exec python "${PLUGIN_ROOT}/skills/codebase-init/scripts/run.py" scan-structure
