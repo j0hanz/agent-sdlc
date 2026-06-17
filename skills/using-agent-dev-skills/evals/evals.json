@@ -90,12 +90,12 @@
     ]
   },
   {
-    "name": "route-to-agents-maintainer",
-    "prompt": "update the coder agent's description",
+    "name": "route-to-codebase-init",
+    "prompt": "generate an AGENTS.md for this repo",
     "should_trigger": true,
     "assertions": [
-      "Routing announcement: 'Routing to agents-maintainer:'",
-      "agents-maintainer skill is invoked"
+      "Routing announcement: 'Routing to codebase-init:'",
+      "codebase-init skill is invoked"
     ]
   },
   {

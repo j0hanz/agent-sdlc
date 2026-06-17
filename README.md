@@ -90,7 +90,7 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `github-automation`              | "GitHub Actions", "gh CLI", "automate workflow"            | Actions and `gh` CLI scripting                                 |
 | `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
 | `using-agent-dev-skills`         | (meta-routing)                                             | Routes to the right skill based on context                     |
-| `agents-maintainer`              | "update AGENTS.md", "update CLAUDE.md"                     | Authoring AGENTS.md and CLAUDE.md files                        |
+| `codebase-init`                  | "generate AGENTS.md", "init agents.md"                     | Generating/refreshing AGENTS.md and CLAUDE.md files            |
 
 ### Subagent Dispatch
 

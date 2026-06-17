@@ -52,7 +52,7 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 - **Quality/Validation:** `verification-before-completion`, `code-review`.
 - **Delivery:** `github-automation`.
 - **Ecosystem Building:** `skill-builder`, `create-agent`, `create-hook`.
-- **Documentation:** `agents-maintainer`.
+- **Documentation:** `codebase-init`.
 
 ## Lifecycle Chain
 
