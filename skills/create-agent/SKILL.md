@@ -8,14 +8,14 @@ allowed-tools: Bash(python *) Bash(python3 *)
 
 # Create Agent
 
-**Mindset:** Agents are expensive primitives. Use only for isolation, parallelism, or reusable narrow roles. For inline instructions, use a **skill**. For fixed lifecycle actions, use a **hook**.
+> **Agents are expensive primitives.** Use only for isolation, parallelism, or reusable narrow roles. For inline instructions, use a **skill**. For fixed lifecycle actions, use a **hook**.
 
 Design every agent through seven strict decisions. Output must be in `markdown-kv` format to minimize noise.
 
 ## 0. Prerequisite Check
 
-- **Context Flooding:** Subagent
-- **Reusable Role:** Subagent
+- **Context Flooding** (parent thread accumulating irrelevant tool output/noise): Subagent
+- **Reusable Role** (same narrow job invoked repeatedly across sessions): Subagent
 - **Independent Parallel Tasks:** Agent team / view
 - **Complex Orchestration / Multi-Agent:** Workflow (scatter-gather, saga, state machines)
 - **External API Call:** Managed Agent
@@ -75,10 +75,10 @@ Agent instructions MUST be generated in strict `markdown-kv` format.
 2. **Validate:** Run `python <skill-dir>/scripts/validate_agent.py path/to/your-agent.md`. MUST yield zero ERRORs before presentation.
 3. **Test Prompt:** Provide a concrete test input and expected output schema.
 4. **Verification:** **Invoke `verification-before-completion`** to ensure the new agent performs its role correctly and adheres to its defined boundaries.
-5. **Trigger Reliability Check:** Before considering delivery complete, inspect the new agent's or skill's frontmatter `description` field directly:
-   - **Concrete phrases:** It must list specific quoted trigger phrases a user would actually type (e.g., `'build agent'`), not vague verbs like "helps with" or "manages."
-   - **No collision:** Confirm none of its trigger phrases overlap with or could be mistaken for triggers belonging to sibling agent-dev skills (`agents-maintainer`, `architecture`, `brainstorming`, `code-review`, `create-hook`, `diagnose`, `github-automation`, `multi-agent-development`, `multi-agent-dispatch`, `planning`, `refactor`, `skill-builder`, `test-driven-development`, `using-agent-dev-skills`, `verification-before-completion`). If a phrase is ambiguous between two skills, narrow it to the scope this agent/skill actually owns.
-   - **Scope match:** The phrases must describe what the agent/skill _does_, not adjacent orchestration or execution concerns owned elsewhere.
+5. **Trigger Reliability Check** on the frontmatter `description`:
+   - Quoted, concrete phrases a user would actually type (e.g., `'build agent'`) — never vague verbs like "helps with."
+   - Zero overlap with sibling agent-dev skills (`agents-maintainer`, `architecture`, `brainstorming`, `code-review`, `create-hook`, `diagnose`, `github-automation`, `multi-agent-development`, `multi-agent-dispatch`, `planning`, `refactor`, `skill-builder`, `test-driven-development`, `using-agent-dev-skills`, `verification-before-completion`). Narrow any ambiguous phrase to the scope this skill actually owns.
+   - Phrases describe what it _does_, not adjacent concerns owned elsewhere.
 
 ---
 

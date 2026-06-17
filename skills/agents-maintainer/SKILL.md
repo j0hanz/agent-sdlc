@@ -10,19 +10,13 @@ allowed-tools: Bash(python *) Bash(python3 *)
 
 Produces a lean, high-signal `AGENTS.md` (and symlinked `CLAUDE.md`/`GEMINI.md`) grounded in the _actual_ project — package manager, scripts, layout, conventions — not generic boilerplate.
 
-The file is read into every agent's context on every turn. Every line costs tokens and attention. Treat it like a hot config file, not human documentation.
-
-## Mental model
-
-This file runs in every agent context, every turn.
-Every token competes with the user's actual request.
-Design for a reader who is skimming at 200 words per second.
+The file is read into every agent's context on every turn. Every line costs tokens and competes with the user's actual request. Treat it like a hot config file, not human documentation — design for a reader skimming at 200 words per second.
 
 ## Workflow
 
 This is a three-phase process. Do not skip phases.
 
-> **Resolving `<skill-dir>`:** Every script command below uses `<skill-dir>` as a placeholder for the absolute path to this skill's directory. In Claude Code, resolve it as `$CLAUDE_PLUGIN_ROOT/skills/agents-maintainer` or use the path returned by the skill loader. Example: `python /home/user/.claude/skills/agents-maintainer/scripts/run.py analyze-env .`
+> **`<skill-dir>`** = this skill's absolute directory path (`$CLAUDE_PLUGIN_ROOT/skills/agents-maintainer`, or the path returned by the skill loader). Used as-is in every command below.
 
 ### Express Mode (Skip Phases)
 
@@ -100,8 +94,6 @@ Use the template selected in Phase 1.5 (`references/phase-1.5-architecture.md`),
 - **Headers + bullets + tables + code blocks.** No paragraphs of prose. Agents skim, not read.
 - **Reference, don't embed.** "See `CONTRIBUTING.md` for setup" beats restating setup. The agent will read the linked file if needed.
 - **Document storage locations.** Explicitly state where dependencies and virtual environments live (e.g., "Dependencies are in `.venv`"). This helps agents understand the workspace environment and avoid accidental deletion or re-installation.
-- **Don't restate linter configs.** If `.eslintrc` says no `console.log`, that's the linter's job. Lint output will surface it.
-- **NEVER list auto-discovered tools.** Do NOT document the number of MCP tools, resources, or prompts. The agent already knows its capabilities via the system prompt.
 - **Prefer file-scoped commands.** `pnpm tsc --noEmit src/foo.ts` is 10× cheaper than `pnpm build`. Always include the per-file versions when the toolchain supports them.
 - **Progressive disclosure.** Move language rules, framework conventions, and detailed guidelines to referenced files (`docs/TESTING.md`, `docs/TYPESCRIPT.md`). Root AGENTS.md references them with a one-liner: _"For TypeScript conventions, see `docs/TYPESCRIPT.md`"_. Rules load only when relevant — other tasks pay no token cost.
 - **Capabilities over structure.** Describe what modules _do_, not where files _live_. File trees go stale and agents can `ls`. Point at 2-3 critical files to read — not a directory listing.
@@ -245,9 +237,7 @@ Example:
 
 ## Anti-patterns
 
-**MANDATORY — READ ENTIRE FILE:** `references/guide.md` if you are refactoring an existing instructions file.
-
-The most common failure modes and _why_ they hurt are documented in `references/guide.md`. Read it once if you're refactoring an existing file — the patterns there are what you're cutting.
+**MANDATORY — READ ENTIRE FILE:** `references/guide.md` if refactoring an existing instructions file — it documents the failure modes you're cutting.
 
 **NEVER include the following in agent instructions:**
 

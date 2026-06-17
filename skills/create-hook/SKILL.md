@@ -7,7 +7,7 @@ argument-hint: '[what the hook should guarantee]'
 
 # Create Hook
 
-A hook trades latency and complexity for a **guarantee**: an action that happens every time, deterministically, instead of relying on the model to choose it. Engineer every hook by working through seven decisions, then test it before shipping.
+A hook trades latency and complexity for a **guarantee**: an action that happens every time, deterministically, instead of relying on the model to choose it.
 
 **Core mindset:** every hook adds latency to its event and is a maintenance liability. Only add one when the deterministic guarantee is worth more than the cost. If judgment is needed rather than a fixed rule, reach for a `prompt`/`agent` hook or a skill instead.
 
@@ -23,7 +23,7 @@ A hook trades latency and complexity for a **guarantee**: an action that happens
 | A one-off action right now                                                         | Just do it — no hook                     |
 | Inject the same context on _every_ session                                         | `CLAUDE.md`, not a `SessionStart` hook   |
 
-If a hook is still the answer, walk the seven decisions below.
+If a hook is still the answer, work through these seven decisions in order, then test before shipping.
 
 ---
 
@@ -55,25 +55,19 @@ This sentence determines the event (the _when_), the matcher (the _which_), and 
 
 Choose the lifecycle point from the _when_. The most common:
 
-| Goal                                                      | Event                              | Can block?          | Output schema shortcut                                                             |
-| :-------------------------------------------------------- | :--------------------------------- | :------------------ | :--------------------------------------------------------------------------------- |
-| Guard / block a tool call before it runs                  | `PreToolUse`                       | Yes                 | exit 2 + stderr, or `hookSpecificOutput.permissionDecision` (allow/deny/ask/defer) |
-| React after a tool **actually ran** (format, lint, log)   | `PostToolUse`                      | No (already ran)    | `decision: "block"` + `reason` to feed back to Claude                              |
-| Inject context / env at session begin or resume           | `SessionStart`                     | No                  | plain stdout on exit 0 becomes context automatically                               |
-| Validate or add context to a prompt before Claude sees it | `UserPromptSubmit`                 | Yes                 | plain stdout on exit 0 becomes context; exit 2 erases prompt                       |
-| Force Claude to keep working until a condition holds      | `Stop`                             | Yes                 | exit 2 + stderr reason; **check `stop_hook_active` first**                         |
-| Auto-answer or modify a permission dialog                 | `PermissionRequest`                | Yes                 | `hookSpecificOutput.decision.behavior` (allow/deny)                                |
-| Desktop notification when Claude needs input              | `Notification`                     | No                  | side effects only                                                                  |
-| Re-inject context after compaction                        | `SessionStart` (matcher `compact`) | No                  | plain stdout on exit 0 becomes context automatically                               |
-| Audit/guard config edits                                  | `ConfigChange`                     | Yes (except policy) | `decision: "block"` + `reason`                                                     |
-
-**Timing rule:** Use `PreToolUse` to block or modify before execution. Use `PostToolUse` to react to commands that _actually ran_ — `PreToolUse` fires even for commands later blocked by other hooks, so audit logs and formatters belong on `PostToolUse`.
+| Goal                                                      | Event                              | Can block?          | Output schema shortcut                                                                                                                                                                                                           |
+| :-------------------------------------------------------- | :--------------------------------- | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guard / block a tool call before it runs                  | `PreToolUse`                       | Yes                 | exit 2 + stderr, or `hookSpecificOutput.permissionDecision` (allow/deny/ask/defer). Fires even for calls another hook later blocks — don't treat it as proof the call happened.                                                  |
+| React after a tool **actually ran** (format, lint, log)   | `PostToolUse`                      | No (already ran)    | `decision: "block"` + `reason` to feed back to Claude. Matching `Edit\|Write` misses files changed via `Bash` (`sed`, `>`) — also match `Bash`, or add a `Stop` hook that scans the working tree, for compliance-grade coverage. |
+| Inject context / env at session begin or resume           | `SessionStart`                     | No                  | plain stdout on exit 0 becomes context automatically; no JSON needed. Prefer over `CLAUDE.md` only when content changes between sessions.                                                                                        |
+| Validate or add context to a prompt before Claude sees it | `UserPromptSubmit`                 | Yes                 | plain stdout on exit 0 becomes context (no JSON needed); exit 2 erases prompt                                                                                                                                                    |
+| Force Claude to keep working until a condition holds      | `Stop`                             | Yes                 | exit 2 + stderr reason; **check `stop_hook_active` first**                                                                                                                                                                       |
+| Auto-answer or modify a permission dialog                 | `PermissionRequest`                | Yes                 | `hookSpecificOutput.decision.behavior` (allow/deny)                                                                                                                                                                              |
+| Desktop notification when Claude needs input              | `Notification`                     | No                  | side effects only                                                                                                                                                                                                                |
+| Re-inject context after compaction                        | `SessionStart` (matcher `compact`) | No                  | plain stdout on exit 0 becomes context automatically                                                                                                                                                                             |
+| Audit/guard config edits                                  | `ConfigChange`                     | Yes (except policy) | `decision: "block"` + `reason`                                                                                                                                                                                                   |
 
 **The full table of ~30 events, their input fields, output schemas, and exit-code-2 behavior lives in [references/events.md](references/events.md). Read it before committing to an event** — pick the one whose timing and blocking ability match the guarantee.
-
-**Coverage trap:** `PreToolUse`/`PostToolUse` on `Edit|Write` does **not** catch files changed via `Bash` (e.g. `sed`, `>`). For compliance scanning, add a `Stop` hook that scans the working tree once per turn, or also match `Bash`.
-
-**Context injection:** For `SessionStart` and `UserPromptSubmit`, plain stdout on exit 0 is automatically appended to Claude's context — no JSON required. This is the primary mechanism for injecting dynamic content (git log, env state, etc.). For `SessionStart`, prefer a hook over `CLAUDE.md` only when the content changes between sessions; static instructions belong in `CLAUDE.md`.
 
 ---
 
@@ -169,7 +163,8 @@ Exit `0` and print JSON to stdout. Universal fields: `continue` (false = Claude 
 - `PermissionRequest`: `hookSpecificOutput.decision.behavior` = `allow`/`deny`.
 - `UserPromptSubmit`/`SessionStart`: `hookSpecificOutput.additionalContext` to inject text.
 
-> Do not mix: if you exit `2`, stdout JSON is ignored. `"allow"` skips the prompt but **cannot** override a deny rule from settings — hooks tighten, never loosen.
+> **Rule 1:** Exit `0` when emitting JSON. Exiting `2` makes stdout JSON ignored entirely — pick one signalling style per handler.
+> **Rule 2:** `permissionDecision: "allow"` only skips the confirmation prompt. It can never override a `deny` rule already set in settings — hooks tighten permissions, never loosen them.
 
 ### Handler template (bash)
 

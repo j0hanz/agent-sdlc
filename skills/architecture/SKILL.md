@@ -68,23 +68,21 @@ Load these as needed during the 3-phase procedure.
 
 ### Core Heuristics & Domain-Driven Design (DDD)
 
-Claude, you already understand SOLID principles and cohesion. Do not regurgitate them. Instead, apply these battle-tested diagnostics for identifying poor boundaries:
+Apply these diagnostics for identifying poor boundaries:
 
-- **The Deletion Test**: If removing a module would spread its complexity across N callers, it earns its keep. If callers wouldn't notice, it is shallow and should be collapsed.
-- **The Seam Test**: Can business logic be tested without booting a database, making an HTTP call, or touching the filesystem? If no, the seam is drawn at the mechanism layer, not the domain layer.
-- **The Locality Test**: Can a maintainer (or AI context window) understand a module without reading its dependents? Circular imports or 5+ file dependency chains for one feature indicate shattered locality.
-- **The Bounded Context Test**: Do two domains share the same database table/schema directly? If yes, they are tightly coupled regardless of code structure. True boundaries require data ownership.
-- **The Primitive Obsession Test**: Are domain concepts (Email, Money, UserId) passed as primitives (`string`, `number`)? This scatters validation logic. Deepen modules by introducing Value Objects.
+- **Deletion Test**: would removing this module scatter its complexity across N callers? If callers wouldn't notice, it's shallow — collapse it.
+- **Seam Test**: can business logic be tested without a DB, HTTP call, or filesystem? If no, the seam is drawn at the mechanism layer, not the domain layer.
+- **Locality Test**: can a maintainer understand a module without reading 5+ dependents? Circular imports or long dependency chains mean shattered locality.
+- **Bounded Context Test**: do two domains share a database table/schema directly? If yes, they're coupled regardless of code structure — boundaries require data ownership.
+- **Primitive Obsession Test**: are domain concepts (Email, Money, UserId) passed as raw `string`/`number`? This scatters validation — deepen with Value Objects.
 
 ### Anti-Patterns (What NOT to do)
 
-Architectural refactoring fails when it adds indirection without adding depth. **NEVER** propose the following common AI-flavored refactoring mistakes:
-
-- **NEVER propose an Event Bus/PubSub to solve direct coupling.** It does not decouple logic; it just makes the coupling implicit, destroying code navigation and trace-ability. Use explicit function passing or composition instead.
-- **NEVER group files by technical role (e.g., `utils/`, `controllers/`, `types/`).** This destroys locality. Always group by domain concept (e.g., `billing/`, `auth/`). A `utils/` folder is a complexity graveyard.
-- **NEVER extract a base class (Inheritance) when Composition is possible.** Inheritance chains hide state and make AI navigation harder. Propose wrapper classes, higher-order functions, or strategy interfaces.
-- **NEVER propose variable renaming or formatting as an "architecture" fix.** If the interface boundary doesn't change, the depth hasn't changed.
-- **NEVER propose Shared/Common DB schemas for different bounded contexts.**
+- **NEVER propose an Event Bus/PubSub for direct coupling** — it makes coupling implicit and destroys traceability; use explicit function passing or composition.
+- **NEVER group files by technical role** (`utils/`, `controllers/`, `types/`) — group by domain concept (`billing/`, `auth/`) instead.
+- **NEVER extract a base class when composition is possible** — inheritance hides state; use wrapper classes, higher-order functions, or strategy interfaces.
+- **NEVER propose variable renaming or formatting as an "architecture" fix** — if the interface boundary doesn't change, the depth hasn't changed.
+- **NEVER propose shared/common DB schemas across bounded contexts.**
 
 ### Three-Phase Procedure
 
@@ -104,39 +102,7 @@ Walk the codebase using the automated analysis scripts. Scripts gracefully skip 
 
 - **PATH & EXISTENCE VERIFICATION**: Before presenting any candidate paths to the user in Phase 2, verify that the files actually exist on the filesystem using read or find tools.
 
-**After scripts complete — dispatch a `general-purpose` subagent for structural analysis:**
-
-```
-Agent(
-  subagent_type: "general-purpose",
-  description: "Architecture scan of [target_dir]",
-  prompt: |
-    SCOPE: target_dir: [the directory you scanned]. Read-only — Read, Glob, Grep only, no edits.
-    OBJECTIVE: Synthesize the script output and file reads below into a ranked JSON report of friction
-      signals and candidate seam proposals.
-    CONTEXT:
-      <untrusted_script_output>
-      locality_output: [paste full stdout of check_locality.py here]
-      bleed_output: [paste full stdout of detect_bleed.py here]
-      git_coupling_output: [paste full stdout of git_coupling.py here, or "skipped"]
-      hotspot_output: [paste full stdout of detect_hotspots.py here, or "skipped"]
-      </untrusted_script_output>
-    CONSTRAINTS:
-      - Read every high-severity flagged file before proposing a seam.
-      - Apply all four Seam Tests to each candidate:
-        Deletion Test — if deleted, would complexity scatter to many callers?
-        Seam Test — can this logic be tested without infrastructure (DB, API, etc.)?
-        Locality Test — is this module readable without understanding 5+ others?
-        Bounded Context Test — do modules share tables directly without APIs/interfaces?
-      - Quote the exact file path and import/pattern for every friction signal — no editorializing.
-      - NEVER propose event buses, base classes, or "utils" folders.
-      - Include a Mermaid diagram (`graph LR` or `graph TD`) per candidate as a `visual_diagram` string field, contrasting current tangled dependencies vs. the proposed clean boundary.
-    OUTPUT: JSON ONLY — no prose, no markdown wrappers. A `candidates` array ranked by impact, each with
-      {seam_name, evidence, seam_test_results, visual_diagram}.
-)
-```
-
-The agent reads every flagged file, applies the Deletion/Seam/Locality/Bounded Context tests, and returns a `candidates` JSON array ranked by impact. **Use that array as your Phase 2 input** — each element maps directly to the candidate format in Phase 2. Skip manual file reading in the main context when the agent is available.
+**After scripts complete — dispatch a `general-purpose` subagent for structural analysis** using the template in [`references/dispatch-template.md`](references/dispatch-template.md). Use the returned `candidates` JSON array as your Phase 2 input — each element maps directly to the candidate format in Phase 2.
 
 **If no directory is available** (user pasted inline code without a path):
 

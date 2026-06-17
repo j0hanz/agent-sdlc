@@ -42,7 +42,7 @@ GitHub Actions is a YAML-on-top-of-event-handlers product with a lot of footguns
 
 Follow these steps in order. Don't skip validation — runtime-only feedback is what makes Actions painful.
 
-#### 1. Orient
+#### 1. Orient, then classify intent
 
 Before writing anything:
 
@@ -52,9 +52,7 @@ ls -la .github/workflows/ 2>/dev/null || echo "no workflows yet"
 
 If the user pointed at a specific file, read it first. If they're scaffolding from scratch, decide the filename — short, kebab-case, ends in `.yml` (e.g., `ci.yml`, `release.yml`, `deploy-prod.yml`).
 
-#### 2. Classify intent
-
-Pick one. The classification drives which reference to load:
+Then pick one intent. The classification drives which reference to load:
 
 | Intent                               | Load this reference                                                                                              |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
@@ -71,7 +69,7 @@ Pick one. The classification drives which reference to load:
 
 You don't have to read the whole reference — jump to the section. **Do NOT load** references for intents you didn't select.
 
-#### 3. Apply the recipe
+#### 2. Apply the recipe
 
 Write the workflow file using the recipe as a starting point, then adapt to the user's stack.
 
@@ -83,9 +81,7 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
    ```
 
-   **IMPORTANT:** Verify `gh auth status` before running pinning scripts. If not authenticated, explain this to the user as pinning requires API access.
-
-   Use `<skill-dir>/scripts/pin_actions.py` to resolve tags → SHAs in bulk.
+   Use `<skill-dir>/scripts/pin_actions.py` to resolve tags → SHAs in bulk. The script fails loudly per-ref (stderr + non-zero exit) if it can't resolve a SHA, including on auth/network failures — no manual `gh auth status` pre-check needed.
 
 2. **NEVER write a workflow without `permissions:` at the top.** Default to least privilege at the workflow level, widen per-job only where needed:
 
@@ -106,7 +102,7 @@ Write the workflow file using the recipe as a starting point, then adapt to the 
      run: echo "$PR_TITLE"
    ```
 
-#### 4. Validate before claiming done
+#### 3. Validate before claiming done
 
 ```bash
 python <skill-dir>/scripts/lint.py .github/workflows/<file>.yml
@@ -147,7 +143,7 @@ The agent evaluates 7 semantic dimensions: OIDC trust scope, `pull_request_targe
 - `summary.medium` or `summary.low` → disclose findings to the user; they do not block completion
 - `clean: true` → workflow is semantically secure; proceed
 
-#### 5. Verify the trigger fires
+#### 4. Verify the trigger fires
 
 - `push`/`pull_request` workflow → push a branch and watch it
 - `workflow_dispatch` → `gh workflow run <file>.yml`

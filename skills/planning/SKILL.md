@@ -18,11 +18,11 @@ Every plan task carries `Satisfies: REQ-001, SEC-002` linking it to spec IDs. `v
 
 ## Depth Dial
 
-| Depth                  | Spec rigor                                        | Plan format       | Use when                   |
-| ---------------------- | ------------------------------------------------- | ----------------- | -------------------------- |
-| `sketch`               | Goal + top REQs + rough interfaces                | Compact phases    | Early idea, exploratory    |
-| `contract` _(default)_ | All 8 sections, interface errors mandatory        | Atomic tasks      | Feature-ready, build-ready |
-| `blueprint`            | Contract + rollback, error cases, Mermaid diagram | Narrative runbook | Production-critical        |
+| Depth                  | Spec rigor                                        | Plan format       | Use when                                                                          |
+| ---------------------- | ------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------- |
+| `sketch`               | Goal + top REQs + rough interfaces                | Compact phases    | Request explicitly says "rough"/"early idea", or scope/interface is still UNKNOWN |
+| `contract` _(default)_ | All 8 sections, interface errors mandatory        | Atomic tasks      | Default — no explicit depth, and goal + interface are both known                  |
+| `blueprint`            | Contract + rollback, error cases, Mermaid diagram | Narrative runbook | Request names production rollout, migration, or an on-call/incident-facing system |
 
 ## Modifiers
 
@@ -34,7 +34,7 @@ Every plan task carries `Satisfies: REQ-001, SEC-002` linking it to spec IDs. `v
 
 ## Step-by-Step Execution
 
-**skill-dir:** directory containing this `SKILL.md` file (use the absolute path of this file's parent directory if `$CLAUDE_PLUGIN_ROOT` is not set). All `python <skill-dir>/scripts/...` commands resolve against it.
+**Note on resolution:** use the absolute path of the directory containing this `SKILL.md` file as `<skill-dir>` (or `$CLAUDE_PLUGIN_ROOT/skills/planning` if available).
 
 ### Step 1 — Intake
 

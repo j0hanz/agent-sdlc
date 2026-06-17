@@ -9,22 +9,28 @@ argument-hint: '[the independent tasks to split across agents]'
 
 **Mindset:** One agent per independent problem domain, all launched in one batch, working concurrently. Agents are expensive — dispatch for genuine parallelism across isolated domains, never to look busy or to "be thorough."
 
-## Dispatch Gate — pass BOTH before spawning anything
+## Dispatch Gate — answer BOTH questions, in order, before spawning anything
 
-```text
-1. AUTHORIZED  user asked for parallel/agent work  OR  a parent skill phase calls for it
-               (diagnose P3 · brainstorming Dispatch · code-review fan-out · refactor split).
-               "multiple angles" / "be thorough" is NOT authorization — do that inline.
-2. INDEPENDENT 2+ domains, no shared mutable state: separate files, bugs, questions, hypotheses.
-```
+**Question 1 — AUTHORIZED?** Did the user ask for parallel/agent work, or does a parent skill phase
+call for it (diagnose P3 · brainstorming Dispatch · code-review fan-out · refactor split)?
+"Multiple angles" / "be thorough" is NOT authorization — do that inline instead.
 
-| Dispatch in parallel ✓                          | Keep inline / sequential ✗                       |
-| :---------------------------------------------- | :----------------------------------------------- |
-| 3 unrelated failures in 3 different modules     | One bug whose root cause you have not traced yet |
-| Research 4 libraries / subsystems at once       | Step 2 needs step 1's output (dependency chain)  |
-| Falsify 3+ ranked hypotheses (diagnose P3)      | Two edits to the same file or shared state       |
-| Audit several file clusters for one issue class | A single domain you already fully understand     |
-| Implement features touching disjoint file sets  | Work needing whole-system understanding          |
+→ If NO, stop. Do not dispatch.
+→ If YES, proceed to Question 2.
+
+**Question 2 — INDEPENDENT?** Are there 2+ domains that share no mutable state — separate files,
+separate bugs, separate questions, separate hypotheses?
+
+→ If NO (a dependency chain, or you don't yet understand the domain), stop. Investigate inline first.
+→ If YES, dispatch.
+
+| Fails Q1 (not authorized) — keep inline     | Fails Q2 (not independent) — keep sequential     | Passes both — dispatch in parallel              |
+| :------------------------------------------ | :----------------------------------------------- | :---------------------------------------------- |
+| Routine "be thorough" pass, no ask          | One bug whose root cause you have not traced yet | 3 unrelated failures in 3 different modules     |
+| Exploratory curiosity, no parent-phase call | Step 2 needs step 1's output (dependency chain)  | Research 4 libraries / subsystems at once       |
+|                                             | Two edits to the same file or shared state       | Falsify 3+ ranked hypotheses (diagnose P3)      |
+|                                             | A single domain you already fully understand     | Audit several file clusters for one issue class |
+|                                             | Work needing whole-system understanding          | Implement features touching disjoint file sets  |
 
 When in doubt, or when failures are interconnected — do not dispatch. Investigate inline first.
 

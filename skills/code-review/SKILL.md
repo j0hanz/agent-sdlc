@@ -17,16 +17,6 @@ Code review is not verification (does it work?) and not architecture (is it well
 
 ---
 
-## NEVER
-
-- **NEVER accept "I don't see any issues"** as a conclusion — state what you checked and why it passed
-- **NEVER review code in isolation** — always get a git diff; you need the before/after to spot regressions
-- **NEVER report PASS after only skimming** — work through the Phase 2 risk tiers in order
-- **NEVER conflate advisory and blocking issues** — mixing them buries the things that actually stop a merge
-- **NEVER review without knowing what the code is supposed to do** — read the PR description or ask before scanning
-
----
-
 ## Scope
 
 **In scope — hunt for these:**
@@ -43,6 +33,16 @@ Code review is not verification (does it work?) and not architecture (is it well
 - **Test adequacy** → `verification-before-completion`
 - **Improving readability/structure** → `refactor` skill
 - **Performance optimization** (not regression) → not a review concern
+
+---
+
+## NEVER
+
+- **NEVER accept "I don't see any issues"** as a conclusion — state what you checked and why it passed
+- **NEVER review code in isolation** — always get a git diff; you need the before/after to spot regressions
+- **NEVER report PASS after only skimming** — work through the Phase 2 risk tiers in order
+- **NEVER conflate advisory and blocking issues** — mixing them buries the things that actually stop a merge
+- **NEVER review without knowing what the code is supposed to do** — read the PR description or ask before scanning
 
 ---
 
@@ -88,14 +88,14 @@ Scan in this order. Higher tiers surface issues earlier. Do not skip to lower ti
 
 ### Tier 1 — Security (Stop Everything If Found)
 
-| Pattern                                         | Check                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------ |
-| Shell / exec call                               | Are arguments shell-escaped? Is shell interpolation needed at all? |
-| New SQL / query construction                    | Are all values parameterized — no string concatenation?            |
-| Auth / permission check                         | Is the check before the action, not after?                         |
-| Secrets / credentials                           | Are any tokens, keys, or passwords hardcoded or logged?            |
-| Deserialization (JSON.parse, pickle, yaml.load) | Is input validated before deserializing?                           |
-| File path construction                          | Is user input sanitized against path traversal?                    |
+| Pattern                       | Check                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| Shell / exec call             | Are arguments shell-escaped? Is shell interpolation needed at all?       |
+| SQL / query construction      | Are all values parameterized — no string concatenation?                  |
+| Permission check placement    | Is the check before the action, not after?                               |
+| Hardcoded secret / credential | Is any token, key, or password hardcoded or logged?                      |
+| Deserialization call          | Is input validated before deserializing (JSON.parse, pickle, yaml.load)? |
+| File path construction        | Is user input sanitized against path traversal?                          |
 
 Any Tier 1 finding is a **blocking issue** — stop and flag immediately.
 
@@ -136,32 +136,12 @@ git grep -n "formatDate\|format_date\|dateToString" --
 
 ### Plugin-Aware Checks (agent-dev specific)
 
-When the diff touches agent-dev plugin files, run these additional checks:
+When the diff touches a SKILL.md, agent, or hook file, validate it against the authoring rules owned by that file type's skill — do not re-derive the rules here:
 
-**Skills (`skills/*/SKILL.md`):**
-
-- `name`: kebab-case, max 64 chars, no spaces
-- `description`: no angle brackets, max 1024 chars, ends with a triggering phrase
-- Body: imperative form throughout — no "you should", "you might"
-- `disable-model-invocation: true` skills must not be in another skill's `skills:` preload list
-
-**Agents (`agents/*.md`):**
-
-- `color`: must be a named color — `red blue green yellow purple orange pink cyan`
-- `type: agent` present
-- `name` matches filename (minus `.md`)
-- No undocumented frontmatter fields
-
-**Hooks (`hooks/hooks.json`):**
-
-- Event names are valid: `SessionStart`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `UserPromptSubmit`, `Stop`
-- Commands use `${CLAUDE_PLUGIN_ROOT}` not hardcoded paths
-- Matcherless groups have a `_comment` key documenting intent
-
-**Commands (`commands/*.md`):**
-
-- Frontmatter only contains documented fields: `description`, `argument-hint`, `allowed-tools`
-- No `name:` field (name is derived from filename)
+- Skills (`skills/*/SKILL.md`) → check against `skill-builder`'s reference rules
+- Agents (`agents/*.md`) → check against `create-agent`'s reference rules
+- Hooks (`hooks/hooks.json`) → check against `create-hook`'s reference rules
+- Commands (`commands/*.md`) → check frontmatter only contains documented fields (`description`, `argument-hint`, `allowed-tools`) and has no `name:` field
 
 ---
 

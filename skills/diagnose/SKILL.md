@@ -7,18 +7,10 @@ argument-hint: '[symptom or file path]'
 
 # Skill: diagnose
 
-## Red Flags
+## Rules
 
-The value of this methodology is that it forces you to know — not guess — before you act. Every shortcut below hides the real issue.
-
-| Thought                                | Reality                                                             |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| "I can see the issue"                  | You haven't traced it. Complete Phases 1–2 first.                   |
-| "This quick fix will work"             | No fix without a documented root cause.                             |
-| "It's probably X"                      | "Probably" is not root cause. Falsify it.                           |
-| "Let me try a few things"              | Scatter-shot changes hide the real issue. One hypothesis at a time. |
-| "The fix is obvious"                   | Document it anyway. You may be wrong.                               |
-| "I'll write the regression test after" | Write it before the fix. That is Phase 5.                           |
+- A hypothesis that "feels right" is not a root cause until falsified by Phase 3 — a plausible-looking explanation that matches prior experience is the most common source of a wrong fix, because it skips falsification entirely.
+- Write the regression test before the fix, not after (Phase 5) — writing it after means the test is shaped to match the fix instead of the bug, and will pass even if the fix is wrong.
 
 **Purpose:** Systematic bug finding and fixing. A fast, deterministic feedback loop is a prerequisite to finding the root cause — do not guess. Applies to code, infrastructure, flakiness, and performance.
 
@@ -42,7 +34,7 @@ Use semantic search or `grep_search` on `references/feedback-loops.md` to retrie
 
 - **Goal:** Create a deterministic pass/fail signal.
 - **Actions:** Write test, shell script, or minimal harness.
-- **Metric_Speed:** Target < 2 seconds. (Performance-bug loops may exceed this — minimize setup overhead, not measurement runs.)
+- **Metric_Speed:** Target < 2 seconds. If diagnosing a performance bug, the loop itself may legitimately take longer — state the expected loop time before starting, and minimize setup overhead rather than measurement runs.
 - **Metric_Signal:** Assert exact symptom.
 - **Metric_Determinism:** Pin time, seed RNG, isolate filesystem.
 
@@ -62,9 +54,11 @@ Use semantic search or `grep_search` on `references/feedback-loops.md` to retrie
 - **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
 - **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). For parallel investigation, invoke the `multi-agent-dispatch` skill. Dispatch one `detective` agent (read-only) per ranked hypothesis to falsify each distinct hypothesis simultaneously via targeted instrumentation. Exception: a single domain you already fully understand should be tested sequentially, not via dispatch — see `multi-agent-dispatch`'s dispatch gate.
+- **Action:** Rank hypotheses, then check the dispatch condition below.
 
-**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and dispatched the subagents to test them in parallel (unless the sequential exception above applies). Testing hypotheses sequentially when parallel subagents can be used is an anti-pattern.
+**Dispatch condition:** If ≥2 ranked hypotheses are independent and mutually exclusive, and each can be falsified without depending on another's result, dispatch one `detective` agent (read-only) per hypothesis in parallel via the `multi-agent-dispatch` skill. Otherwise — a single hypothesis, or hypotheses that share a domain or depend on each other's results — test sequentially yourself.
+
+**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and applied the dispatch condition above. Testing hypotheses sequentially when the dispatch condition is met is an anti-pattern.
 
 **Example hypotheses for a KeyError crash:**
 

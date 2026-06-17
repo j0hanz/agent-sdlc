@@ -31,26 +31,21 @@ If the user declines brainstorming, OR Phase 1 scan returns Scope S with no Key 
 
 **Scope XL check:** If scanner returns Scope XL, pause before Phase 2. Ask: "This appears to span 10+ files or multiple modules. Should we split into phases and tackle one slice first?"
 
-<constitutional_constraints>
-<rule id="1" severity="HIGH">You MUST NOT ask leading questions — let the user define the domain.</rule>
-<rule id="2" severity="HIGH">You MUST NOT assume two terms mean the same thing — inventory ALL contexts before drilling into any one.</rule>
-<rule id="3" severity="HIGH">You MUST NOT capture implementation details during discovery — capture WHAT a concept IS, not HOW it is built.</rule>
-<rule id="4" severity="CRITICAL">You MUST NOT write code or scaffolding before design is approved.</rule>
-</constitutional_constraints>
+**Non-negotiable constraints:**
+
+- Never ask leading questions — let the user define the domain.
+- Never assume two terms mean the same thing — inventory ALL contexts before drilling into any one.
+- Never capture implementation details during discovery — capture WHAT a concept IS, not HOW it is built.
 
 ## Red Flags
 
+**Design approval gate:** Do not write any code, scaffolding, or invoke any implementation skill until the user has explicitly approved a design in Phase 4.
+
 | Thought                              | Reality                                                   |
 | ------------------------------------ | --------------------------------------------------------- |
-| "The requirements are obvious"       | Assumptions cause rework. Clarify anyway.                 |
-| "I'll start simple and iterate"      | Design approval comes first — see the gate below.         |
 | "We can figure out edge cases later" | Edge cases belong in the spec, not the debugger.          |
-| "This is too small to need design"   | Small features accumulate into large regrets.             |
 | "The user said just build it"        | Offer a quick brainstorm first. User can decline.         |
-| "Everyone knows what X means"        | Ambiguous terms corrupt specs. Capture them in Phase 2.   |
 | "I'll define terms after we design"  | Terminology conflicts surface in specs at the worst time. |
-
-**Design approval gate:** Do not write any code, scaffolding, or invoke any implementation skill until the user has explicitly approved a design in Phase 4.
 
 ## Dispatch Agents
 
@@ -67,8 +62,9 @@ For parallel codebase scanning across multiple hypotheses, use the `multi-agent-
 
 **Stakeholder probe:** If who will use the feature is not evident from context, ask this one question while the scanner runs: "Who interacts with this feature most — end users, internal teams, or other systems?" This single answer changes Phase 4 design tradeoffs significantly.
 
+**Timeout / Dead-Letter Fallback:** If the scan times out or fails (e.g. due to repository size), do not fail the workflow. Fall back to shallow regex heuristics: use `grep_search` and `glob` with strict depth limits to map the immediate domain, or explicitly request the user to limit the scope.
+
 Dispatch the codebase scanner (`references/codebase-scanner-prompt.md`) — pass the feature description exactly as stated. Wait for the Codebase Context Report.
-**Timeout / Dead-Letter Fallback:** If the scan times out or fails (e.g. due to repository size), do not fail the workflow. Instead, automatically fall back to shallow regex heuristics: use `grep_search` and `glob` with strict depth limits to map the immediate domain, or explicitly request the user to limit the scope.
 
 Summarize your understanding in one paragraph, drawing from the report: what was found, what constraints exist, what Key Unknowns were flagged, and what you don't know yet. Ask the user to confirm.
 
