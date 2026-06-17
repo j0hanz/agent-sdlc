@@ -6,92 +6,51 @@ argument-hint: '[what the agent should do]'
 allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
-# Create Agent
+# create-agent
 
-> **Agents are expensive primitives.** Use only for isolation, parallelism, or reusable narrow roles. For inline instructions, use a **skill**. For fixed lifecycle actions, use a **hook**.
+Agents are high-cost primitives. Use only for isolation, parallelism, or reusable roles. Use **skills** for inline instructions and **hooks** for fixed lifecycle actions.
 
-Design every agent through seven strict decisions. Output must be in `markdown-kv` format to minimize noise.
+## 0. Decision Tree
 
-## 0. Prerequisite Check
+- **Context Flooding / Isolation:** Subagent
+- **Reusable Role:** Subagent
+- **Parallel Tasks:** Agent Team
+- **Orchestration/State Machine:** Workflow (Saga, Scatter-Gather)
+- **External API:** Managed Agent
+- **Inline Logic:** Skill
 
-- **Context Flooding** (parent thread accumulating irrelevant tool output/noise): Subagent
-- **Reusable Role** (same narrow job invoked repeatedly across sessions): Subagent
-- **Independent Parallel Tasks:** Agent team / view
-- **Complex Orchestration / Multi-Agent:** Workflow (scatter-gather, saga, state machines)
-- **External API Call:** Managed Agent
-- **Inline Instructions:** Skill
-- **One-off Task:** No agent
+## 1. Procedure: 7 Strict Decisions
 
-## 1. Job Definition
-
-- **Format:** `This agent <verb + object> so that <main-thread benefit>.`
-- **Constraint:** One sentence. Narrow scope.
-- **Split Rule:** If the job contains `AND` connecting unrelated tasks, split into two agents.
-
-## 2. Primitive Selection
-
-- **Subagent:** Delegated side tasks; isolated context. Returns a single final message.
-- **Agent Team:** Independent tasks running concurrently.
-- **Workflow:** Large-scale orchestration, transaction management, scatter-gather, saga patterns, compensation logic, circuit breakers.
-- **Managed Agent:** API-callable service outside any session.
-
-## 3. System Prompt (`markdown-kv` format)
-
-Agent instructions MUST be generated in strict `markdown-kv` format.
-
-- **Role:** Who the agent is and its single job.
-- **Objective:** The concrete goal.
-- **Procedure:** Ordered imperative steps.
-- **Fallback:** Dead-letter/timeout handling (crucial for multi-agent workflows).
-- **Boundaries:** Explicit "Do not" boundaries.
-- **Output:** Exact final message schema.
-
-## 4. Tools & Permissions
-
-- **Default:** Least privilege. Read-only (`Read, Grep, Glob`).
-- **Escalation:** Justify `Edit, Write, Bash`.
-- **Spawn Rights:** Allowlist via `Agent(worker, ...)` or omit to forbid spawning.
-- **Permission Mode:** `default` (prompts), `plan` (read-only), `acceptEdits` (auto-accept files), `bypassPermissions` (dangerous).
-
-## 5. Model & Effort
-
-- **Haiku:** Classification, simple search/dispatch.
-- **Sonnet:** Implementation, tool orchestration.
-- **Opus:** Adversarial reasoning, security bounds, deep root-cause analysis.
-- **Effort:** Scale to match complexity.
-
-## 6. Composition & State
-
-- **Isolation:** `worktree` for writes that shouldn't touch parent checkout.
-- **Skills:** `skills: [name]` to preload behaviors natively.
-- **Hooks:** Lifecycle guards (`SubagentStop`).
-- **Memory:** Scoped persistence (`user|project|local`).
-
-## 7. Delivery & Testing
-
-**Note on resolution:** use the absolute path of the directory containing this `SKILL.md` file as `<skill-dir>` (or `$CLAUDE_PLUGIN_ROOT/skills/create-agent` if available).
-
-1. **Deliver:** Complete agent definition in `markdown-kv` format. State the file path.
-2. **Validate:** Run `python <skill-dir>/scripts/validate_agent.py path/to/your-agent.md`. MUST yield zero ERRORs before presentation.
-3. **Test Prompt:** Provide a concrete test input and expected output schema.
-4. **Verification:** **Invoke `verification-before-completion`** to ensure the new agent performs its role correctly and adheres to its defined boundaries.
-5. **Trigger Reliability Check** on the frontmatter `description`:
-   - Quoted, concrete phrases a user would actually type (e.g., `'build agent'`) — never vague verbs like "helps with."
-   - Zero overlap with sibling agent-dev skills (`agents-maintainer`, `architecture`, `brainstorming`, `code-review`, `create-hook`, `diagnose`, `github-automation`, `multi-agent-development`, `multi-agent-dispatch`, `planning`, `refactor`, `skill-builder`, `test-driven-development`, `using-agent-dev-skills`, `verification-before-completion`). Narrow any ambiguous phrase to the scope this skill actually owns.
-   - Phrases describe what it _does_, not adjacent concerns owned elsewhere.
-
----
+1. **Job Definition:** "This agent <verb + object> so that <main-thread benefit>." (One sentence).
+2. **Primitive Selection:** Subagent | Agent Team | Workflow | Managed Agent.
+3. **System Prompt (markdown-kv):**
+   - **Role:** Specific persona and single job.
+   - **Objective:** Concrete measurable goal.
+   - **Procedure:** Ordered imperative steps.
+   - **Fallback:** Timeout/Dead-letter handling.
+   - **Boundaries:** Explicit "Do Not" rules.
+   - **Output:** Exact final message schema.
+4. **Tools & Permissions:** Default to Read-only. Escalate to `Edit, Write, Bash` only if justified. Select permission mode: `default | plan | acceptEdits | bypassPermissions`.
+5. **Model & Effort:**
+   - Haiku (Classification/Dispatch)
+   - Sonnet (Implementation/Orchestration)
+   - Opus (Security/Deep Root-Cause)
+6. **Composition:** Define `worktree` isolation, `skills: []` to preload, and `memory` scope.
+7. **Validation:**
+   - Run `validate_agent.py`.
+   - Run `verification-before-completion`.
+   - Ensure `description` has zero overlap with sibling skills.
 
 ## Expert Patterns
 
-- **Recursive Decomposition:** If an agent definition exceeds 100 lines or handles >3 distinct logic branches, decompose it into a **team** of simpler agents or a **workflow** with clear state transitions.
-- **Taint-Aware Prompts:** For security or data-processing agents, explicitly define "untrusted" sources (e.g., user input, external APIs) and "trusted" sinks (e.g., database, shell). The procedure must include a mandatory sanitization step.
-- **Circuit Breakers:** For long-running or autonomous agents, the procedure must include explicit "Stop and Report" conditions for timeouts, tool failures, or if the agent reaches a state where it lacks necessary context.
-- **State Handoff:** In workflows, never assume the next agent knows the full history. Explicitly define the "Context Payload" that is passed between agents.
+- **Recursive Decomposition:** If prompt > 100 lines or >3 branches, split into a team/workflow.
+- **Taint-Awareness:** Explicitly define "Untrusted Sources" and "Trusted Sinks".
+- **Circuit Breakers:** Mandatory "Stop and Report" conditions for timeouts or tool failures.
+- **State Handoff:** Define the "Context Payload" for workflows.
 
 ## Common Failure Modes
 
-- **Context Bleed:** The agent is given too much irrelevant context from the parent session, leading it to make assumptions about files or state it shouldn't access. **Fix:** Be aggressive with `worktree` isolation and explicit file allowlists.
-- **Tool Blindness:** The agent has the correct tools but the prompt focuses on "what to do" without explaining "how to use the tools to do it." **Fix:** Include tool-specific instructions in the Procedure (e.g., "Use `Grep` to find X before attempting `Edit`").
-- **Infinite Looping:** An agent calls itself or triggers a cycle in a multi-agent workflow without a clear decrementing counter or termination condition. **Fix:** Always include a `max_turns` or `deadline` in the fallback logic.
-- **Permission Bloat:** Granting `bypassPermissions` or `acceptEdits` by default. **Fix:** Always start with `default` permissions and only escalate if the specific task requires it and the user is informed.
+- **Context Bleed:** Too much irrelevant parent history. Use `worktree` and allowlists.
+- **Tool Blindness:** Focus on "what" without tool "how". Add tool-specific steps to Procedure.
+- **Infinite Loops:** Missing termination counters in multi-agent flows.
+- **Permission Bloat:** Using `bypassPermissions` by default.

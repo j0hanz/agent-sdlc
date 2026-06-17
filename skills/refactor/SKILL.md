@@ -4,222 +4,65 @@ description: "Trigger on 'clean up', 'refactor', 'simplify', 'improve', 'moderni
 disable-model-invocation: false
 ---
 
-# Refactor
+# refactor
 
-Refactoring means improving structure without changing behavior. The skill is knowing _what_ to change, _how much_, and _in what order_ — not knowing the patterns. You already know the patterns.
+Improve structure without changing behavior. Focus on readability, testability, and extensibility.
 
----
+## Step 1: Baseline Analysis
 
-## Step 1: Read Before You Touch
+Build a mental model before touching code:
 
-Read the full code before proposing any change. Build a mental model:
+- **Blast Radius:** Use `Grep` to find all callers and dependencies.
+- **Invariants:** Identify hidden logic requirements.
+- **Tests:** Verify current tests exist and pass.
 
-- What does this code actually do? (Not just what the names imply)
-- Who calls it? What does it depend on?
-- What's already clean vs. what's genuinely problematic?
-- Are there tests? Can you run them?
+## Step 2: Pain Point Mapping
 
-Don't refactor on a quick scan. Code that looks messy sometimes has hidden invariants that matter. Use `Grep` to rigorously assess the cross-file blast radius before touching module boundaries or exported functions.
+If vague, ask: \"What is the hardest part of working with this code?\"
+| Pain | Likely Problem | Rationale |
+| :--- | :--- | :--- |
+| \"Hard to add cases\" | Missing Abstraction | Use Strategy, Enum, or Factory. |
+| \"Hard to understand\" | Poor Naming / Bloat | Rename, extract helpers. |
+| \"Copy-pasted\" | Duplication | Extract shared utility (DRY). |
+| \"Tests breaking\" | Hidden Coupling | Dependency injection, concern separation. |
 
----
+## Step 3: Priority & Risk
 
-## Step 2: Name the Pain Point
+1. **Low Risk (First):** Rename misnomers, replace magic literals, remove dead code, early returns.
+2. **Medium Risk:** Split functions, extract classes, introduce types/interfaces.
+3. **High Risk (Confirm First):** Reorganize modules, change public API signatures, apply Observer/Strategy patterns.
 
-If the request is vague ("clean this up", "make it better", "improve this"), ask one question before touching anything:
+## Step 4: Hidden Bug Protocol
 
-> **What's the hardest thing about working with this code right now?**
+If a bug is discovered during refactoring: **STOP.**
 
-This question matters because refactoring toward readability, testability, and extensibility often requires different changes. Spending time on the wrong axis wastes both of your time.
+1. Surface the bug (trigger, behavior, fix).
+2. **NEVER** fix it in the same turn as the refactor.
+3. Leave the buggy line intact. Fix only in a separate, dedicated step (invoke `diagnose`).
 
-Map the answer to the right fix:
+## Step 5: Small, Verified Steps
 
-| Pain                               | Likely problem                     | Likely fix                               |
-| ---------------------------------- | ---------------------------------- | ---------------------------------------- |
-| "Hard to add a new case"           | Missing abstraction                | Extract class, Strategy, or enum         |
-| "Hard to understand"               | Poor naming, too much in one place | Rename, extract, remove comments-as-code |
-| "Copy-pasted everywhere"           | Duplication                        | Extract shared utility                   |
-| "Tests keep breaking unexpectedly" | Hidden coupling                    | Separate concerns, inject dependencies   |
-| "Scared to touch it"               | No tests + complex logic           | Write characterization tests first       |
+- **Checkpoint:** Commit or stash before starting.
+- **Cycle:** One change → Confirm (read diff) → Run tests → Confirm typecheck.
+- **Automated Tools:** Run `prettier`, `eslint --fix`, `ruff format`, or `gofmt` before manual edits.
 
-If the user said "just clean it up", proceed — but check in after surfacing the biggest wins before touching higher-risk changes.
+## Step 6: Communication (Mandatory Output)
 
----
-
-## Step 3: Prioritize — High Value, Low Risk First
-
-Rank your planned changes before writing a line:
-
-**Do first (low risk, high clarity gain):**
-
-- Rename variables/functions that lie about what they are
-- Replace magic numbers/strings with named constants
-- Remove dead code (grep callers first to be sure)
-- Flatten nested conditionals into guard clauses / early returns
-- Extract a well-understood block into a named function
-
-**Do carefully (medium risk):**
-
-- Split a large function into multiple helpers
-- Extract a new class from mixed responsibilities
-- Introduce a type/interface to replace a raw primitive or `any`
-- Deduplicate logic across 3+ callsites
-
-**Confirm with user first (higher risk):**
-
-- Change a public API signature
-- Reorganize modules or files
-- Apply a structural design pattern (Strategy, Observer, etc.)
-- Touch anything without test coverage
-
----
-
-## Parallel Refactoring of Independent Modules
-
-For parallel refactoring of independent modules, use the `multi-agent-dispatch` skill with `coder` agents.
-
----
-
-## Step 4: Execute in Small, Verified Steps
-
-**State Checkpoint**: Before touching any code or beginning the refactor, you MUST create a deterministic rollback point using `git commit -am "WIP: pre-refactor checkpoint"` (if there are staged/tracked changes) or ensure you have a clean working tree. If you make a mistake and tests fail, use `git reset --hard HEAD` or `git restore <file>` to revert to your checkpoint instead of trying to manually un-edit the file.
-
-One change at a time. After each change:
-
-1. Verify the code still does what it did (read the diff, check callers)
-2. Run tests if they exist (`npm test`, `pytest`, `go test ./...`, etc.)
-3. Confirm it still compiles / type-checks
-
-Announce non-trivial changes before making them. If tests fail after a step, stop and diagnose before continuing.
-
-**Hidden Bug Protocol:** If you uncover a pre-existing bug during refactoring: STOP.
-
-1. Surface the bug clearly — describe what it is, what triggers it, and what the correct behavior should be.
-2. Do **not** fix it — not in this turn, not in a "separate section," not even in a clearly labeled step. Leave the buggy line intact in any refactored code you produce.
-3. If the issue is a discrete logic/correctness bug, invoke the `diagnose` skill before continuing the refactor. Otherwise, ask the user how to proceed: "I found a bug. Want me to fix it in a dedicated step after the refactor, or separately?"
-
-Why: mixing structural and behavioral changes makes regressions undiagnosable. If a test fails after the refactor, you need to know whether the refactor broke it or the bug fix broke it. That is only possible when they are in separate changes.
-
-**Automated Tooling First:** Before making manual stylistic changes, check if an ecosystem tool can do the heavy lifting safely and automatically.
-
-| Language | Tool     | Command                   |
-| -------- | -------- | ------------------------- |
-| JS/TS    | Prettier | `prettier --write <file>` |
-| JS/TS    | ESLint   | `eslint --fix <file>`     |
-| Python   | Ruff     | `ruff format <file>`      |
-| Python   | Black    | `black <file>`            |
-| Go       | gofmt    | `go fmt ./...`            |
-| Rust     | rustfmt  | `cargo fmt`               |
-
-Suggest running the tool first and only proceed to manual changes for things the tool can't fix (naming, structure, duplication).
-
-### The right tool for each operation
-
-**Extract function** — when a block has one clear purpose, is >20-30 lines, or a comment is explaining what it does (name the function instead of the comment).
-
-**Rename** — when the name misleads. Grep all usages first; rename all at once. Don't rename just to rename.
-
-**Inline** — when a function is called once and its name adds no clarity over reading the body.
-
-**Flatten conditionals** — replace nested if/else chains with guard clauses. Replace switch-on-type with a lookup map or polymorphism when new variants are expected.
-
-**DRY** — wait until 3+ real occurrences before extracting. Two similar-looking blocks with different semantics are not duplicates.
-
-**Introduce type** — replace a raw primitive or anonymous object shape with a named type/interface. Especially at module boundaries and public APIs.
-
----
-
-## Step 5: Communicate the Changes
-
-After refactoring, use this exact output structure:
-
+```markdown
 ## Changes
 
-**What changed:** [list of modifications — file renames, function extractions, structural reorganizations]
+**What changed:** [List renames, extractions, reorganizations]
+**Why:** [Problem solved / Benefit gained]
+**Deliberately NOT changed:** [Preserved scope / Justification]
+```
 
-**Why:** [rationale for each change — what problem does it solve, what becomes easier]
+## Critical Rules
 
-**Deliberately NOT changed:** [what was intentionally preserved and why — decisions made to limit scope or avoid unnecessary refactoring]
+- **NEVER** mix behavior changes with structural changes.
+- **NEVER** extract solely on structural similarity (Incidental Duplication).
+- **NEVER** change public signatures without test coverage.
+- **NEVER** refactor an untested critical path. Write characterization tests first.
 
----
+## Transition
 
-Keep explanations short. Skip obvious things. Focus on the _why_, not the _what_.
-
-After communicating the changes, invoke `verification-before-completion` before declaring the refactor done. A clean test run before refactoring is not sufficient — VBC confirms no regressions were introduced and no debug artifacts remain.
-
----
-
-## Language Quick-Reference
-
-**TypeScript/JavaScript**
-
-- Prefer `const` and narrow union types over `any`
-- Use `satisfies` to validate object shape without widening the type
-- Prefer optional chaining (`?.`) and nullish coalescing (`??`) over deep null checks
-- Use `Map`/`Set` instead of plain objects for dynamic-key collections
-- Extract complex conditions into well-named boolean variables
-
-**Python**
-
-- `@dataclass` and `@property` for encapsulation without boilerplate
-- `match` (3.10+) to replace chained `if/elif` type checks
-- Prefer comprehensions over `map`/`filter`; use generators for large sequences
-- Add type hints to all public function signatures
-- Name complex boolean expressions as variables before using them in `if`
-
-**Go**
-
-- Keep interfaces small; accept interfaces, return structs
-- Functional options (`WithTimeout(d time.Duration) Option`) for optional config
-- Wrap errors: `fmt.Errorf("context: %w", err)` for traceable chains
-- Named return values clarify intent at declaration; don't use them for naked returns
-
-**Java / Kotlin**
-
-- Prefer composition over inheritance; seal or finalize by default
-- Replace `null` returns with `Optional<T>` (Java) or nullable types (Kotlin)
-- Sealed classes for sum types where behavior varies per variant
-- Builder pattern when a type has more than 4 optional fields
-
----
-
-## Critical Anti-Patterns (NEVER do these)
-
-- **NEVER mix behavior changes with structural changes:** Do not add features or fix bugs in the same step as a refactor. If a test fails, you won't know if the refactor broke it or the "fix" broke it.
-- **NEVER extract based solely on structural similarity (Incidental Duplication):** Two blocks of code that _look_ identical but represent different business concepts should NOT be merged. They will evolve differently and force you to add awkward boolean flags later.
-- **NEVER change a public API signature without test coverage:** Renaming or reshaping a public function that has no tests gives you no safety net — callers break silently. Write characterization tests first, then reshape the API under them.
-- **NEVER refactor an untested critical path:** "Scary code" with no tests exists because no one has verified its behavior. Write characterization tests that document current behavior (even if you don't like it) before touching the structure.
-
-  **How to tell the difference — reason both sides before deciding:**
-
-  Before extracting, explicitly argue the case _against_ merging, not just the case for it. State at least one concrete future scenario in which the two blocks would need to diverge. If you cannot construct one, say so and explain why. A one-sided conclusion ("these are clearly the same thing") is a smell — ambiguous cases deserve ambiguous answers.
-
-  Signals that concepts are different despite structural similarity:
-  - Different domain labels in error messages or variable names (`billing` vs `shipping`, `invoice` vs `receipt`)
-  - Different regulatory or compliance contexts (billing often has VAT, fiscal codes, IBAN; shipping does not)
-  - Different ownership — one is owned by Finance, one by Logistics
-  - One has already diverged slightly (e.g., has an extra field) — that extra field is a preview of future divergence
-
-  If you conclude extraction is correct after thinking both ways, state the condition that makes it safe: _"These can be merged as long as [specific invariant]. If that changes, split them back."_
-
-- **NEVER apply high-risk patterns without test coverage:** If there are no tests for complex logic, NEVER apply structural patterns like Strategy or Observer. Limit yourself to safe, mechanical renames or variable extractions unless you write characterization tests first.
-
----
-
-## When to Stop
-
-You've gone far enough when:
-
-- The code reads as clearly as the comment that used to explain it
-- A new case can be added without touching existing code
-- Function names tell the story without reading the body
-
-Stop before getting clever. A slightly under-abstracted design is better than a slightly over-engineered one.
-
----
-
-## Reference Files (Conditional Loading)
-
-**Do NOT load these files by default.** Only load them under these specific conditions:
-
-- **When you spot a code smell but need a precise name and canonical fix strategy:** MANDATORY — READ ENTIRE FILE: [`references/smell-catalog.md`](references/smell-catalog.md).
-- **When replacing complex conditionals with a structural design pattern:** MANDATORY — READ ENTIRE FILE: [`references/patterns.md`](references/patterns.md) before implementing the pattern.
+Invoke `verification-before-completion` after the final test pass.

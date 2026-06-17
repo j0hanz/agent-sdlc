@@ -1,148 +1,71 @@
 ---
 name: diagnose
-description: "Disciplined debugging for any bug or unexpected behavior. Trigger on 'debug', 'fix crash', 'not working', 'why is this failing', 'unexpected output', 'production error', 'diagnose'. Mandatory root-cause workflow before any fix."
+description: "Disciplined root-cause analysis for bugs and unexpected behavior. Trigger on 'debug', 'fix crash', 'why is this failing', 'unexpected output'. Mandatory 6-phase workflow before any fix."
 disable-model-invocation: false
-argument-hint: '[symptom or file path]'
+argument-hint: '[symptom description or error trace]'
 ---
 
-# Skill: diagnose
+# diagnose
 
-## Rules
+Identify the true root cause through systematic falsification. **DO NOT GUESS.** A hypothesis is a guess until it survives Phase 3.
 
-- A hypothesis that "feels right" is not a root cause until falsified by Phase 3 — a plausible-looking explanation that matches prior experience is the most common source of a wrong fix, because it skips falsification entirely.
-- Write the regression test before the fix, not after (Phase 5) — writing it after means the test is shaped to match the fix instead of the bug, and will pass even if the fix is wrong.
+## Phase 1: Build Feedback Loop
 
-**Purpose:** Systematic bug finding and fixing. A fast, deterministic feedback loop is a prerequisite to finding the root cause — do not guess. Applies to code, infrastructure, flakiness, and performance.
+Create a deterministic pass/fail signal.
 
-## NEVER
+- **Requirement:** Target < 2s execution.
+- **Isolation:** Isolate filesystem, pin seeds/time.
+- **Gate:** If you cannot run code, request logs/telemetry. DO NOT proceed without a loop.
 
-- **NEVER apply multiple changes simultaneously** — you cannot isolate which change fixed (or masked) the issue; one hypothesis, one change, one test run
-- **NEVER delete or overwrite the reproduction harness** before the fix is confirmed and the regression test passes — if the first fix is wrong you need to reproduce from the same baseline
-- **NEVER accept "works on my machine"** as a root cause — the environmental difference between machines IS the bug; investigate the delta (env vars, OS, runtime version, seed)
+## Phase 2: Reproduce
 
-## Execution Rules
+Confirm the bug matches the report. Achievement of >50% reproduction rate is mandatory before hypothesis testing.
 
-- **Rule 1:** Execute phases in strict sequence.
-- **Rule 2:** NEVER skip Phase 1.
-- **Rule 3:** NEVER modify the original source file directly. Create a working copy (e.g., `orders_fixed.py`) before making any changes.
+## Phase 3: Hypothesize & Falsify (Parallel Split)
 
-## Phases
+1. **Generate Hypotheses:** 3-5 falsifiable hypotheses using Bayesian priors (Recent Changes > Logic > Env).
+2. **Format:** \"If [X] is the cause, then [Y] will change when I do [Z].\"
+3. **Dispatch Gate:** If hypotheses are independent, invoke `multi-agent-dispatch` to test in parallel.
 
-### Phase 1: Build Feedback Loop
+## Phase 4: Instrumentation (Targeted Probes)
 
-Use semantic search or `grep_search` on `references/feedback-loops.md` to retrieve specific harness patterns before writing the reproduction harness, rather than reading the whole file.
+Instrument code dynamically.
 
-- **Goal:** Create a deterministic pass/fail signal.
-- **Actions:** Write test, shell script, or minimal harness.
-- **Metric_Speed:** Target < 2 seconds. If diagnosing a performance bug, the loop itself may legitimately take longer — state the expected loop time before starting, and minimize setup overhead rather than measurement runs.
-- **Metric_Signal:** Assert exact symptom.
-- **Metric_Determinism:** Pin time, seed RNG, isolate filesystem.
+- **Tagging:** Prefix all debug logs with `[DEBUG-XXXX]`.
+- **Method:** Use targeted probes (logs/REPL) at decision boundaries. NEVER \"log everything.\"
+- **Performance:** Use profilers (`time.perf_counter`), NOT logs.
 
-**If you cannot run code** (no environment access, only logs or a description provided): Stop here. Ask the user for one of: (1) environment or shell access, (2) captured artifacts (logs, core dumps, traces), or (3) permission to add production telemetry. Do not proceed to Phase 2 without a runnable feedback loop.
+## Phase 5: Red-Green Fix
 
-### Phase 2: Reproduce
+1. **Write Regression Test:** Target the failing seam **before** the fix.
+2. **Confirm RED:** Confirm the test fails.
+3. **Apply Fix:** Implement minimal changes on a working copy.
+4. **Confirm GREEN:** Confirm the test passes.
 
-- **Goal:** Confirm bug matches user report.
-- **Checklist_1:** Loop reproduces exact failure.
-- **Checklist_2:** High reproduction rate achieved. If rate is below 50%, go back to Phase 1 — add stress, concurrency, or timing control until the bug reproduces reliably before continuing.
-- **Checklist_3:** Captured precise symptom (error, timing, state).
+## Phase 6: Finalization
 
-**Gate:** Before moving to Phase 3, confirm your loop reproduces the exact failure the user described. If it does not, return to Phase 1.
+- [ ] **De-instrument:** Remove all `[DEBUG-XXXX]` tags.
+- [ ] **Verification:** Verify fix via the Phase 1 loop.
+- [ ] **Clean-up:** Delete throwaway scripts or promote to test suite.
 
-### Phase 3: Hypothesize & Parallel Execution (Split)
-
-- **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
-- **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
-- **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses, then check the dispatch condition below.
-
-**Dispatch condition:** If ≥2 ranked hypotheses are independent and mutually exclusive, and each can be falsified without depending on another's result, dispatch one `detective` agent (read-only) per hypothesis in parallel via the `multi-agent-dispatch` skill. Otherwise — a single hypothesis, or hypotheses that share a domain or depend on each other's results — test sequentially yourself.
-
-**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and applied the dispatch condition above. Testing hypotheses sequentially when the dispatch condition is met is an anti-pattern.
-
-**Example hypotheses for a KeyError crash:**
-
-- H1: The key is genuinely absent in some inputs (most likely — recent data model change). _Falsify:_ add a log before the access; check whether the key appears in the failing case.
-- H2: The key is present but under a different name due to a serialization mismatch. _Falsify:_ log `dict.keys()` at the crash site.
-- H3: A race condition clears the dict between check and access. _Falsify:_ run a single-threaded replay; if it reproduces, concurrency is not the cause.
-
-### Phase 4: Instrument
-
-**MANDATORY — READ ENTIRE FILE**: `references/phases.md` for instrumentation patterns and decision trees.
-
-- **Constraint:** ABSOLUTE REQUIREMENT. You MUST instrument code dynamically. Do NOT rely solely on static inspection, even if the bug appears obvious.
-- **Tagging_Rule:** MANDATORY. Prefix ALL temporary logs with a unique tag (e.g., `[DEBUG-a4f2]`). The tag makes cleanup a single `grep -r "[DEBUG-a4f2]"` — no manual hunting.
-- **Preference_1:** Debugger/REPL.
-- **Preference_2:** Targeted logs at decision boundaries.
-- **Anti_Pattern:** Never "log everything". Use targeted probes.
-- **Performance Exception:** For performance bugs, do NOT use log statements as the measurement tool — instrumentation overhead distorts timing. Use `time.perf_counter`, `cProfile`, `EXPLAIN QUERY PLAN`, or `performance.now()` instead.
-
-### Phase 5: Fix + Regression Test
-
-Write the regression test at the correct seam **before** applying the fix. This is the RED→GREEN cycle:
-
-1. **Write the test** targeting the exact failure. Choose the right depth:
-   - Logic / data bug → unit test at the function boundary
-   - Race condition → concurrent stress test (N threads × M iterations, assert final state)
-   - Performance regression → timing assertion (`assert elapsed_ms < threshold`)
-2. **Run it — confirm it FAILS (RED).** If it passes immediately, the test is wrong — it is not targeting the actual bug.
-3. **Apply the fix** to your working copy.
-4. **Run it again — confirm it PASSES (GREEN).**
-5. **Re-run Phase 1 loop** — confirm the original symptom is gone end-to-end.
-
-### Phase 6: Cleanup + Post-Mortem
-
-Work through this checklist completely before closing:
-
-- [ ] All `[DEBUG-XXXX]` tags removed — run `grep -r "[DEBUG-" .` to confirm zero matches.
-- [ ] Throwaway reproduction scripts deleted OR explicitly promoted into the test suite. No orphaned debug scripts left behind.
-- [ ] Working copy is the canonical fixed file. Original untouched source preserved if needed for diff.
-- [ ] Original bug is verified gone via Phase 1 loop.
-- [ ] Output the Diagnosis Summary and Post-Mortem below.
-
-## Required Final Output Format
-
-Always conclude with this exact structure:
+## Required Final Output
 
 ```markdown
 ## Diagnosis Summary
 
-- **Symptom:** [What the user saw]
-- **Root Cause:** [Correct hypothesis]
-- **Fix:** [What changed]
-- **Feedback Loop Used:** [How reproduced]
+- **Symptom:** [Description]
+- **Root Cause:** [Correct Hypothesis]
+- **Fix:** [Changes]
+- **Feedback Loop:** [Reproduction Script]
 
 ## Post-Mortem
 
-- **Prevention:** [What would have prevented this?]
-- **Next Steps:** [Concrete and actionable — a skill to activate, a doc to update, or "None" if the fix is complete]
-
-After outputting the Post-Mortem: invoke `verification-before-completion` before declaring the task done.
+- **Prevention:** [Architecture/Test improvement]
+- **Next Steps:** [Follow-up tasks]
 ```
 
----
+## Critical Rules
 
-## Command Usage & Troubleshooting Guidelines
-
-### Usage Scenarios
-
-- You have a concrete error message or failing test and need root-cause analysis.
-- A regression appeared after a recent change and you need to trace where it broke.
-- A bug is subtle enough that guessing the fix would likely miss the actual cause.
-
-Proceed directly to implementation (skipping this skill) when the bug location is already known — root-cause analysis adds no value when the cause is already identified. Use web search or documentation when unsure if the behavior is actually a bug vs. intentional design.
-
-### Execution Coordination After Diagnosis
-
-1. Run the `diagnose` skill first to find the root cause, identifying the file, line, and failure mode.
-2. Once the root cause is isolated, implement the fix using standard file editing tools, or ask the user if they would prefer to fix it themselves.
-3. After fixing: re-run the failing test to confirm it passes, then run the full suite to check for regressions.
-4. Invoke `verification-before-completion` before declaring the task done.
-
-### Troubleshooting
-
-- **Diagnose skill can't find root cause** — Provide a stack trace or exact failing assertion instead of a high-level description.
-- **Fix applied but tests still fail** — The identified root cause may have been a symptom. Re-run the diagnose skill with the new failure as input. After 2 attempts without a passing fix, stop and surface to the user as BLOCKED instead of re-diagnosing indefinitely.
-- **New failures appear after fix** — Stop. Revert changes to confirm scope, then re-diagnose with the regression as input. After 2 attempts without a passing fix, stop and surface to the user as BLOCKED instead of re-diagnosing indefinitely.
-- **Root cause turns out to be structural/coupling-related** — If repeated diagnosis reveals the issue stems from tight coupling, a God class, circular dependencies, or other structural problems rather than a discrete bug, invoke the `refactor` skill instead of continuing to re-diagnose.
-- **Success Criteria** — Root cause identified (not just symptom fixed), fix is minimal and targeted (no unrelated changes), all tests pass after the fix, and no regressions are introduced.
+- **NEVER** apply multiple changes simultaneously. One hypothesis per run.
+- **NEVER** modify the original source directly. Use a working copy.
+- **NEVER** accept \"works on my machine\" as a root cause. The environment delta IS the bug.
