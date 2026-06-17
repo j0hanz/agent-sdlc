@@ -34,32 +34,34 @@ Document these findings concisely (not as prose):
 ### Decision 1: Is this a monorepo?
 
 - Check for: `turbo.json`, `pnpm-workspace.yaml`, `nx.json`, `lerna.json`, or `workspaces` in package.json
-- → YES: Use **Monorepo Template**
+- → YES: not a `--language` case — assemble by hand using `guide.md` §1 "Monorepo" pattern
 - → NO: Continue to Decision 2
 
 ### Decision 2: What's the primary language?
 
-| Language              | Marker Files                                         | guide.md §1 Template                     |
-| --------------------- | ---------------------------------------------------- | ---------------------------------------- |
-| JavaScript/TypeScript | `package.json` (Node env)                            | **Base template (single-package JS/TS)** |
-| Python                | `pyproject.toml`, `.venv/`, `poetry.lock`, `uv.lock` | **Python (uv / poetry / pip)**           |
-| Go                    | `go.mod`, `go.sum`                                   | **Go**                                   |
-| Rust                  | `Cargo.toml`, `Cargo.lock`                           | **Rust (Cargo)**                         |
-| Java                  | `pom.xml`, `build.gradle`                            | **Spring Boot (Java)**                   |
-| C# / .NET             | `.csproj`, `.sln`                                    | **.NET / C#**                            |
-| JavaScript (Bun)      | `bun.lockb`                                          | **Bun**                                  |
-| Multiple languages    | Various (2+ languages)                               | **Polyglot / Multi-Language Projects**   |
+This picks the `--language` value for Phase 2's `scaffold-agents-md` command (see `guide.md` §1):
+
+| Language              | Marker Files                                         | `--language` value                                                           |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| JavaScript/TypeScript | `package.json` (Node env)                            | `node`                                                                       |
+| Python                | `pyproject.toml`, `.venv/`, `poetry.lock`, `uv.lock` | `python`                                                                     |
+| Go                    | `go.mod`, `go.sum`                                   | `go`                                                                         |
+| Rust                  | `Cargo.toml`, `Cargo.lock`                           | `rust`                                                                       |
+| Java                  | `pom.xml`, `build.gradle`                            | `java`                                                                       |
+| C# / .NET             | `.csproj`, `.sln`                                    | `dotnet`                                                                     |
+| JavaScript (Bun)      | `bun.lockb`                                          | `bun`                                                                        |
+| Multiple languages    | Various (2+ languages)                               | not a single value — assemble by hand using `guide.md` §1 "Polyglot" pattern |
 
 ### Decision 3: Customize for Your Project
 
-Once you've selected a template:
+Once `scaffold-agents-md` has produced the skeleton:
 
-1. Keep all **required sections** (see "Required Sections" in SKILL.md Phase 2)
-2. Add any extra sections the project genuinely needs beyond the template (e.g., a deployment-specific section) — only if grounded in real repo signals, never speculative
-3. Drop template sections that don't apply to this project (e.g., a monorepo section in a single-package repo)
-4. Add **project-specific conventions** (3-7 bullets; see [guide.md](guide.md))
+1. Keep all **required sections** (see "Required Sections" in SKILL.md Phase 2) — they're already in the right order; don't reorder
+2. Add any extra sections the project genuinely needs beyond the skeleton (e.g., a deployment-specific section) — only if grounded in real repo signals, never speculative
+3. Drop generated sections that don't apply (rare — the skeleton is already minimal)
+4. Fill **project-specific conventions** into the `## Key Conventions` TODO (3-7 lines; see `guide.md` §2.5)
 
 For **monorepos specifically:**
 
-- Are all packages the same language? If yes, base monorepo template applies
-- Different languages per package? Add separate language sections or package-level AGENTS.md files (see guide.md)
+- Are all packages the same language? Generate once with that `--language`, then add the Monorepo pattern on top
+- Different languages per package? Generate a root skeleton for the dominant language, then add package-level AGENTS.md overrides (see `guide.md` §1)

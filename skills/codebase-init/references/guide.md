@@ -2,54 +2,38 @@
 
 This guide contains everything you need to draft, refactor, and wire `AGENTS.md` files (and their variants like `CLAUDE.md`, `GEMINI.md`, etc.).
 
-## 1. Templates
+**Format rule:** every section body is `key: value` lines (markdown-kv) — not prose paragraphs, not nested bullets-of-bullets. One fact per line. Tables stay tables (commands, workspace layout).
 
-Adapt these templates to the project shape. Every command and convention must come from the actual repo, not the template.
+**Order rule:** Hard Rules come immediately after the H1 + description, before Toolchain/Conventions. Attribution is the only thing that goes last.
 
-### Base template (single-package JS/TS)
+## 1. Generating the Skeleton
 
-```markdown
-# Agent Instructions
+Don't hand-write or hand-copy a template — generate one. `scripts/run.py scaffold-agents-md` holds the skeleton (Hard Rules block, marker, Commit Attribution) and the per-language defaults (`Config.LANGUAGE_DEFAULTS`, `Config.HARD_RULES_TEXT`) as data, so the LLM never re-derives or retypes boilerplate.
 
-## Package Manager
-
-Use **pnpm** — `pnpm install`, `pnpm dev`, `pnpm test`. `npm install` will break the lockfile.
-
-## Dependency Locations
-
-- Node dependencies: `node_modules/`
-
-## File-Scoped Commands
-
-| Task      | Command                             |
-| --------- | ----------------------------------- |
-| Typecheck | `pnpm tsc --noEmit path/to/file.ts` |
-| Lint      | `pnpm eslint path/to/file.ts`       |
-| Test      | `pnpm jest path/to/file.test.ts`    |
-
-## Key Conventions
-
-- API routes live in `src/api/routes/` — follow patterns there
-- Errors thrown from handlers are caught by `src/middleware/error.ts`
-- DB migrations: `pnpm migrate create <name>`, never edit applied migrations
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer with the agent model's name and byline.
-Example: `Co-Authored-By: Claude Opus 4 <noreply@anthropic.com>`
+```bash
+python scripts/run.py scaffold-agents-md \
+  --language <node|python|go|rust|java|dotnet|bun> \
+  --purpose "<one sentence — what this repo does>" \
+  --commit <strict|relaxed|minimal> \
+  --maturity <production|development> \
+  --testing <always|touched-files|not-enforced> \
+  [--pm "<override>"] [--set key=value ...] \
+  [--out AGENTS.md]
 ```
 
-### Monorepo (pnpm workspaces / Turborepo)
+Output: H1, `purpose:`, `## Hard Rules` (full sentences + marker), `## Package Manager`, `## Dependency Locations`, `## File-Scoped Commands` table, a `## Key Conventions` TODO placeholder, `## Commit Attribution`.
 
-Add this on top of the base template.
+After running it:
+
+1. Override any default Phase 1 found wrong — re-run with `--pm`/`--set key=value`, don't hand-edit a wrong default into something else wrong.
+2. Replace the `## Key Conventions` TODO with 3-7 real `key: value` lines grounded in the actual repo (see §2.5) — the script never invents these.
+3. No language match (PHP, Ruby, etc.)? Pick the closest `--language`, then override every toolchain value with `--set` — treat the defaults as scratch, not fact.
+
+### Shapes the script doesn't cover
+
+Monorepos, package-level overrides, and polyglot repos don't fit one `--language` slot — assemble these sections by hand, still in markdown-kv:
+
+**Monorepo** — add on top of the generated skeleton:
 
 ```markdown
 ## Workspace Layout
@@ -59,24 +43,14 @@ Add this on top of the base template.
 | `@acme/api` | `apps/api`    | HTTP API      |
 | `@acme/db`  | `packages/db` | Prisma client |
 
-## Dependency Locations
-
-- Root dependencies: `node_modules/`
-- Workspace packages: `apps/*/node_modules`, `packages/*/node_modules`
-
 ## Cross-Package Commands
 
-- Run script in package: `pnpm --filter @acme/api test`
-- Run across all: `pnpm -r build` (uses Turbo cache)
-
-Each package may have its own `AGENTS.md` with overrides.
+filter: `pnpm --filter @acme/api test`
+all: `pnpm -r build` (uses Turbo cache)
+note: each package may have its own `AGENTS.md` with overrides
 ```
 
-#### Monorepo: Package-Level AGENTS.md Overrides
-
-If a package uses different tooling, create a package-level AGENTS.md. Example:
-
-**File: `apps/api/AGENTS.md`**
+**Package-level override** (only when a package's tooling genuinely differs from root — don't duplicate root sections, reference them):
 
 ```markdown
 # @acme/api Agent Instructions
@@ -85,316 +59,27 @@ See root `/AGENTS.md` for shared setup and workspace commands.
 
 ## Override: Test Runner
 
-This package uses Mocha instead of Jest:
-
-| Task | Command |
-| Test | `mocha --require ts-node/register src/**/*.test.ts` |
-| Test (one file) | `mocha --require ts-node/register src/auth/test_login.test.ts` |
-
-All other conventions apply from root AGENTS.md.
+runner: Mocha, not Jest
+test: `mocha --require ts-node/register src/**/*.test.ts`
+test-one-file: `mocha --require ts-node/register src/auth/test_login.test.ts`
 ```
 
-**When to Create Package-Level AGENTS.md:**
-
-- ✓ Package uses different test runner, linter, or build tool than root
-- ✓ Package has unique setup requirements
-- ✗ Don't duplicate root sections; reference root instead
-
-### Python (uv / poetry / pip)
+**Polyglot** — run the scaffold once per subsystem's dominant language, then merge into one file under per-subsystem headings (or split into `backend/AGENTS.md` + `frontend/AGENTS.md` + a root `AGENTS.md` with only `## Shared Conventions` if the toolchains diverge enough to make one file noisy):
 
 ```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **uv** — `uv sync`, `uv run pytest`, `uv add <pkg>`. Don't use raw `pip install`.
-
-## Dependency Locations
-
-- Python virtual environment: `.venv/`
-- Site packages: `.venv/lib/python3.x/site-packages/`
-
-## File-Scoped Commands
-
-| Task      | Command                                         |
-| --------- | ----------------------------------------------- |
-| Typecheck | `uv run mypy path/to/file.py`                   |
-| Lint      | `uv run ruff check path/to/file.py`             |
-| Test      | `uv run pytest path/to/test_file.py::test_name` |
-
-## Key Conventions
-
-- Public API lives in `src/<pkg>/__init__.py` — keep `__all__` in sync
-- Settings: `src/<pkg>/config.py` uses pydantic-settings.
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### Go
-
-```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **Go Modules** — `go mod tidy`, `go build`, `go test`.
-
-## Dependency Locations
-
-- Vendored dependencies: `vendor/` (if used)
-- Module cache: `$GOPATH/pkg/mod`
-
-## File-Scoped Commands
-
-| Task | Command                                 |
-| ---- | --------------------------------------- |
-| Lint | `golangci-lint run path/to/file.go`     |
-| Test | `go test -run TestName path/to/package` |
-
-## Key Conventions
-
-- Place binaries in `cmd/`
-- Follow idiomatic Go error handling: `if err != nil { return err }`
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### Rust (Cargo)
-
-```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **Cargo** — `cargo build`, `cargo test`, `cargo clippy`.
-
-## Dependency Locations
-
-- Build artifacts: `target/`
-
-## File-Scoped Commands
-
-| Task | Command                                            |
-| ---- | -------------------------------------------------- |
-| Lint | `cargo clippy --package <pkg_name> -- -D warnings` |
-| Test | `cargo test --package <pkg_name> test_name`        |
-
-## Key Conventions
-
-- Use `Result<T, E>` for error handling.
-- Documentation comments should use `///`.
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### Spring Boot (Java)
-
-```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **Maven** — `mvn clean install`, `mvn test`. Or **Gradle** — `gradle build`, `gradle test`.
-
-## Dependency Locations
-
-- Maven: `target/` (build), `~/.m2/repository` (cache)
-- Gradle: `build/` (build), `~/.gradle` (cache)
-
-## File-Scoped Commands
-
-| Task    | Command                                                         |
-| ------- | --------------------------------------------------------------- |
-| Compile | `mvn compile -pl :<module_name>` or `gradle -p :<module> build` |
-| Test    | `mvn test -Dtest=TestClass#testMethod -pl :<module>`            |
-
-## Key Conventions
-
-- API endpoints: Use `@RestController` in `src/main/java/com/...controller/` package
-- Error handling: Custom exceptions inherit from `ApplicationException`; include HTTP status + message
-- Database migrations: Use Flyway or Liquibase in `src/main/resources/db/migration/`
-- Dependency injection: Prefer constructor injection over field injection
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### .NET / C#
-
-```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **dotnet** — `dotnet restore`, `dotnet build`, `dotnet test`.
-
-## Dependency Locations
-
-- NuGet: `~/.nuget/packages`
-- Build: `bin/`, `obj/`
-
-## File-Scoped Commands
-
-| Task  | Command                                                 |
-| ----- | ------------------------------------------------------- |
-| Build | `dotnet build -p :<ProjectName>`                        |
-| Test  | `dotnet test --filter FullyQualifiedName~TestClassName` |
-
-## Key Conventions
-
-- Async methods: End with `Async` suffix; use `async/await` throughout
-- Dependency injection: Configure in `Program.cs`; use constructor injection
-- Error handling: Custom exception types; use `Result<T>` or exceptions (pick one consistently)
-- Migrations (EF Core): `dotnet ef migrations add <name>`, never edit applied migrations
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### Bun
-
-```markdown
-# Agent Instructions
-
-## Package Manager
-
-Use **bun** — `bun install`, `bun run`, `bun test`. Fast JavaScript runtime.
-
-## Dependency Locations
-
-- Modules: `node_modules/`
-
-## File-Scoped Commands
-
-| Task | Command                         |
-| ---- | ------------------------------- |
-| Test | `bun test path/to/file.test.ts` |
-| Run  | `bun path/to/file.ts`           |
-
-## Key Conventions
-
-- Test runner: Built-in, no Jest config needed
-- Prefer native Bun APIs (`Bun.file()`, `Bun.write()`) over Node equivalents when possible
-- Scripts run with `--hot` flag for file-watch mode
-
-## Hard Rules
-
-- **Commit policy:** [commit policy bullet — derived from the Phase 0 commit & attribution answer]
-- **Project maturity:** [project maturity bullet — derived from the Phase 0 maturity answer]
-- **Testing rigor:** [testing rigor bullet — derived from the Phase 0 testing answer]
-
-<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->
-
-## Commit Attribution
-
-AI commits MUST include a `Co-Authored-By:` trailer.
-```
-
-### Polyglot / Multi-Language Projects
-
-For projects combining multiple languages, create **language-specific sections** within one AGENTS.md, or **separate AGENTS.md per subsystem** if toolchains differ significantly.
-
-#### Single AGENTS.md Approach (Shared Conventions)
-
-```markdown
-# Agent Instructions
-
-## Overview
-
-This project spans Python (API) and TypeScript (Frontend).
-
 ## Shared Conventions
 
-- Error handling: All errors include unique error code + user-facing message
-- Testing: Both suites use same coverage thresholds (80% minimum)
+errors: every error includes a unique code + user-facing message
+testing: both suites use the same coverage threshold (80% minimum)
 
 ## Backend (Python + FastAPI)
 
-### Package Manager
-
-Use **uv**: `uv sync`, `uv run pytest`
-
-### File-Scoped Commands
-
-| Task | Command |
-| Test | `uv run pytest src/api/test_*.py::test_name` |
+pm: uv — `uv sync`, `uv run pytest`
 
 ## Frontend (TypeScript + React)
 
-### Package Manager
-
-Use **pnpm**: `pnpm install`, `pnpm test`
-
-### File-Scoped Commands
-
-| Task | Command |
-| Test | `pnpm jest src/components/__tests__/Button.test.tsx` |
+pm: pnpm — `pnpm install`, `pnpm test`
 ```
-
-#### Separate AGENTS.md per Subsystem
-
-If languages have very different toolchains:
-
-```
-project-root/
-├── AGENTS.md (shared conventions only)
-├── backend/
-│   ├── AGENTS.md (Python-specific)
-│   └── [Python code]
-└── frontend/
-    ├── AGENTS.md (TypeScript-specific)
-    └── [React code]
-```
-
-See monorepo section for how to structure package-level overrides.
 
 ## 2. Anti-Patterns (What to Cut)
 
@@ -437,12 +122,12 @@ The "Key conventions" section should capture patterns the linter can't enforce. 
 ### Good Conventions (Specific, Verifiable)
 
 ```markdown
-- **File naming:** Handlers end with `.handler.ts`, utilities end with `.util.ts`. Example: `login.handler.ts`, `date.util.ts`
-- **Error handling:** All errors inherit from `AppError` (see `src/errors.ts`). Include `statusCode` (HTTP) and `userMessage` (user-facing).
-- **Testing:** Every exported function has a test. Every async function has an integration test. Sync utilities only need unit tests.
-- **Database migrations:** Never edit applied migrations. Create new migrations with `pnpm migrate create --name feature_name`.
-- **API patterns:** Routers call services; services return data (not HTTP responses). HTTP formatting in handlers only.
-- **Dependency injection:** Constructor injection only. No field injection (`@Autowired`) or service locators.
+file-naming: handlers end `.handler.ts`, utilities end `.util.ts` — e.g. `login.handler.ts`
+errors: all inherit `AppError` (`src/errors.ts`); include `statusCode` + `userMessage`
+testing: every exported function has a test; every async function has an integration test
+migrations: never edit applied ones; create with `pnpm migrate create --name feature_name`
+api-pattern: routers call services; services return data, never HTTP responses
+dependency-injection: constructor injection only — no `@Autowired`, no service locators
 ```
 
 **Why these work:**
@@ -489,20 +174,25 @@ python scripts/run.py <command> [args]
 - `analyze-env [target_dir]` — Detect package manager, test runner, linter, monorepo structure
 - `find-dependencies [target_dir]` — Locate installed dependency directories
 - `scan-structure [target_dir] [--max-depth 3]` — Output directory tree (respects .gitignore)
+- `scaffold-agents-md --language L --commit C --maturity M --testing T [--purpose P] [--pm PM] [--set k=v ...] [--out FILE]` — Print/write a complete AGENTS.md skeleton, Hard Rules first (see §1)
 - `lint-agents-md <path_to_AGENTS.md>` — Validate AGENTS.md length, filler text, commit attribution
-- `wire-agents <source_file> <target1> [target2...]` — Create symlink/hardlink/copy fallbacks
+- `wire-agents <source_file> <target1> [target2...]` — Write one-line redirect stubs in each target pointing to the source
 
 **Hook integration:** `scripts/run_lint.sh` is a thin shell wrapper that runs `lint-agents-md` using `$CLAUDE_PLUGIN_ROOT` and `$CLAUDE_PROJECT_DIR` environment variables. It is intended for use in Claude Code hooks (e.g., `PostToolUse`) to automatically lint the AGENTS.md after edits. Invoke it directly only if those env vars are set.
 
-## 4. File Setup & Symlinking
+## 4. File Setup & Wiring
 
-Create a canonical `AGENTS.md` and link agent-specific files to it. Use the provided wiring script to safely handle platform differences (especially on Windows):
+Create one canonical `AGENTS.md`. Every other agent-specific filename is a **one-line redirect stub** — never a copy, symlink, or hardlink. A full copy means every tool that loads `CLAUDE.md`/`GEMINI.md` re-spends tokens on content already in `AGENTS.md`; a stub costs one line and the agent reads the real file only when it needs to.
 
 ```bash
 python scripts/run.py wire-agents AGENTS.md CLAUDE.md GEMINI.md
 ```
 
-This script will attempt to create symlinks, and will automatically fall back to hardlinks or file copies if symlinks are not supported by the environment.
+Each target file ends up containing exactly:
+
+```markdown
+# See [AGENTS.md](AGENTS.md)
+```
 
 | Agent / tool           | File it looks for                   |
 | ---------------------- | ----------------------------------- |
@@ -511,7 +201,7 @@ This script will attempt to create symlinks, and will automatically fall back to
 | Gemini CLI             | `GEMINI.md`                         |
 | Cursor                 | `.cursorrules` or `.cursor/rules/*` |
 
-**Cursor:** `.cursorrules` requires plain text; copy the body of `AGENTS.md` into it.
+**Cursor:** `.cursorrules` requires plain text and Cursor doesn't follow markdown links — use the same one-line stub format anyway; if Cursor must have the full body, that's the one exception to the no-copy rule.
 
 ## 5. Refactoring Examples
 
@@ -532,9 +222,19 @@ This project is built with TS, React, and PG. We love clean code.
 ```markdown
 # Agent Instructions
 
+purpose: TS/React/Postgres app
+
+## Hard Rules
+
+commit: free-form messages, Co-Authored-By required
+maturity: development — breaking changes fine
+testing: touched-files only
+
+<!-- codebase-init:hard-rules v1 commit=relaxed maturity=development testing=touched-files -->
+
 ## Package Manager
 
-Use **pnpm**.
+pm: pnpm
 
 ## File-Scoped Commands
 
@@ -544,5 +244,5 @@ Use **pnpm**.
 
 ## Commit Attribution
 
-AI commits MUST include a `Co-Authored-By:` trailer.
+Co-Authored-By: <Model Name>
 ```

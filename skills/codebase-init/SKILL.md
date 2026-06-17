@@ -8,7 +8,7 @@ allowed-tools: Bash(python *) Bash(python3 *)
 
 # codebase-init
 
-Maintain lean, high-signal `AGENTS.md` (symlinked to `CLAUDE.md`/`GEMINI.md`). Optimized for agent context injection, not human reading. Target: < 100 lines.
+Maintain lean, high-signal `AGENTS.md`. `CLAUDE.md`/`GEMINI.md` are one-line redirect stubs to it — never duplicates. Optimized for agent context injection, not human reading. Target: < 100 lines. Body style: markdown-kv (`key: value` lines), not prose paragraphs.
 
 ## Phase 0: Hard Rule Survey
 
@@ -44,30 +44,48 @@ This sequentially runs `analyze-env` (package manager, test runner, linter, mono
 
 ## Phase 1.5: Architecture Mapping
 
-**Required:** Read `references/phase-1.5-architecture.md` to select the project-specific template and detect tech stack patterns.
+**Required:** Read `references/phase-1.5-architecture.md` to pick the `--language` value for Phase 2 and detect tech stack patterns.
 
 ## Phase 2: Draft
 
-**Required:** Read `references/guide.md` §1 for the template matching the language/framework selected in Phase 1.5, and §2 for the conventions and anti-patterns checklist. Fill in the template using only facts grounded in Phase 1/1.5 output — never invent commands or conventions.
+**Required:** Generate the skeleton — don't hand-write or hand-copy one. Run:
 
-Every drafted `AGENTS.md` must satisfy the Required Sections below, including a `<!-- codebase-init:hard-rules v1 commit=<value> maturity=<value> testing=<value> -->` marker comment immediately after the Hard Rules section (values from the Phase 0 survey answers — see `references/hard-rules.md` for the value encoding) — this marker is what lets a future run skip Phase 0.
+```bash
+python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" scaffold-agents-md \
+  --language <node|python|go|rust|java|dotnet|bun> \
+  --purpose "<one sentence from Phase 1>" \
+  --commit <strict|relaxed|minimal> \
+  --maturity <production|development> \
+  --testing <always|touched-files|not-enforced> \
+  [--pm "<real pm from Phase 1>"] [--set key=value ...] \
+  --out AGENTS.md
+```
 
-### Required Sections
+`--commit`/`--maturity`/`--testing` are the marker tokens, not the Phase 0 question labels — map: Strict/Relaxed/Minimal → `strict`/`relaxed`/`minimal`; Production/Development → `production`/`development`; Always required/Touched-files only/Not enforced → `always`/`touched-files`/`not-enforced` (see `references/hard-rules.md`). Use `--pm`/`--set key=value` to override any default with what Phase 1 actually found (e.g. `--set test='npm test'`) — never leave a wrong default in place. No language match? Read `references/guide.md` §1 for the manual fallback (monorepo/polyglot/package-override patterns, or picking the closest `--language` and overriding everything).
 
-| Section                  | Requirement                                                                                                                                                                          |
-| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **H1 Header**            | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                                                                           |
-| **Description**          | Single sentence immediately following H1.                                                                                                                                            |
-| **Toolchain**            | Package manager and critical environment commands.                                                                                                                                   |
-| **File-Scoped Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                                                                 |
-| **Conventions**          | 3-7 specific, actionable bullets (e.g., "Use AppError for all rethrows").                                                                                                            |
-| **Hard Rules**           | Exactly 3 imperative bullets covering commit policy, project maturity, and testing rigor — derived from the Phase 0 survey answers, followed by the hard-rules marker comment above. |
-| **Attribution**          | `Co-Authored-By: <Model Name>` at end of file.                                                                                                                                       |
+This writes a complete skeleton with Hard Rules first, the marker, and a `## Key Conventions` TODO placeholder. Now, grounded only in Phase 1/1.5 output — never invented:
+
+1. Fix any remaining wrong Toolchain/Dependency/Command default.
+2. Replace the Key Conventions TODO with 3-7 real `key: value` lines (see `references/guide.md` §2.5 for the good/bad checklist).
+
+Every drafted `AGENTS.md` must satisfy the Required Sections below, in order — the scaffold already produces this order; don't reorder it by hand.
+
+### Required Sections (top-to-bottom order)
+
+| Order | Section                  | Requirement                                                                                                                                   |
+| ----: | :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+|     1 | **H1 Header**            | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                                    |
+|     2 | **Description**          | Single `kv` line: `purpose: <one sentence>`.                                                                                                  |
+|     3 | **Hard Rules**           | Exactly 3 `kv` lines — `commit:`, `maturity:`, `testing:` — derived from the Phase 0 survey, followed by the hard-rules marker comment above. |
+|     4 | **Toolchain**            | Package manager and critical environment commands, as `kv` lines.                                                                             |
+|     5 | **File-Scoped Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                          |
+|     6 | **Conventions**          | 3-7 specific, actionable `kv` lines (e.g., `errors: extend AppError, never throw raw Error`).                                                 |
+|     7 | **Attribution**          | `Co-Authored-By: <Model Name>` at end of file.                                                                                                |
 
 ## Phase 3: Write, Wire, Validate
 
-1. Write the drafted content to the root `AGENTS.md`.
-2. Run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" wire-agents AGENTS.md CLAUDE.md GEMINI.md` to symlink (falling back to hardlink/copy) the variant filenames.
+1. `AGENTS.md` is already on disk from Phase 2's `--out AGENTS.md`. Apply the Toolchain/Conventions edits from Phase 2 directly to that file — don't rewrite it from scratch.
+2. Run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" wire-agents AGENTS.md CLAUDE.md GEMINI.md` to write one-line redirect stubs (`# See [AGENTS.md](AGENTS.md)`) into the variant filenames. Never copy/symlink full content into them — that wastes tokens on every load.
 3. Run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md` and fix any FAIL-level issues before finishing. If a `PostToolUse` hook already runs `scripts/run_lint.sh` on save, this step is redundant but harmless.
 
 ## Audit Mode

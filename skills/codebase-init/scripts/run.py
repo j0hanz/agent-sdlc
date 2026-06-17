@@ -11,7 +11,6 @@ import json
 import os
 import re
 import shlex
-import shutil
 import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -72,6 +71,140 @@ class Config:
     MAX_DIR_SCAN_COUNT = 10000
     MAX_SKILL_LINES = 150
     MAX_AGENTS_MD_LINES = 100
+
+    # Per-language scaffold defaults for `scaffold-agents-md`. Each entry supplies a
+    # *starting point* only — the LLM must override any value Phase 1 discovered to
+    # differ from the default (e.g. a repo using npm instead of pnpm).
+    LANGUAGE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {
+        "node": {
+            "pm": "pnpm",
+            "toolchain": {
+                "install": "pnpm install",
+                "dev": "pnpm dev",
+                "test": "pnpm test",
+            },
+            "dependency_locations": {"node_modules": "node_modules/"},
+            "commands": [
+                ("Typecheck", "pnpm tsc --noEmit path/to/file.ts"),
+                ("Lint", "pnpm eslint path/to/file.ts"),
+                ("Test", "pnpm jest path/to/file.test.ts"),
+            ],
+        },
+        "python": {
+            "pm": "uv",
+            "toolchain": {
+                "sync": "uv sync",
+                "test": "uv run pytest",
+                "add-dep": "uv add <pkg>",
+            },
+            "dependency_locations": {
+                "venv": ".venv/",
+                "site-packages": ".venv/lib/python3.x/site-packages/",
+            },
+            "commands": [
+                ("Typecheck", "uv run mypy path/to/file.py"),
+                ("Lint", "uv run ruff check path/to/file.py"),
+                ("Test", "uv run pytest path/to/test_file.py::test_name"),
+            ],
+        },
+        "go": {
+            "pm": "Go Modules",
+            "toolchain": {
+                "tidy": "go mod tidy",
+                "build": "go build",
+                "test": "go test",
+            },
+            "dependency_locations": {
+                "vendor": "vendor/ (if used)",
+                "module-cache": "$GOPATH/pkg/mod",
+            },
+            "commands": [
+                ("Lint", "golangci-lint run path/to/file.go"),
+                ("Test", "go test -run TestName path/to/package"),
+            ],
+        },
+        "rust": {
+            "pm": "Cargo",
+            "toolchain": {
+                "build": "cargo build",
+                "test": "cargo test",
+                "lint": "cargo clippy",
+            },
+            "dependency_locations": {"build-artifacts": "target/"},
+            "commands": [
+                ("Lint", "cargo clippy --package <pkg_name> -- -D warnings"),
+                ("Test", "cargo test --package <pkg_name> test_name"),
+            ],
+        },
+        "java": {
+            "pm": "Maven or Gradle",
+            "toolchain": {
+                "maven-build": "mvn clean install",
+                "maven-test": "mvn test",
+                "gradle-build": "gradle build",
+                "gradle-test": "gradle test",
+            },
+            "dependency_locations": {
+                "maven": "build in target/, cache in ~/.m2/repository",
+                "gradle": "build in build/, cache in ~/.gradle",
+            },
+            "commands": [
+                (
+                    "Compile",
+                    "mvn compile -pl :<module_name> (or gradle -p :<module> build)",
+                ),
+                ("Test", "mvn test -Dtest=TestClass#testMethod -pl :<module>"),
+            ],
+        },
+        "dotnet": {
+            "pm": "dotnet",
+            "toolchain": {
+                "restore": "dotnet restore",
+                "build": "dotnet build",
+                "test": "dotnet test",
+            },
+            "dependency_locations": {
+                "nuget-cache": "~/.nuget/packages",
+                "build": "bin/, obj/",
+            },
+            "commands": [
+                ("Build", "dotnet build -p :<ProjectName>"),
+                ("Test", "dotnet test --filter FullyQualifiedName~TestClassName"),
+            ],
+        },
+        "bun": {
+            "pm": "bun",
+            "toolchain": {
+                "install": "bun install",
+                "run": "bun run",
+                "test": "bun test",
+            },
+            "dependency_locations": {"modules": "node_modules/"},
+            "commands": [
+                ("Test", "bun test path/to/file.test.ts"),
+                ("Run", "bun path/to/file.ts"),
+            ],
+        },
+    }
+
+    # Phase 0 survey answers -> Hard Rules sentence. Keys must match the marker
+    # value encoding in references/hard-rules.md.
+    HARD_RULES_TEXT: ClassVar[dict[str, dict[str, str]]] = {
+        "commit": {
+            "strict": "Conventional Commits format (`type(scope): subject`) required; every AI commit MUST include a `Co-Authored-By:` trailer",
+            "relaxed": "free-form commit messages allowed; every AI commit MUST include a `Co-Authored-By:` trailer",
+            "minimal": "no enforced message format, no required attribution trailer",
+        },
+        "maturity": {
+            "production": "stability first — avoid breaking changes, prefer additive changes, flag breaking changes explicitly before making them",
+            "development": "breaking changes are fine — never add fallback/legacy-compat shims, rewrite to the better approach directly",
+        },
+        "testing": {
+            "always": "every change must have passing tests before being called done",
+            "touched-files": "test/typecheck files you changed; don't require full-suite runs",
+            "not-enforced": "no automatic testing requirement, rely on existing CI",
+        },
+    }
 
 
 class IssueLevel(Enum):
@@ -444,6 +577,82 @@ def has_hard_rules_marker(content: str) -> bool:
     return bool(_HARD_RULES_MARKER_RE.search(content))
 
 
+def render_agents_md_skeleton(
+    language: str,
+    purpose: str,
+    commit: str,
+    maturity: str,
+    testing: str,
+    pm_override: str | None = None,
+    toolchain_overrides: dict[str, str] | None = None,
+) -> str:
+    """Render a markdown-kv AGENTS.md skeleton with Hard Rules first.
+
+    `pm_override`/`toolchain_overrides` carry real commands discovered in Phase 1 —
+    they replace the per-language defaults, which exist only as a starting point and
+    must never be hallucinated as fact for a specific repo.
+    """
+    if language not in Config.LANGUAGE_DEFAULTS:
+        raise ValueError(
+            f"Unknown language {language!r}. Choices: {sorted(Config.LANGUAGE_DEFAULTS)}"
+        )
+    for category, value in (
+        ("commit", commit),
+        ("maturity", maturity),
+        ("testing", testing),
+    ):
+        if value not in Config.HARD_RULES_TEXT[category]:
+            raise ValueError(
+                f"Unknown {category} {value!r}. Choices: {sorted(Config.HARD_RULES_TEXT[category])}"
+            )
+
+    defaults = Config.LANGUAGE_DEFAULTS[language]
+    pm = pm_override or defaults["pm"]
+    toolchain = dict(defaults["toolchain"])
+    toolchain.update(toolchain_overrides or {})
+
+    lines: list[str] = [
+        "# Agent Instructions",
+        "",
+        f"purpose: {purpose}",
+        "",
+        "## Hard Rules",
+        "",
+        f"commit: {Config.HARD_RULES_TEXT['commit'][commit]}",
+        f"maturity: {Config.HARD_RULES_TEXT['maturity'][maturity]}",
+        f"testing: {Config.HARD_RULES_TEXT['testing'][testing]}",
+        "",
+        render_hard_rules_marker(commit, maturity, testing),
+        "",
+        "## Package Manager",
+        "",
+        f"pm: {pm}",
+    ]
+    for key, value in toolchain.items():
+        lines.append(f"{key}: `{value}`")
+
+    lines += ["", "## Dependency Locations", ""]
+    for key, value in defaults["dependency_locations"].items():
+        lines.append(f"{key}: `{value}`")
+
+    lines += ["", "## File-Scoped Commands", "", "| Task | Command |", "| --- | --- |"]
+    for task, command in defaults["commands"]:
+        lines.append(f"| {task} | `{command}` |")
+
+    lines += [
+        "",
+        "## Key Conventions",
+        "",
+        "# TODO: 3-7 kv lines grounded in real repo facts from Phase 1/1.5 — never invented",
+        "",
+        "## Commit Attribution",
+        "",
+        "Co-Authored-By: <Model Name>",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 _HARD_RULES_SECTION_RE = re.compile(r"^##\s+Hard Rules\b", re.IGNORECASE | re.MULTILINE)
 _PACKAGE_OVERRIDE_RE = re.compile(r"See root\s+(?:`)?\S*AGENTS\.md", re.IGNORECASE)
 
@@ -682,7 +891,7 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
 
 
 def wire_agents_files(source: Path, targets: list[Path]) -> int:
-    """Wire agent files by attempting symlink, hardlink, then file copy."""
+    """Write one-line redirect stubs (never full copies) pointing targets at source."""
     source = source.resolve()
     if not source.exists():
         safe_print(f"FAIL: Source file not found: {source}", file=sys.stderr)
@@ -699,37 +908,15 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
             exit_code = 1
             continue
         try:
-            if target.is_dir() and not target.is_symlink():
+            if target.is_dir():
                 raise IsADirectoryError(f"target is a directory: {target}")
             if target.exists() or target.is_symlink():
                 target.unlink()
-        except OSError as e:
-            safe_print(
-                f"FAIL: could not remove existing target {target}: {e}", file=sys.stderr
+            rel = os.path.relpath(source, target.parent).replace(os.sep, "/")
+            target.write_text(
+                f"# See [{source.name}]({rel})\n", encoding="utf-8", newline="\n"
             )
-            exit_code = 1
-            continue
-
-        # Try symlink first
-        try:
-            target.symlink_to(source)
-            safe_print(f"Symlinked: {target.name} -> {source}")
-            continue
-        except (OSError, NotImplementedError):
-            pass
-
-        # Try hardlink
-        try:
-            os.link(source, target)
-            safe_print(f"Hardlinked: {target.name} -> {source}")
-            continue
-        except (OSError, NotImplementedError):
-            pass
-
-        # Fall back to copy
-        try:
-            shutil.copy2(source, target)
-            safe_print(f"Copied: {source.name} -> {target.name}")
+            safe_print(f"Stubbed: {target.name} -> {rel}")
         except OSError as e:
             safe_print(f"FAIL: Could not wire {target}: {e}", file=sys.stderr)
             exit_code = 1
@@ -908,7 +1095,7 @@ def main() -> int:
 
     wire_parser = subparsers.add_parser(
         "wire-agents",
-        help="Wire AGENTS.md to agent-specific files via symlink/hardlink/copy.",
+        help="Write one-line redirect stubs in agent-specific files pointing to AGENTS.md.",
     )
     wire_parser.add_argument("source", type=Path, help="Source file (e.g. AGENTS.md).")
     wire_parser.add_argument(
@@ -916,6 +1103,39 @@ def main() -> int:
         type=Path,
         nargs="+",
         help="Target files to create (e.g. CLAUDE.md GEMINI.md).",
+    )
+
+    scaffold_parser = subparsers.add_parser(
+        "scaffold-agents-md",
+        help="Print (or write) an AGENTS.md skeleton for a language, Hard Rules first.",
+    )
+    scaffold_parser.add_argument(
+        "--language", required=True, choices=sorted(Config.LANGUAGE_DEFAULTS)
+    )
+    scaffold_parser.add_argument(
+        "--purpose", default="<one sentence — what this repo does>"
+    )
+    scaffold_parser.add_argument(
+        "--commit", required=True, choices=sorted(Config.HARD_RULES_TEXT["commit"])
+    )
+    scaffold_parser.add_argument(
+        "--maturity", required=True, choices=sorted(Config.HARD_RULES_TEXT["maturity"])
+    )
+    scaffold_parser.add_argument(
+        "--testing", required=True, choices=sorted(Config.HARD_RULES_TEXT["testing"])
+    )
+    scaffold_parser.add_argument(
+        "--pm", default=None, help="Override the default package manager name."
+    )
+    scaffold_parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Override a toolchain command discovered in Phase 1, e.g. --set test='npm test'.",
+    )
+    scaffold_parser.add_argument(
+        "--out", type=Path, default=None, help="Write to this file instead of stdout."
     )
 
     args = parser.parse_args()
@@ -1001,6 +1221,35 @@ def main() -> int:
             return 0
         case "wire-agents":
             return wire_agents_files(args.source, args.targets)
+        case "scaffold-agents-md":
+            overrides: dict[str, str] = {}
+            for pair in args.set:
+                if "=" not in pair:
+                    safe_print(
+                        f"FAIL: --set expects KEY=VALUE, got: {pair}", file=sys.stderr
+                    )
+                    return 1
+                key, _, value = pair.partition("=")
+                overrides[key] = value
+            try:
+                content = render_agents_md_skeleton(
+                    args.language,
+                    args.purpose,
+                    args.commit,
+                    args.maturity,
+                    args.testing,
+                    pm_override=args.pm,
+                    toolchain_overrides=overrides,
+                )
+            except ValueError as e:
+                safe_print(f"FAIL: {e}", file=sys.stderr)
+                return 1
+            if args.out:
+                args.out.write_text(content, encoding="utf-8", newline="\n")
+                safe_print(f"Wrote skeleton to {args.out}")
+            else:
+                safe_print(content)
+            return 0
         case _:
             return 1
 
