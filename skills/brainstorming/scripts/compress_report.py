@@ -26,7 +26,7 @@ class CompressConfig:
     max_files: int = 5
     max_log_lines: int = 3
     max_constraints: int = 5
-    max_terminology: int = 10
+    max_interface_shapes: int = 10
     max_unknowns: int = 4
     max_design_docs: int = 3
     max_analogous: int = 2
@@ -85,8 +85,8 @@ def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
     ]
 
     # Deduplicate and cap list fields
-    out["terminology"] = _dedupe_stable(report.get("terminology", []))[
-        : cfg.max_terminology
+    out["interface_shapes"] = _dedupe_stable(report.get("interface_shapes", []))[
+        : cfg.max_interface_shapes
     ]
     out["constraints"] = _dedupe_stable(report.get("constraints", []))[
         : cfg.max_constraints
@@ -109,14 +109,14 @@ def _annotate_savings(original: dict[str, Any], compressed: dict[str, Any]) -> N
     """Attach a brief savings summary so the agent knows what was trimmed."""
     orig_files = len(original.get("related_files", []))
     kept_files = len(compressed.get("related_files", []))
-    orig_terms = len(original.get("terminology", []))
-    kept_terms = len(compressed.get("terminology", []))
+    orig_shapes = len(original.get("interface_shapes", []))
+    kept_shapes = len(compressed.get("interface_shapes", []))
 
     notes: list[str] = []
     if orig_files > kept_files:
         notes.append(f"files {orig_files}→{kept_files}")
-    if orig_terms > kept_terms:
-        notes.append(f"terms {orig_terms}→{kept_terms}")
+    if orig_shapes > kept_shapes:
+        notes.append(f"shapes {orig_shapes}→{kept_shapes}")
 
     compressed["_compressed"] = (
         "trimmed: " + ", ".join(notes) if notes else "no trimming needed"
@@ -133,7 +133,7 @@ def main() -> None:
     parser.add_argument("--max-files", type=int, default=5)
     parser.add_argument("--max-log-lines", type=int, default=3)
     parser.add_argument("--max-constraints", type=int, default=5)
-    parser.add_argument("--max-terminology", type=int, default=10)
+    parser.add_argument("--max-interface-shapes", type=int, default=10)
     parser.add_argument("--max-unknowns", type=int, default=4)
     parser.add_argument("--max-design-docs", type=int, default=3)
     parser.add_argument("--max-analogous", type=int, default=2)
@@ -155,7 +155,7 @@ def main() -> None:
         max_files=args.max_files,
         max_log_lines=args.max_log_lines,
         max_constraints=args.max_constraints,
-        max_terminology=args.max_terminology,
+        max_interface_shapes=args.max_interface_shapes,
         max_unknowns=args.max_unknowns,
         max_design_docs=args.max_design_docs,
         max_analogous=args.max_analogous,

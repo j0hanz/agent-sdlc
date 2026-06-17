@@ -25,17 +25,12 @@ CONSTRAINTS:
   - Preferred: run as a single parallel call using single quotes for all arguments:
       python '<skill-dir>/scripts/scan_context.py' -- '<sanitized_noun1>' ['<sanitized_noun2>' ...]
         --cwd '<project_root>'
-    Use its JSON output to populate the report. Fall back to the manual steps below only if it fails.
-  - Manual fallback (run all steps in parallel):
-    1. Files — Glob `**/*<noun>*`, Grep for function/class/type/import matches. Cap at 5.
-    2. Git history — `git log --oneline -10 -- <filepath>` for each found file.
-    3. Terminology — search glossary.md, README "Concepts" sections, typed definitions for domain nouns.
-    4. Design docs — search ADRs (docs/adr/, *ADR*) and architecture docs (ARCHITECTURE.md).
-    5. Constraints — rate limits, interface contracts, TODO/FIXME comments, test coverage signals.
-    6. Analogous features — Grep for adjacent synonyms; report up to 2 files (candidates for pattern
-       reuse or the Creative Checkpoint).
-    7. Test coverage — for each found file, check for a corresponding test file (test_<name>.*,
-       <name>.test.*, <name>.spec.*, <name>_test.* in the same dir or tests/, __tests__/, spec/).
+    Use its JSON output to populate the report. Fall back to manual exploration ONLY if the script fails.
+  - Manual fallback (Explorer specific):
+    1. Search for domain terms using `grep_search`.
+    2. Map the relevant directory structure using `ls -R`.
+    3. Identify key interfaces/types using `grep_search` with regex for class/interface definitions.
+    4. Check for analogous patterns by searching for synonyms.
 
 OUTPUT: Return exactly this structure. Write "None found" for empty sections.
 
@@ -51,6 +46,9 @@ OUTPUT: Return exactly this structure. Write "None found" for empty sections.
 
   ### Terminology Found
   [`Term` — [where found] — [apparent meaning]]
+
+  ### Interface Shapes (Critical)
+  [List key class signatures, interface definitions, or API schemas discovered. This grounds the design phase.]
 
   ### Design Docs
   [ADRs or architecture docs: title, location, key decision relevant to this feature]

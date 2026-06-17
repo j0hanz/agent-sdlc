@@ -17,7 +17,7 @@ OBJECTIVE: Generate 2-3 concrete design approaches with tradeoffs, an evidence-b
 CONTEXT (the full context packet):
   Feature description: [confirmed in Phase 1]
   Stakeholder type: [from Phase 1 probe, or "not specified"]
-  Codebase Context Report (compressed), including Analogous Features and Test Coverage: [paste]
+  Codebase Context Report (compressed), including Analogous Features, Test Coverage, and Interface Shapes: [paste]
   Domain terms: [from Phase 2, or "Phase 2 skipped"]
   Risks and success criteria: [from Phase 3, or "Phase 3 skipped"]
   Creative Checkpoint findings: [zero-code/adjacent-pattern candidate, if any]
@@ -33,7 +33,9 @@ CONSTRAINTS:
   - Approaches must differ on real axes, not naming or minor implementation details — 2 minimum, 3 max.
   - Novelty mandate: at least one approach must explore a non-obvious, counterintuitive, or
     unconventional solution. The "obvious default" is allowed but not sufficient alone. If the Creative
-    Checkpoint identified a zero-code or adjacent-pattern candidate, it must be a mandatory option.
+    Checkpoint identified a zero-code or adjacent-pattern candidate, it MUST be "Approach A".
+  - Interface alignment: ensure the proposed components and responsibilities align with the discovered
+    Interface Shapes from the Codebase Context Report.
   - YAGNI check: remove components not justified by a stated requirement or discovered constraint;
     flag them as "Deferred" instead of silently dropping them.
   - Recommendation must cite a specific constraint from the Codebase Context Report and the success

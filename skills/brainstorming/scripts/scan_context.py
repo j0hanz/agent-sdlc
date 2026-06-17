@@ -36,7 +36,7 @@ class FileSignal:
 class ScanResult:
     feature_area: str
     related_files: list[FileSignal] = field(default_factory=list)
-    terminology: list[str] = field(default_factory=list)
+    interface_shapes: list[str] = field(default_factory=list)
     constraints: list[str] = field(default_factory=list)
     design_docs: list[str] = field(default_factory=list)
     analogous_features: list[str] = field(default_factory=list)
@@ -217,7 +217,7 @@ def _scan_constraints(file_path: Path) -> list[str]:
     return hits[:3]
 
 
-def _extract_code_terms(file_path: Path, nouns: set[str]) -> list[str]:
+def _extract_interface_shapes(file_path: Path, nouns: set[str]) -> list[str]:
     """Extract named types/classes from source files that match domain nouns.
 
     Uses Python AST for .py files; regex patterns for TypeScript, Go, Rust, and others.
@@ -319,8 +319,8 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
             pool.submit(_scan_constraints, cwd / f.path): f.path
             for f in result.related_files
         }
-        term_futures = {
-            pool.submit(_extract_code_terms, cwd / f.path, noun_set): f.path
+        shape_futures = {
+            pool.submit(_extract_interface_shapes, cwd / f.path, noun_set): f.path
             for f in result.related_files
         }
         test_futures = {
@@ -340,9 +340,9 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
             except Exception:
                 pass
 
-        for fut in as_completed(term_futures):
+        for fut in as_completed(shape_futures):
             try:
-                result.terminology.extend(fut.result())
+                result.interface_shapes.extend(fut.result())
             except Exception:
                 pass
 
@@ -367,7 +367,7 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
     )
 
     # ── Unknowns ──────────────────────────────────────────────────────────────
-    if not result.terminology:
+    if not result.interface_shapes:
         result.unknowns.append("No typed definitions found for domain nouns")
     if not any(
         f.last_commit and f.last_commit != "no history" for f in result.related_files
