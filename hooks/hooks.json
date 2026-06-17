@@ -14,7 +14,6 @@
     ],
     "UserPromptSubmit": [
       {
-        "_comment": "Intentional: no matcher — nudge fires on all prompts; handler checks config flag internally",
         "hooks": [
           {
             "type": "command",
@@ -97,7 +96,6 @@
     ],
     "Stop": [
       {
-        "_comment": "Intentional: no matcher — debug scan runs on every stop event",
         "hooks": [
           {
             "type": "command",
