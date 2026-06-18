@@ -105,7 +105,7 @@ has_long_flag() {
 ROOT_TARGET_PATTERN='(^|[[:space:]])["'"'"']?(\$HOME/?|~/?|/\*|/)["'"'"']?([[:space:]]|$)'
 
 # Split on ; && || | into segments — best-effort, not a full shell parser.
-IFS=$'\n' read -r -d '' -a segments < <(printf '%s\0' "$command" | tr ';|' '\n' | sed -E 's/&&|\|\|/\n/g') || true
+IFS=$'\n' read -r -d '' -a segments < <(printf '%s\0' "$command" | tr ';|' '\n' | sed -E 's/&&/\n/g') || true
 
 for segment in "${segments[@]}"; do
   # trim leading/trailing whitespace
