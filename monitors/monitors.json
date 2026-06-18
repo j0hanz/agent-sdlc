@@ -6,14 +6,8 @@
     "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (PowerShell)"
   },
   {
-    "name": "node-test-watcher",
-    "command": "node --test --watch \"${CLAUDE_PLUGIN_ROOT}/hooks/handlers/*.test.mjs\"",
-    "description": "Hook handler unit tests — live feedback during hook development",
-    "when": "on-skill-invoke:create-hook"
-  },
-  {
     "name": "python-test-watcher",
-    "command": "python -m pytest \"${CLAUDE_PLUGIN_ROOT}/skills/create-agent/scripts/tests/\" \"${CLAUDE_PLUGIN_ROOT}/skills/skill-builder/tests/\" \"${CLAUDE_PLUGIN_ROOT}/skills/planning/tests/\" -v --tb=short -f",
+    "command": "python -m pytest \"${CLAUDE_PLUGIN_ROOT}/skills/skill-builder/tests/\" \"${CLAUDE_PLUGIN_ROOT}/skills/planning/tests/\" -v --tb=short -f",
     "description": "Skill script tests — live feedback during skill development",
     "when": "on-skill-invoke:skill-builder"
   }

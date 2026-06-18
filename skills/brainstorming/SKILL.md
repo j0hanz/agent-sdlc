@@ -131,7 +131,6 @@ Produce mandatory `markdown-kv` brief:
 
 - `planning`: To transform the design brief into a concrete implementation spec and task list.
 - `architecting`: To refine boundaries or choose patterns if the design reveals structural complexity.
-- `create-agent`: If the brainstormed solution requires a new specialized autonomous worker.
 
 ## Red Flags
 

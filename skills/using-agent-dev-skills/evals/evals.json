@@ -24,24 +24,6 @@
     ]
   },
   {
-    "name": "route-to-create-agent",
-    "prompt": "build an agent that monitors deploys",
-    "should_trigger": true,
-    "assertions": [
-      "Routing announcement: 'Routing to create-agent:'",
-      "create-agent skill is invoked"
-    ]
-  },
-  {
-    "name": "route-to-create-hook",
-    "prompt": "add a hook to block pushes to main",
-    "should_trigger": true,
-    "assertions": [
-      "Routing announcement: 'Routing to create-hook:'",
-      "create-hook skill is invoked"
-    ]
-  },
-  {
     "name": "route-to-request-code-review",
     "prompt": "review this diff for bugs before I merge",
     "should_trigger": true,

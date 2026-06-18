@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent Dev Plugin extends Claude Code with 15 skills and 8 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on every session event to keep development disciplined. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent Dev Plugin extends Claude Code with 13 skills and 8 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on every session event to keep development disciplined. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -20,7 +20,7 @@ Agent Dev Plugin extends Claude Code with 15 skills and 8 lifecycle hooks coveri
 
 | Feature                  | Description                                                                                                                                    |
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
+| 13 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
 | 8 lifecycle hooks        | Fire on session events to enforce workflow discipline automatically                                                                            |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
@@ -71,7 +71,7 @@ claude --plugin-dir ./claude-agent-dev-plugin
 
 ## What's Included
 
-### Skills (15)
+### Skills (13)
 
 Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`.
 
@@ -79,8 +79,6 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | :------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------- |
 | `brainstorming`                  | "let's build", "add a feature", "I want to implement"      | Requirements discovery before implementation — prevents rework |
 | `planning`                       | "plan", "design", "how should we approach"                 | Implementation planning and design decisions                   |
-| `create-agent`                   | "build agent", "create subagent", "agent prompt"           | Scaffold, write, and test agents                               |
-| `create-hook`                    | "create hook", "add hook", "hook for X"                    | Design and test lifecycle hooks                                |
 | `skill-builder`                  | "make skill", "build skill", "run evals"                   | Create, test, and optimize skills                              |
 | `diagnose`                       | "debug", "fix crash", "not working", "why is this failing" | Root-cause debugging before any fix                            |
 | `request-code-review`            | "review", "check this", "is this correct"                  | Dispatches a fresh-context subagent to review the diff         |
@@ -136,7 +134,7 @@ Lifecycle hooks fire automatically during every Claude Code session.
 │   └── utils.mjs
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions
-├── skills/                 # Skill SKILL.md files (14 skills)
+├── skills/                 # Skill SKILL.md files (12 skills)
 └── tests/                  # Integration tests
 ```
 

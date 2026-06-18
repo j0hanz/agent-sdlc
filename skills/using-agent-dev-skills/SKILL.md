@@ -116,7 +116,7 @@ Announce the identified route and confirm via `AskUserQuestion`:
 
 - **Quality/Validation:** `verification-before-completion`, `request-code-review`, `receive-code-review`.
 - **Delivery:** `github-automation`.
-- **Ecosystem Building:** `skill-builder`, `create-agent`, `create-hook`.
+- **Ecosystem Building:** `skill-builder`.
 - **Documentation:** `codebase-init`.
 
 ## Skip Disclaimer
