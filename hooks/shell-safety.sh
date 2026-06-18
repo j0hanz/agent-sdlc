@@ -39,7 +39,7 @@ extract_command() {
   fi
 }
 
-command=$(extract_command "$input")
+command=$(extract_command "$input") || command=""
 
 if [ -z "$command" ]; then
   exit 0
