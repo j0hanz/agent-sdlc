@@ -24,6 +24,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 # Kept in sync with validate_skill.py's KEBAB_RE so a name scaffold accepts is
 # guaranteed to also pass validation (and vice versa).
@@ -105,7 +106,7 @@ if __name__ == "__main__":
 '''
 
 
-def _evals_stub(name: str) -> dict:
+def _evals_stub(name: str) -> dict[str, Any]:
     return {
         "skill_name": name,
         "evals": [

@@ -144,6 +144,16 @@ def validate_frontmatter(
                 "recommended so Claude can match literal user phrases to this skill"
             )
 
+    disable_model_invocation = fields.get("disable-model-invocation")
+    if disable_model_invocation is not None and disable_model_invocation not in (
+        "true",
+        "false",
+    ):
+        warnings.append(
+            f"[FRONTMATTER] disable-model-invocation {disable_model_invocation!r} should "
+            "be the lowercase boolean literal 'true' or 'false'"
+        )
+
     return errors, warnings
 
 
@@ -192,7 +202,11 @@ def validate_references(skill_dir: Path, body: str) -> tuple[list[str], list[str
     warnings: list[str] = []
 
     missing: set[str] = set()
-    for match in LINKED_DIR_PATH_RE.finditer(body):
+    # Strip fenced (triple-backtick) blocks only — not inline single-backtick
+    # spans, since a bare backtick-wrapped relative path is exactly what this
+    # check is meant to catch (see test_dangling_reference_link_is_error).
+    unfenced_body = _FENCED_CODE_RE.sub("", body)
+    for match in LINKED_DIR_PATH_RE.finditer(unfenced_body):
         rel_path = match.group(1).rstrip(".,;:)")
         if not (skill_dir / rel_path).exists():
             missing.add(rel_path)
@@ -326,14 +340,14 @@ def main() -> None:
     print(f"--- {skill_md} ---")
     errors, warnings = validate_skill(skill_md)
 
-    if warnings:
-        print("WARNINGS:")
-        for w in warnings:
-            print(f"  [!] {w}")
     if errors:
         print("ERRORS:")
         for e in errors:
             print(f"  [X] {e}")
+    if warnings:
+        print("WARNINGS:")
+        for w in warnings:
+            print(f"  [!] {w}")
 
     failed = bool(errors) or (args.strict and bool(warnings))
     print(
