@@ -130,7 +130,7 @@ Produce mandatory `markdown-kv` brief:
 **next skills:**
 
 - `planning`: To transform the design brief into a concrete implementation spec and task list.
-- `architecture`: To refine boundaries or choose patterns if the design reveals structural complexity.
+- `architecting`: To refine boundaries or choose patterns if the design reveals structural complexity.
 - `create-agent`: If the brainstormed solution requires a new specialized autonomous worker.
 
 ## Red Flags

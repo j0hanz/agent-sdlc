@@ -16,7 +16,7 @@ testpaths = [
     "skills",
 ]
 pythonpath = [
-    "skills/architecture/scripts",
+    "skills/architecting/scripts",
 ]
 addopts = "-v"
 

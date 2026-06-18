@@ -15,12 +15,12 @@
     "assertions": ["Routing announcement: 'Routing to planning:'", "planning skill is invoked"]
   },
   {
-    "name": "route-to-architecture",
+    "name": "route-to-architecting",
     "prompt": "our auth module is too coupled, review the architecture",
     "should_trigger": true,
     "assertions": [
-      "Routing announcement: 'Routing to architecture:'",
-      "architecture skill is invoked"
+      "Routing announcement: 'Routing to architecting:'",
+      "architecting skill is invoked"
     ]
   },
   {

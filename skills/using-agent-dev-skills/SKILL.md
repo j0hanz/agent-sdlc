@@ -22,7 +22,7 @@ digraph using_agent_dev_skills {
   Planning [label="planning"];
 
   Gate2 [label="Gate 2: Systemic Issue?", shape=diamond];
-  Arch [label="architecture"];
+  Arch [label="architecting"];
   Refactor [label="refactor"];
   Diagnose [label="diagnose"];
 
@@ -68,7 +68,7 @@ Announce the identified route and confirm via `AskUserQuestion`:
 
 - **IF** the user has a vague idea, OR if there is no documented specification:
   -> **ROUTE TO:** `brainstorming`
-- **IF** there is an idea, but we need a concrete execution plan and architecture:
+- **IF** there is an idea, but we need a concrete execution plan and architecting:
   -> **ROUTE TO:** `planning`
 - **IF** the spec and plan exist:
   -> **Proceed to Gate 2.**
@@ -76,7 +76,7 @@ Announce the identified route and confirm via `AskUserQuestion`:
 ### Gate 2: Is this a systemic issue or localized?
 
 - **IF** the code has circular dependencies, \"God classes\", or boundary violations:
-  -> **ROUTE TO:** `architecture`
+  -> **ROUTE TO:** `architecting`
 - **IF** the issue is localized to a messy function or single file:
   -> **ROUTE TO:** `refactor`
 - **IF** we are actively debugging a crash or traceback:
@@ -100,7 +100,7 @@ Announce the identified route and confirm via `AskUserQuestion`:
 ## Mandatory Rules (NEVER List)
 
 - **NEVER** route to `test-driven-development` if Gate 1 (spec/plan) is not fully GREEN.
-- **NEVER** skip `architecture` for `refactor` if changes span 3+ files or cross module boundaries.
+- **NEVER** skip `architecting` for `refactor` if changes span 3+ files or cross module boundaries.
 - **NEVER** use `multi-agent-dispatch` if tasks have _any_ shared mutable state or logical dependencies.
 - **NEVER** ignore the `diagnose` step when a bug is encountered during a feature implementation.
 

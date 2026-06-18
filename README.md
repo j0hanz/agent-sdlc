@@ -87,7 +87,7 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `receive-code-review`            | "reviewer said", "PR comments"                             | Verify, push back on, and implement review feedback            |
 | `refactor`                       | "clean up", "refactor", "simplify", "messy"                | Structural improvements                                        |
 | `test-driven-development`        | "TDD", "write tests", "implement this"                     | Red-green-refactor workflow                                    |
-| `architecture`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
+| `architecting`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
 | `github-automation`              | "GitHub Actions", "gh CLI", "automate workflow"            | Actions and `gh` CLI scripting                                 |
 | `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
 | `using-agent-dev-skills`         | (meta-routing)                                             | Routes to the right skill based on context                     |

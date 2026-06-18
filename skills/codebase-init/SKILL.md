@@ -142,7 +142,7 @@ Every drafted `AGENTS.md` must satisfy the Required Sections below, in order —
 
 **next skills:**
 
-- `architecture`: To map the repository's structural patterns and identify "God" modules or circular dependencies after initialization.
+- `architecting`: To map the repository's structural patterns and identify "God" modules or circular dependencies after initialization.
 - `brainstorming`: To start exploring new features now that the agent instructions are established.
 - `planning`: To create concrete implementation plans for existing ideas in the newly onboarded repo.
 

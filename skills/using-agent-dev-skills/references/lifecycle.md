@@ -12,7 +12,7 @@ graph TD
     B --> P
     P --> G2
 
-    G2 -- Systemic --> ARC[architecture]
+    G2 -- Systemic --> ARC[architecting]
     G2 -- Localized --> REF[refactor]
     G2 -- Debugging --> DIAG[diagnose]
     G2 -- Feature --> G3{Gate 3: Strategy}
