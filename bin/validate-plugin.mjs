@@ -112,12 +112,32 @@ function validateHooks() {
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksJson, 'utf-8'));
 
-    // Check that hook commands use runner.mjs pattern
+    // Hook commands must invoke a bash handler under hooks/handlers/*.sh via
+    // ${CLAUDE_PLUGIN_ROOT} (no hardcoded paths, no .mjs/.py handlers).
     Object.entries(hooks.hooks || {}).forEach(([event, matchers]) => {
       matchers.forEach((matcher) => {
         matcher.hooks?.forEach((hook) => {
-          if (hook.type === 'command' && !hook.command.includes('hooks/runner.mjs')) {
-            warnings.push(`[Hooks] Event ${event}: Command doesn't use hooks/runner.mjs pattern`);
+          if (hook.type !== 'command') return;
+
+          if (!hook.command.includes('${CLAUDE_PLUGIN_ROOT}')) {
+            warnings.push(
+              `[Hooks] Event ${event}: Command doesn't reference \${CLAUDE_PLUGIN_ROOT} — hardcoded paths break in other installs`,
+            );
+          }
+
+          const match = hook.command.match(/hooks\/handlers\/([\w-]+\.sh)/);
+          if (!match) {
+            warnings.push(
+              `[Hooks] Event ${event}: Command doesn't reference a hooks/handlers/*.sh handler`,
+            );
+            return;
+          }
+
+          const handlerPath = path.join(pluginRoot, 'hooks', 'handlers', match[1]);
+          if (!fs.existsSync(handlerPath)) {
+            errors.push(
+              `[Hooks] Event ${event}: Handler file not found: hooks/handlers/${match[1]}`,
+            );
           }
         });
       });

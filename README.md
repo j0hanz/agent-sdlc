@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent Dev Plugin extends Claude Code with 13 skills and 8 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on every session event to keep development disciplined. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent Dev Plugin extends Claude Code with 13 skills and 3 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands, surface relevant skills, and keep a local telemetry trail. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -22,7 +22,7 @@ Agent Dev Plugin extends Claude Code with 13 skills and 8 lifecycle hooks coveri
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | 13 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
-| 8 lifecycle hooks        | Fire on session events to enforce workflow discipline automatically                                                                            |
+| 3 lifecycle hooks        | Bash-only handlers: a shell-safety guard, a skill nudge, and telemetry capture                                                                 |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
 
 ## Installation
@@ -106,17 +106,15 @@ There are no custom agent definitions in this plugin. Every dispatch uses the bu
 
 ### Hooks
 
-Lifecycle hooks fire automatically during every Claude Code session.
+Bash-only handlers (`hooks/handlers/*.sh`), wired in `hooks/hooks.json`. `shell-safety` is the only blocking hook — everything else is additive (warns or injects context, never blocks).
 
-| Event                                            | Handler                   | What it does                                                   |
-| :----------------------------------------------- | :------------------------ | :------------------------------------------------------------- |
-| `SessionStart`                                   | session, explorer, skills | Injects session context, explorer history, and skill list      |
-| `UserPromptSubmit`                               | brainstorm-nudge          | Encourages requirements discovery before implementation starts |
-| `PreToolUse` (Grep/Glob/Read/WebFetch/WebSearch) | explorer                  | Logs search breadcrumbs for context replay                     |
-| `PostToolUse` (Write/Edit/MultiEdit)             | debug                     | Scans for new issues after each change                         |
-| `PostToolUseFailure` (Bash)                      | diagnose-nudge            | Prompts structured debugging when a command fails              |
-| `Stop`                                           | debug                     | Final scan before Claude stops                                 |
-| `SessionEnd`                                     | explorer                  | Flushes explorer history to disk                               |
+| Event                 | Handler             | What it does                                                                                                                                                          | Blocking? |
+| :-------------------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
+| `PreToolUse` (`Bash`) | `shell-safety`      | Rejects a small, explicit denylist of catastrophic commands (`rm -rf /`, force-push to main/master, `git clean -fdx`). Override with `AGENT_DEV_SKIP_SHELL_SAFETY=1`. | Yes       |
+| `PostToolUse` (`*`)   | `telemetry-capture` | Appends a human-readable line per tool call to `.claude/telemetry.log`. Opt out with `AGENT_DEV_TELEMETRY=0`. Tail it live via the `telemetry-watcher` monitor.       | No        |
+| `SessionStart` (`*`)  | `skill-nudge`       | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_DEV_SKILL_NUDGE=0`.                                                             | No        |
+
+`shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/handlers/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
 
 ### MCP Server
 
@@ -127,20 +125,22 @@ Lifecycle hooks fire automatically during every Claude Code session.
 ```text
 .
 ├── bin/                    # Validation scripts
-├── hooks/                  # Hook runner and handlers
+├── hooks/                  # Hook manifest and bash handlers
 │   ├── handlers/
-│   ├── hooks.json
-│   ├── runner.mjs
-│   └── utils.mjs
+│   │   ├── lib.sh
+│   │   ├── shell-safety.sh
+│   │   ├── skill-nudge.sh
+│   │   └── telemetry-capture.sh
+│   └── hooks.json
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions
-├── skills/                 # Skill SKILL.md files (12 skills)
+├── skills/                 # Skill SKILL.md files (13 skills)
 └── tests/                  # Integration tests
 ```
 
 | Directory   | Purpose                                                          |
 | :---------- | :--------------------------------------------------------------- |
-| `hooks/`    | Hook runner, event handlers, and the hooks manifest              |
+| `hooks/`    | Bash hook handlers and the hooks manifest                        |
 | `skills/`   | One directory per skill, each containing a `SKILL.md` definition |
 | `monitors/` | Experimental live watchers for tests and telemetry               |
 | `bin/`      | Plugin manifest validator and YAML schema checker                |

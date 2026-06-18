@@ -1,56 +1,156 @@
 /**
- * Integration test: hooks write telemetry when the plugin is active.
+ * Integration test: hook handlers behave correctly when invoked directly,
+ * the way hooks.json invokes them (stdin JSON in, stdout JSON / exit code
+ * out). Exercises hooks/handlers/*.sh directly — no `claude` CLI needed.
  *
- * SLOW: requires claude CLI + ANTHROPIC_API_KEY. Run manually.
  * Run: node tests/integration/test-hooks-fire.mjs
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import { cleanupProject } from './helpers.mjs';
 
-// Skip all tests if claude CLI is not available
-let claudeAvailable = false;
-try {
-  execSync('claude --version', { stdio: 'ignore' });
-  claudeAvailable = true;
-} catch {
-  // claude CLI not available; tests will be skipped
+const pluginRoot = process.cwd();
+const handlersDir = join(pluginRoot, 'hooks', 'handlers');
+
+function runHandler(name, input, env = {}) {
+  try {
+    const stdout = execFileSync('bash', [join(handlersDir, name)], {
+      input: JSON.stringify(input),
+      encoding: 'utf-8',
+      env: { ...process.env, ...env },
+    });
+    return { stdout, exitCode: 0 };
+  } catch (err) {
+    return { stdout: err.stdout ?? '', stderr: err.stderr ?? '', exitCode: err.status ?? 1 };
+  }
 }
 
-const skipIfNoClaude = claudeAvailable ? test : test.skip;
+test('shell-safety.sh blocks rm -rf / with exit code 2', () => {
+  const { exitCode, stderr } = runHandler('shell-safety.sh', {
+    tool_input: { command: 'rm -rf /' },
+  });
+  assert.strictEqual(exitCode, 2);
+  const parsed = JSON.parse(stderr);
+  assert.strictEqual(parsed.hookSpecificOutput.permissionDecision, 'deny');
+});
 
-skipIfNoClaude('session hook writes telemetry log', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'hook-test-'));
-  const claudeDir = join(dir, '.claude');
-  mkdirSync(claudeDir, { recursive: true });
+test('shell-safety.sh allows an rm -rf on a subpath', () => {
+  const { exitCode } = runHandler('shell-safety.sh', {
+    tool_input: { command: 'rm -rf /home/user/project/node_modules' },
+  });
+  assert.strictEqual(exitCode, 0);
+});
 
+test('shell-safety.sh allows the denylist word inside a quoted string', () => {
+  const { exitCode } = runHandler('shell-safety.sh', {
+    tool_input: { command: "git commit -m 'do not rm -rf / ever'" },
+  });
+  assert.strictEqual(exitCode, 0);
+});
+
+test('shell-safety.sh respects the AGENT_DEV_SKIP_SHELL_SAFETY override', () => {
+  const { exitCode } = runHandler(
+    'shell-safety.sh',
+    { tool_input: { command: 'rm -rf /' } },
+    { AGENT_DEV_SKIP_SHELL_SAFETY: '1' },
+  );
+  assert.strictEqual(exitCode, 0);
+});
+
+test('telemetry-capture.sh appends a line to .claude/telemetry.log', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-telemetry-'));
   try {
-    // Run the session.start hook directly (does not need API key)
-    const pluginRoot = process.cwd();
-    execSync(`node "${join(pluginRoot, 'hooks/runner.mjs')}" session start`, {
-      cwd: dir,
-      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
-      stdio: 'ignore',
-    });
+    const { exitCode } = runHandler(
+      'telemetry-capture.sh',
+      { tool_name: 'Write' },
+      { CLAUDE_PROJECT_DIR: dir },
+    );
+    assert.strictEqual(exitCode, 0);
 
-    const logPath = join(claudeDir, 'telemetry.log');
-    assert.ok(existsSync(logPath), 'telemetry.log should exist after session hook runs');
-
+    const logPath = join(dir, '.claude', 'telemetry.log');
+    assert.ok(existsSync(logPath), 'telemetry.log should exist after the hook runs');
     const lines = readFileSync(logPath, 'utf-8').trim().split('\n');
-    assert.ok(lines.length > 0, 'telemetry.log should have at least one entry');
-
-    const entry = JSON.parse(lines[lines.length - 1]);
-    assert.strictEqual(entry.domain, 'session');
-    assert.strictEqual(entry.action, 'start');
-    assert.strictEqual(entry.status, 'success');
-    assert.ok(typeof entry.duration === 'number');
+    assert.ok(lines.length > 0);
+    assert.match(lines[lines.length - 1], /PostToolUse Write ok$/);
   } finally {
     cleanupProject(dir);
+  }
+});
+
+test('telemetry-capture.sh writes nothing when AGENT_DEV_TELEMETRY=0', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-telemetry-'));
+  try {
+    runHandler(
+      'telemetry-capture.sh',
+      { tool_name: 'Write' },
+      { CLAUDE_PROJECT_DIR: dir, AGENT_DEV_TELEMETRY: '0' },
+    );
+    const logPath = join(dir, '.claude', 'telemetry.log');
+    assert.ok(!existsSync(logPath), 'telemetry.log should not be created when opted out');
+  } finally {
+    cleanupProject(dir);
+  }
+});
+
+test('skill-nudge.sh emits additionalContext on first fire, then stays quiet (cooldown)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-nudge-'));
+  try {
+    const first = runHandler(
+      'skill-nudge.sh',
+      {},
+      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot },
+    );
+    assert.strictEqual(first.exitCode, 0);
+    const parsed = JSON.parse(first.stdout);
+    assert.ok(parsed.hookSpecificOutput.additionalContext.includes('brainstorming'));
+
+    const second = runHandler(
+      'skill-nudge.sh',
+      {},
+      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot },
+    );
+    assert.strictEqual(second.exitCode, 0);
+    assert.strictEqual(second.stdout.trim(), '');
+  } finally {
+    cleanupProject(dir);
+  }
+});
+
+test('skill-nudge.sh respects AGENT_DEV_SKILL_NUDGE=0', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-nudge-'));
+  try {
+    const { stdout, exitCode } = runHandler(
+      'skill-nudge.sh',
+      {},
+      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot, AGENT_DEV_SKILL_NUDGE: '0' },
+    );
+    assert.strictEqual(exitCode, 0);
+    assert.strictEqual(stdout.trim(), '');
+  } finally {
+    cleanupProject(dir);
+  }
+});
+
+test('all hooks.json handler commands reference an existing handler file', () => {
+  mkdirSync(handlersDir, { recursive: true });
+  const hooksConfig = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf-8'));
+  const referenced = [];
+  for (const matchers of Object.values(hooksConfig.hooks ?? {})) {
+    for (const matcher of matchers) {
+      for (const hook of matcher.hooks ?? []) {
+        const match = hook.command?.match(/hooks\/handlers\/([\w-]+\.sh)/);
+        if (match) referenced.push(match[1]);
+      }
+    }
+  }
+  assert.ok(referenced.length > 0, 'hooks.json should reference at least one handler');
+  for (const name of referenced) {
+    assert.ok(existsSync(join(handlersDir, name)), `${name} should exist in hooks/handlers/`);
   }
 });

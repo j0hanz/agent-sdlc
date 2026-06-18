@@ -9,15 +9,9 @@ export default [
 
   js.configs.recommended,
 
-  // All Node.js scripts — hooks, skills, bin, tests
+  // All Node.js scripts — skills, bin, tests (hooks/ is bash-only, no .mjs)
   {
-    files: [
-      'hooks/**/*.mjs',
-      'skills/**/*.mjs',
-      'skills/**/*.js',
-      'bin/**/*.mjs',
-      'tests/**/*.mjs',
-    ],
+    files: ['skills/**/*.mjs', 'skills/**/*.js', 'bin/**/*.mjs', 'tests/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -42,14 +36,6 @@ export default [
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'object-shorthand': 'error',
       'prefer-template': 'error',
-    },
-  },
-
-  // Hooks only: warn on console.log — debug.mjs scans for these as debug artifacts
-  {
-    files: ['hooks/**/*.mjs'],
-    rules: {
-      'no-console': 'warn',
     },
   },
 
