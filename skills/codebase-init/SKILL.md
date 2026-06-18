@@ -1,6 +1,6 @@
 ---
 name: codebase-init
-description: "Initialize or audit repository instructions. Generates high-signal AGENTS.md wired to CLAUDE.md/GEMINI.md stubs. Trigger on: 'init codebase', 'onboard repo', 'audit AGENTS.md', 'setup agent instructions', 'codebase-init', 'initialize project memory'."
+description: "Initialize or audit repository instructions. Generates high-signal AGENTS.md wired to CLAUDE.md/GEMINI.md stubs. Not for documenting a specific feature's spec or design (see planning, brainstorming). Trigger on: 'init codebase', 'onboard repo', 'audit AGENTS.md', 'setup agent instructions', 'codebase-init', 'initialize project memory'."
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *) AskUserQuestion

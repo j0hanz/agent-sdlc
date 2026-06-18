@@ -1,6 +1,6 @@
 ---
 name: using-agent-dev-skills
-description: "Global orchestrator for agent-dev skills. Diagnostic gating to route tasks to optimal skills. Use as the default entry point for any software engineering task in this repo — feature requests, bug investigations, reviews — not just explicit routing requests. Trigger on: 'start task', 'route work', 'using-agent-dev-skills', 'skill selection', 'task diagnostic', 'orchestrate development', and ordinary task requests like 'fix this bug', 'add a feature', 'investigate why X is failing'."
+description: "Global orchestrator for agent-dev skills. Diagnostic gating to route tasks to optimal skills. Use as the default entry point for any software engineering task in this repo — feature requests, bug investigations, reviews — not just explicit routing requests. Not for building or improving the skills themselves (see skill-builder). Trigger on: 'start task', 'route work', 'using-agent-dev-skills', 'skill selection', 'task diagnostic', 'orchestrate development', and ordinary task requests like 'fix this bug', 'add a feature', 'investigate why X is failing'."
 ---
 
 # using-agent-dev-skills

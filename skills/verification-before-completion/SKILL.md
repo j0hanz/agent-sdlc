@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Evidence-based operational correctness verification. Mandatory execution check before task completion. Trigger on: 'ready to merge', 'looks good', 'mark as done', 'verification-before-completion', 'smoke test', 'manual verification'."
+description: "Evidence-based operational correctness verification. Mandatory execution check before task completion. Not for requesting a peer review of code quality or security (see request-code-review). Trigger on: 'ready to merge', 'looks good', 'mark as done', 'verification-before-completion', 'smoke test', 'manual verification'."
 disable-model-invocation: false
 ---
 

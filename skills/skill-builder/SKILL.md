@@ -74,7 +74,7 @@ Save cases to `evals/evals.json`.
 3. **Metrics:** Capture `total_tokens` and `duration_ms` into `timing.json`.
 4. **Grade:** Dispatch agent to score assertions against the OUTPUT SCHEMA's `EVIDENCE` field. Save to `grading.json`.
 5. **Aggregate:** `python -m scripts.aggregate_benchmark <workspace>/iteration-N`
-6. **Viewer:** Launch `generate_review.py`. Provide clickable link.
+6. **Viewer:** Launch `eval-viewer/generate_review.py`. Provide clickable link.
 
 **Error Recovery:**
 

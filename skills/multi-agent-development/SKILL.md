@@ -1,6 +1,6 @@
 ---
 name: multi-agent-development
-description: "Sequential task execution with gated reviews. Uses isolated subagents to execute complex multi-task plans. Trigger on: 'implement the plan', 'execute spec', 'agentic development', 'multi-agent-development', 'sequential tasks', 'gated implementation'."
+description: "Sequential task execution with gated reviews. Uses isolated subagents to execute complex multi-task plans. Not for fully independent tasks with no shared state — that's faster in parallel (see multi-agent-dispatch). Trigger on: 'implement the plan', 'execute spec', 'agentic development', 'multi-agent-development', 'sequential tasks', 'gated implementation'."
 disable-model-invocation: false
 argument-hint: '[path to plan file]'
 ---

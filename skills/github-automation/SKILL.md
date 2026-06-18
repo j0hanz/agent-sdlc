@@ -1,6 +1,6 @@
 ---
 name: github-automation
-description: "Secure GitHub automation and CLI scripting. Expert in GitHub Actions, OIDC, and SHA-pinning. Trigger on: 'add CI', 'setup release', 'harden workflow', 'gh api', 'github-automation', 'least-privilege permissions', 'OIDC setup'."
+description: "Secure GitHub automation and CLI scripting. Expert in GitHub Actions, OIDC, and SHA-pinning. Not for reviewing code quality or correctness (see request-code-review). Trigger on: 'add CI', 'setup release', 'harden workflow', 'gh api', 'github-automation', 'least-privilege permissions', 'OIDC setup'."
 disable-model-invocation: true
 allowed-tools: Bash(python *) Bash(python3 *)
 ---

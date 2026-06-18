@@ -1,6 +1,6 @@
 ---
 name: planning
-description: "Paired specification and implementation planning. Generates durable spec.md and plan.md artifacts. Trigger on: 'write a spec', 'spec and plan this', 'create implementation plan', 'planning', 'blueprint', 'technical specification', 'task decomposition'."
+description: "Paired specification and implementation planning. Generates durable spec.md and plan.md artifacts. Not for vague/ambiguous requirements that need discovery first (see brainstorming) or for executing an existing plan (see multi-agent-development, test-driven-development). Trigger on: 'write a spec', 'spec and plan this', 'create implementation plan', 'planning', 'blueprint', 'technical specification', 'task decomposition'."
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)

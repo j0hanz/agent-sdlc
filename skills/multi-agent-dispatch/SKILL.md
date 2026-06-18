@@ -1,6 +1,6 @@
 ---
 name: multi-agent-dispatch
-description: "Parallel execution for independent tasks. Fans out to isolated subagents for efficiency. Trigger on: 'in parallel', 'dispatch agents', 'fan out', 'multi-agent-dispatch', 'independent tasks', 'concurrent execution'."
+description: "Parallel execution for independent tasks. Fans out to isolated subagents for efficiency. Not for tasks with shared mutable state or dependencies — those need strict ordering (see multi-agent-development). Trigger on: 'in parallel', 'dispatch agents', 'fan out', 'multi-agent-dispatch', 'independent tasks', 'concurrent execution'."
 disable-model-invocation: false
 argument-hint: '[the independent tasks to parallelize]'
 ---
