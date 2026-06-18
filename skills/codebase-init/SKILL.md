@@ -38,8 +38,11 @@ digraph codebase_init {
 
   AuditMode -> LintAudit -> ReportAudit;
 
+  Halt [label="Halt:\nNo Partial File", shape=box, style="rounded,dashed"];
+
   InitMode -> Phase0 [label="marker absent"];
   Phase0 -> Phase1 [label="survey complete"];
+  Phase0 -> Halt [label="cancelled", style=dashed];
   InitMode -> Phase1 [label="marker present"];
   Phase1 -> Phase1_5 -> Phase2 -> Phase3;
 }

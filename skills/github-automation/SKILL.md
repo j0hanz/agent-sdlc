@@ -34,8 +34,15 @@ digraph github_automation {
   Trigger -> PathA [label="yml / CI"];
   Trigger -> PathB [label="gh / API"];
 
+  Diagnose [label="Handoff:\ndiagnose", style=dashed];
+  Refactor [label="Handoff:\nrefactor", style=dashed];
+
   PathA -> ClassifyA -> AuthorA -> ValidateA;
   PathB -> ModeB -> StandardsB -> SafetyB;
+
+  ValidateA -> Diagnose [label="runtime fail", style=dashed];
+  ValidateA -> Refactor [label="hygiene issue", style=dashed];
+  SafetyB   -> Diagnose [label="script fail", style=dashed];
 }
 ```
 

@@ -42,9 +42,12 @@ digraph multi_agent_dev {
   Next [label="Next Task?", shape=diamond];
   Final [label="Final Validation\n(Test & Verify)"];
 
+  Blocked [label="BLOCKED\n(Escalate to User)", shape=box, style="rounded,dashed"];
+
   Start -> Phase1 -> Phase2;
   Phase2 -> Phase3 [label="SPEC_PASS"];
   Phase2 -> Phase1 [label="SPEC_FAIL", style=dashed];
+  Phase2 -> Blocked [label="SPEC_FAIL\n(after 2 attempts)", style=dashed];
 
   Phase3 -> Next [label="QUALITY_PASS"];
   Phase3 -> Phase1 [label="CRITICAL / IMPORTANT", style=dashed];

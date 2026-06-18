@@ -30,10 +30,15 @@ digraph receive_code_review {
 
   Done [label="Handoff:\nverification-before-completion"];
 
+  DiagnoseH [label="Handoff:\ndiagnose", style=dashed];
+  RefactorH [label="Handoff:\nrefactor", style=dashed];
+
   Start -> Identify -> Read -> Verify;
   Verify -> CheckMatch;
   CheckMatch -> Respond [label="Verified or\nPushback"];
   Respond -> Implement -> Test;
+  Implement -> DiagnoseH [label="Tier 1/2\nblocking", style=dashed];
+  Implement -> RefactorH [label="Tier 4\nhygiene", style=dashed];
   Test -> Loop -> Verify [label="Next item"];
   Loop -> Done [label="All items fixed"];
 }

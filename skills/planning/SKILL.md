@@ -28,7 +28,9 @@ digraph planning {
   Step1 -> Step2 -> Step3;
   Step3 -> Step4 [label="depth > sketch"];
   Step3 -> Step5 [label="depth == sketch"];
+  Step3 -> Step2 [label="errors found", style=dashed];
   Step4 -> Step5 [label="Approved"];
+  Step4 -> Step2 [label="not ready:\nrevise", style=dashed];
 }
 ```
 

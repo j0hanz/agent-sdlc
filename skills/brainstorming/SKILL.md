@@ -52,6 +52,7 @@ digraph brainstorming {
   DesignProposal -> DesignBrief      [label="not flagged"];
   StructuredReview -> DesignBrief    [label="approved"];
   StructuredReview -> DesignProposal [label="rejected", style=dashed];
+  StructuredReview -> StructuredReview [label="revise", style=dotted];
 }
 ```
 

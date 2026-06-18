@@ -41,6 +41,7 @@ digraph multi_agent_dispatch {
   Step4 [label="4. INTEGRATE\n(Reconcile & Verify)"];
 
   Step1 -> Step2 -> Step3 -> Step4;
+  Step4 -> Step3 [label="partial failure:\nretry failed domains", style=dashed];
 }
 ```
 
