@@ -42,6 +42,31 @@ def test_scaffold_refuses_overwrite_without_force(tmp_path: Path) -> None:
     scaffold("demo-skill", out_dir=tmp_path, force=True)  # does not raise
 
 
+def test_scaffold_force_does_not_clobber_drafted_skill_md(tmp_path: Path) -> None:
+    """Once a scaffolded SKILL.md has been drafted (no '{{FILL' markers left),
+    --force must refuse to overwrite it rather than silently destroying the
+    drafted content just because the user wanted to add a missing optional
+    dir like --evals."""
+    scaffold("demo-skill", out_dir=tmp_path)
+    skill_md = tmp_path / "demo-skill" / "SKILL.md"
+    drafted = (
+        '---\nname: demo-skill\ndescription: "a fully drafted real description"\n'
+        "---\n\nReal drafted content, no placeholders left.\n"
+    )
+    skill_md.write_text(drafted, encoding="utf-8")
+    with pytest.raises(FileExistsError):
+        scaffold("demo-skill", out_dir=tmp_path, force=True)
+    assert skill_md.read_text(encoding="utf-8") == drafted
+
+
+@pytest.mark.parametrize("bad_name", ["", "a--b", "-foo", "foo-", "Demo_Skill", "con"])
+def test_scaffold_rejects_degenerate_and_reserved_names(
+    tmp_path: Path, bad_name: str
+) -> None:
+    with pytest.raises(ValueError):
+        scaffold(bad_name, out_dir=tmp_path)
+
+
 def test_scaffold_optional_dirs(tmp_path: Path) -> None:
     created = scaffold(
         "demo-skill",
@@ -106,6 +131,23 @@ def test_name_directory_mismatch_is_error(tmp_path: Path) -> None:
     )
     errors, _ = validate_skill(skill_dir / "SKILL.md")
     assert any("does not match" in e for e in errors)
+
+
+def test_non_kebab_name_matching_non_kebab_directory_is_still_an_error(
+    tmp_path: Path,
+) -> None:
+    """A name that matches its (also non-kebab) directory must still be
+    flagged as not kebab-case — the mismatch check and the kebab-case check
+    are independent and must not short-circuit each other."""
+    skill_dir = tmp_path / "Demo_Skill"
+    skill_dir.mkdir()
+    (skill_dir / "SKILL.md").write_text(
+        '---\nname: Demo_Skill\ndescription: "x"\n---\n\n# demo\n',
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill(skill_dir / "SKILL.md")
+    assert any("not kebab-case" in e for e in errors)
+    assert not any("does not match" in e for e in errors)
 
 
 def test_missing_frontmatter_is_error(tmp_path: Path) -> None:

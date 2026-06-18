@@ -111,14 +111,15 @@ def validate_frontmatter(
 
     if not name:
         errors.append("[FRONTMATTER] Missing 'name' field")
-    elif name != skill_dir.name:
-        errors.append(
-            f"[FRONTMATTER] name {name!r} does not match directory name {skill_dir.name!r}"
-        )
-    elif not KEBAB_RE.match(name):
-        errors.append(
-            f"[FRONTMATTER] name {name!r} is not kebab-case (lowercase, hyphen-separated)"
-        )
+    else:
+        if name != skill_dir.name:
+            errors.append(
+                f"[FRONTMATTER] name {name!r} does not match directory name {skill_dir.name!r}"
+            )
+        if not KEBAB_RE.match(name):
+            errors.append(
+                f"[FRONTMATTER] name {name!r} is not kebab-case (lowercase, hyphen-separated)"
+            )
 
     if not description:
         errors.append("[FRONTMATTER] Missing 'description' field")

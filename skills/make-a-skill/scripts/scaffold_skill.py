@@ -21,8 +21,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
+
+# Kept in sync with validate_skill.py's KEBAB_RE so a name scaffold accepts is
+# guaranteed to also pass validation (and vice versa).
+_KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+_WINDOWS_RESERVED_NAMES = frozenset(
+    {"con", "prn", "aux", "nul"}
+    | {f"com{i}" for i in range(1, 10)}
+    | {f"lpt{i}" for i in range(1, 10)}
+)
 
 _SKILL_TEMPLATE = """\
 ---
@@ -121,26 +131,35 @@ def scaffold(
     force: bool = False,
 ) -> list[Path]:
     """Write a new skill skeleton. Returns the list of paths created."""
-    if (
-        "/" in name
-        or "\\" in name
-        or name.startswith(".")
-        or "\x00" in name
-        or name != name.lower()
-    ):
+    if not _KEBAB_RE.match(name):
         raise ValueError(
-            f"Invalid name {name!r}: must be a lowercase, plain directory name "
-            "with no path separators (kebab-case, e.g. 'make-a-skill')"
+            f"Invalid name {name!r}: must be a lowercase, kebab-case directory name "
+            "with no path separators (e.g. 'make-a-skill')"
         )
+    if name in _WINDOWS_RESERVED_NAMES:
+        raise ValueError(f"Invalid name {name!r}: reserved filename on Windows")
 
     skill_dir = Path(out_dir).resolve() / name
     skill_md = skill_dir / "SKILL.md"
-    if skill_md.exists() and not force:
+    skill_md_exists = skill_md.exists()
+    if skill_md_exists and not force:
         raise FileExistsError(f"{skill_md} already exists. Use --force to overwrite.")
+    if (
+        skill_md_exists
+        and force
+        and "{{FILL" not in skill_md.read_text(encoding="utf-8")
+    ):
+        raise FileExistsError(
+            f"{skill_md} already exists and looks drafted (no remaining '{{{{FILL' "
+            "placeholders) — refusing to overwrite drafted content even with --force. "
+            "Delete it manually first if you really want to restart from the template."
+        )
 
     skill_dir.mkdir(parents=True, exist_ok=True)
-    skill_md.write_text(_SKILL_TEMPLATE.format(name=name), encoding="utf-8")
-    created = [skill_md]
+    created: list[Path] = []
+    if not skill_md_exists or force:
+        skill_md.write_text(_SKILL_TEMPLATE.format(name=name), encoding="utf-8")
+        created.append(skill_md)
 
     if with_scripts:
         scripts_dir = skill_dir / "scripts"
