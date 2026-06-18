@@ -4,7 +4,7 @@
 # only ever degrade an additive hook to a no-op, never silently disable the
 # one blocking guard.
 
-AGENT_DEV_TELEMETRY_MAX_LINES=500
+readonly AGENT_DEV_TELEMETRY_MAX_LINES=500
 
 agent_dev_json_escape() {
   # Escapes $1 for embedding as a JSON string value (no surrounding quotes).
@@ -38,7 +38,9 @@ agent_dev_telemetry_append() {
   lines=$(wc -l <"$log" 2>/dev/null || echo 0)
   lines=${lines//[^0-9]/}
   if [ -n "$lines" ] && [ "$lines" -gt "$AGENT_DEV_TELEMETRY_MAX_LINES" ]; then
-    tail -n "$AGENT_DEV_TELEMETRY_MAX_LINES" "$log" >"$log.tmp" 2>/dev/null && mv "$log.tmp" "$log" 2>/dev/null
+    local tmp
+    tmp=$(mktemp "$dir/telemetry.log.XXXXXX" 2>/dev/null) || return 0
+    tail -n "$AGENT_DEV_TELEMETRY_MAX_LINES" "$log" >"$tmp" 2>/dev/null && mv "$tmp" "$log" 2>/dev/null || rm -f "$tmp" 2>/dev/null
   fi
   return 0
 }

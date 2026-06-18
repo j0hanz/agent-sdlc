@@ -1,13 +1,13 @@
 /**
  * Integration test: hook handlers behave correctly when invoked directly,
  * the way hooks.json invokes them (stdin JSON in, stdout JSON / exit code
- * out). Exercises hooks/handlers/*.sh directly — no `claude` CLI needed.
+ * out). Exercises hooks/*.sh directly — no `claude` CLI needed.
  *
  * Run: node tests/integration/test-hooks-fire.mjs
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -16,11 +16,11 @@ import process from 'node:process';
 import { cleanupProject } from './helpers.mjs';
 
 const pluginRoot = process.cwd();
-const handlersDir = join(pluginRoot, 'hooks', 'handlers');
+const hooksDir = join(pluginRoot, 'hooks');
 
 function runHandler(name, input, env = {}) {
   try {
-    const stdout = execFileSync('bash', [join(handlersDir, name)], {
+    const stdout = execFileSync('bash', [join(hooksDir, name)], {
       input: JSON.stringify(input),
       encoding: 'utf-8',
       env: { ...process.env, ...env },
@@ -138,19 +138,18 @@ test('skill-nudge.sh respects AGENT_DEV_SKILL_NUDGE=0', () => {
 });
 
 test('all hooks.json handler commands reference an existing handler file', () => {
-  mkdirSync(handlersDir, { recursive: true });
   const hooksConfig = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf-8'));
   const referenced = [];
   for (const matchers of Object.values(hooksConfig.hooks ?? {})) {
     for (const matcher of matchers) {
       for (const hook of matcher.hooks ?? []) {
-        const match = hook.command?.match(/hooks\/handlers\/([\w-]+\.sh)/);
+        const match = hook.command?.match(/hooks\/([\w-]+\.sh)/);
         if (match) referenced.push(match[1]);
       }
     }
   }
   assert.ok(referenced.length > 0, 'hooks.json should reference at least one handler');
   for (const name of referenced) {
-    assert.ok(existsSync(join(handlersDir, name)), `${name} should exist in hooks/handlers/`);
+    assert.ok(existsSync(join(hooksDir, name)), `${name} should exist in hooks/`);
   }
 });
