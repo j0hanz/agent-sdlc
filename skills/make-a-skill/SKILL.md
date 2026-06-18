@@ -1,6 +1,6 @@
 ---
 name: make-a-skill
-description: "Scaffolds and validates a new Claude Code skill's structure: file layout, placeholders, dangling references, vague/passive language, token budget, evals.json shape. Not for editing an existing finished skill's prose. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill'."
+description: "Guides the creation, scaffolding, and structural auditing of Claude Code skills to ensure they follow best practices (500-line rule, progressive disclosure). Use this to generate skill skeletons or to validate that an existing skill's structure, placeholders, and references are correct. Not for general content editing. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill', 'audit skill', 'review skill'."
 disable-model-invocation: false
 ---
 
@@ -33,10 +33,10 @@ digraph make_a_skill {
 ## Step 1: Scaffold
 
 ```bash
-python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/scaffold_skill.py" <name> [--scripts] [--references] [--evals]
+python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/scaffold_skill.py" <name> [--scripts] [--references] [--evals] [--skill-rules]
 ```
 
-`<name>` must be a lowercase, kebab-case directory name (e.g. `make-a-skill`). Add `--scripts`/`--references`/`--evals` only for the sibling directories the skill actually needs — don't stub directories it won't use. Writes `.claude/skills/<name>/SKILL.md` by default (the standard project-level location); pass `--dir skills` instead when the skill being authored ships inside a plugin's own `skills/` directory. Every section, including `description`, is written as a `{{FILL: ...}}` placeholder except `name`.
+`<name>` must be a lowercase, kebab-case directory name (e.g. `make-a-skill`). Add `--scripts`/`--references`/`--evals` only for the sibling directories the skill actually needs — don't stub directories it won't use. Pass `--skill-rules` to print a suggested JSON snippet for `skill-rules.json` (for hook-based activation). Writes `.claude/skills/<name>/SKILL.md` by default (the standard project-level location); pass `--dir skills` instead when the skill being authored ships inside a plugin's own `skills/` directory. Every section, including `description`, is written as a `{{FILL: ...}}` placeholder except `name`.
 
 ## Step 2: Draft the body
 

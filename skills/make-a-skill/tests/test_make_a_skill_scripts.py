@@ -89,6 +89,16 @@ def test_scaffold_optional_dirs(tmp_path: Path) -> None:
     assert evals_data["skill_name"] == "demo-skill"
 
 
+def test_scaffold_skill_rules_snippet(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scaffold("demo-skill", out_dir=tmp_path, with_skill_rules=True)
+    captured = capsys.readouterr()
+    assert "Suggested skill-rules.json entry for 'demo-skill'" in captured.out
+    assert '"demo-skill": {' in captured.out
+    assert '"type": "domain"' in captured.out
+
+
 # ---------------------------------------------------------------------------
 # validate_skill — structural errors
 # ---------------------------------------------------------------------------
