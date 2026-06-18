@@ -12,6 +12,7 @@ source "$SCRIPT_DIR/lib.sh" 2>/dev/null || exit 0
 
 input=$(cat)
 tool=$(printf '%s' "$input" | jq -r '.tool_name // "unknown"' 2>/dev/null || echo unknown)
+tool="${tool//$'\n'/ }"; tool="${tool//$'\r'/}"
 
 agent_dev_telemetry_append "PostToolUse" "$tool" "ok" || true
 exit 0
