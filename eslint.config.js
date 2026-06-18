@@ -4,14 +4,7 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: [
-      'node_modules/**',
-      '.simulate/**',
-      '.venv/**',
-      '.ruff_cache/**',
-      '__pycache__/**',
-      'skills/skill-builder/assets/**',
-    ],
+    ignores: ['node_modules/**', '.simulate/**', '.venv/**', '.ruff_cache/**', '__pycache__/**'],
   },
 
   js.configs.recommended,

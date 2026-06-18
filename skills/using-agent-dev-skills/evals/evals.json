@@ -54,15 +54,6 @@
     ]
   },
   {
-    "name": "route-to-skill-builder",
-    "prompt": "make a skill for my team's PR workflow",
-    "should_trigger": true,
-    "assertions": [
-      "Routing announcement: 'Routing to skill-builder:'",
-      "skill-builder skill is invoked"
-    ]
-  },
-  {
     "name": "route-to-github-automation",
     "prompt": "automate our release workflow with GitHub Actions",
     "should_trigger": true,

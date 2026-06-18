@@ -1,6 +1,6 @@
 ---
 name: using-agent-dev-skills
-description: "Global orchestrator for agent-dev skills. Diagnostic gating to route tasks to optimal skills. Use as the default entry point for any software engineering task in this repo — feature requests, bug investigations, reviews — not just explicit routing requests. Not for building or improving the skills themselves (see skill-builder). Trigger on: 'start task', 'route work', 'using-agent-dev-skills', 'skill selection', 'task diagnostic', 'orchestrate development', and ordinary task requests like 'fix this bug', 'add a feature', 'investigate why X is failing'."
+description: "Global orchestrator for agent-dev skills. Diagnostic gating to route tasks to optimal skills. Use as the default entry point for any software engineering task in this repo — feature requests, bug investigations, reviews — not just explicit routing requests. Trigger on: 'start task', 'route work', 'using-agent-dev-skills', 'skill selection', 'task diagnostic', 'orchestrate development', and ordinary task requests like 'fix this bug', 'add a feature', 'investigate why X is failing'."
 ---
 
 # using-agent-dev-skills
@@ -160,7 +160,6 @@ After Gate 3's execution skill completes:
 - **Quality/Validation:** `verification-before-completion`, `request-code-review`, `receive-code-review` — see Gate 4.
 - **Delivery:** `github-automation` — see Gate 4.
 - **Repo Onboarding:** `codebase-init` — see Gate 0.
-- **Ecosystem Building:** `skill-builder` — top-level entry point for building/improving skills themselves; not part of the product-code workflow, so it has no gate in this tree.
 
 ## Skip Disclaimer
 
