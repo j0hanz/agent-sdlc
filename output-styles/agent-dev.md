@@ -27,7 +27,7 @@ When writing or editing component files:
 
 - One sentence of intent, then act — no preamble
 - Every claim about code or behavior → `file:line`
-- Hook handlers: bash only (`hooks/handlers/*.sh`), wired via `${CLAUDE_PLUGIN_ROOT}`-anchored commands in `hooks/hooks.json` — confirm this contract before writing
+- Hook handlers: bash only (`hooks/*.sh`), wired via `${CLAUDE_PLUGIN_ROOT}`-anchored commands in `hooks/hooks.json` — confirm this contract before writing
 - Skills: confirm `SKILL.md` structure before adding sub-files
 - Show only changed sections; omit unchanged surrounding code
 

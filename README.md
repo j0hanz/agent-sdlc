@@ -106,7 +106,7 @@ There are no custom agent definitions in this plugin. Every dispatch uses the bu
 
 ### Hooks
 
-Bash-only handlers (`hooks/handlers/*.sh`), wired in `hooks/hooks.json`. `shell-safety` is the only blocking hook — everything else is additive (warns or injects context, never blocks).
+Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` is the only blocking hook — everything else is additive (warns or injects context, never blocks).
 
 | Event                 | Handler             | What it does                                                                                                                                                          | Blocking? |
 | :-------------------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
@@ -114,7 +114,7 @@ Bash-only handlers (`hooks/handlers/*.sh`), wired in `hooks/hooks.json`. `shell-
 | `PostToolUse` (`*`)   | `telemetry-capture` | Appends a human-readable line per tool call to `.claude/telemetry.log`. Opt out with `AGENT_DEV_TELEMETRY=0`. Tail it live via the `telemetry-watcher` monitor.       | No        |
 | `SessionStart` (`*`)  | `skill-nudge`       | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_DEV_SKILL_NUDGE=0`.                                                             | No        |
 
-`shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/handlers/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
+`shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
 
 ### MCP Server
 
@@ -126,11 +126,10 @@ Bash-only handlers (`hooks/handlers/*.sh`), wired in `hooks/hooks.json`. `shell-
 .
 ├── bin/                    # Validation scripts
 ├── hooks/                  # Hook manifest and bash handlers
-│   ├── handlers/
-│   │   ├── lib.sh
-│   │   ├── shell-safety.sh
-│   │   ├── skill-nudge.sh
-│   │   └── telemetry-capture.sh
+│   ├── lib.sh
+│   ├── shell-safety.sh
+│   ├── skill-nudge.sh
+│   ├── telemetry-capture.sh
 │   └── hooks.json
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions

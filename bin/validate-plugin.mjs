@@ -28,7 +28,9 @@ function parseFrontmatter(frontmatterStr) {
     }
     const key = trimmed.slice(0, colonIndex).trim();
     let value = trimmed.slice(colonIndex + 1).trim();
-    const isQuoted = (value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"));
+    const isQuoted =
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"));
     if (isQuoted) {
       value = value.slice(1, -1);
     } else {
@@ -107,7 +109,7 @@ function validateHooks() {
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksJson, 'utf-8'));
 
-    // Hook commands must invoke a bash handler under hooks/handlers/*.sh via
+    // Hook commands must invoke a bash handler under hooks/*.sh via
     // ${CLAUDE_PLUGIN_ROOT} (no hardcoded paths, no .mjs/.py handlers).
     Object.entries(hooks.hooks || {}).forEach(([event, matchers]) => {
       matchers.forEach((matcher) => {
@@ -120,19 +122,15 @@ function validateHooks() {
             );
           }
 
-          const match = hook.command.match(/hooks\/handlers\/([\w-]+\.sh)/);
+          const match = hook.command.match(/hooks\/([\w-]+\.sh)/);
           if (!match) {
-            warnings.push(
-              `[Hooks] Event ${event}: Command doesn't reference a hooks/handlers/*.sh handler`,
-            );
+            warnings.push(`[Hooks] Event ${event}: Command doesn't reference a hooks/*.sh handler`);
             return;
           }
 
-          const handlerPath = path.join(pluginRoot, 'hooks', 'handlers', match[1]);
+          const handlerPath = path.join(pluginRoot, 'hooks', match[1]);
           if (!fs.existsSync(handlerPath)) {
-            errors.push(
-              `[Hooks] Event ${event}: Handler file not found: hooks/handlers/${match[1]}`,
-            );
+            errors.push(`[Hooks] Event ${event}: Handler file not found: hooks/${match[1]}`);
           }
         });
       });
