@@ -1,7 +1,7 @@
 [
   {
     "name": "telemetry-watcher",
-    "command": "New-Item -ItemType File -Force \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\" | Out-Null; Get-Content -Wait -Tail 20 \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\"",
+    "command": "if (-not (Test-Path \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\")) { New-Item -ItemType File \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\" | Out-Null }; Get-Content -Wait -Tail 20 \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\"",
     "shell": "powershell",
     "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (PowerShell)"
   },
