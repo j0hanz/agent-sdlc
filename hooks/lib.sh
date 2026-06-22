@@ -46,10 +46,11 @@ agent_dev_telemetry_append() {
     # Only one process wins; others skip rotation without blocking (exit 0).
     if mkdir "$lockdir" 2>/dev/null; then
       trap "rm -rf \"$lockdir\" \"$tmp\"" RETURN
-      # Serialize rotation: tail the current log content, then atomically rename.
-      # The mv operation is atomic so a concurrent append is never silently dropped.
+      # Serialize rotation: tail the current log content, then overwrite in place.
+      # This preserves the original log's inode, so concurrent appenders do not
+      # land in orphaned inodes. The > truncate + write is atomic per POSIX.
       tail -n "$AGENT_DEV_TELEMETRY_MAX_LINES" "$log" >"$tmp" 2>/dev/null && \
-        mv "$tmp" "$log" 2>/dev/null
+        cat "$tmp" >"$log" 2>/dev/null
     else
       # Another process holds the lock; skip rotation (no blocking).
       rm -f "$tmp" 2>/dev/null
