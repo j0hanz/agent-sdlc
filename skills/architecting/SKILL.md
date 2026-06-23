@@ -23,83 +23,57 @@ Trigger: Review/Design Request
                           -> 5. Scaffold (brief/scripts)
 ```
 
-**trigger:** Architecture review, design request, or structural issues (God modules, circular deps).
+- **Trigger:** Architecture review, design request, or structural issues (God modules, circular dependencies).
+- **Action_Route:** Confirm via `AskUserQuestion` (2-option markdown, no manual "Other"):
+- **1_Recommended:** [Mode A or B] based on [evidence: imports, size, churn, existing vs. new].
+- **2_Alternative:** [Other Mode] + applicability condition.
 
-**action: Route & Confirm**
-Route and confirm via `AskUserQuestion` (or 2-option markdown block) — the tool supplies a free-text "Other" automatically, so don't add one manually:
+- **Mode_A_Focus:** DIAGNOSE (Existing code: God modules, bleed, git coupling, circular deps).
+- **Mode_B_Focus:** DESIGN (New feature/module: Boundary integrity, reversibility, patterns).
+- **Mode_A_Diagnose:**
+- **Constraint_Context:** NEVER load `references/architecture-patterns.md`.
+- **Phase_1_Explore:** - Detect tech stack.
+- Run `scripts/` (default args shown):
+- `python check_locality.py [dir=src]`
+- `python detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
+- `python git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
+- `python detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
 
-1. ✅ **Recommended** — [Mode A or B] based on [evidence: imports, size, churn, "existing code" vs "new module"].
-2. **Alternative** — [The other mode] + condition under which it would actually apply instead.
+- **Fallback:** Manually analyze imports, God modules (>500 lines/20+ exports), and history.
+- **Dispatch:** Use `general-purpose` agent; strictly load `references/dispatch-template.md`.
 
-**routing:**
-| Mode | Focus |
-| :--- | :--- |
-| **A: DIAGNOSE** | Existing code. God modules, bleed, git coupling, circular deps. |
-| **B: DESIGN** | New feature/module. Boundary integrity, reversibility, patterns. |
+- **Phase_2_Present:** List 3-6 targets: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. Prompt: "Which of these candidates interests you most?"
+- **Phase_3_Align:** - Load `references/DOMAIN_INTERVIEW.md` strictly upon interview start.
+- Load `references/INTERFACE_SHAPES.md` & `references/SEAMS_BY_EXAMPLE.md` before proposing seams.
 
-**action: MODE A — DIAGNOSE**
+- **Phase_4_ADR:** Generate ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
+- **Phase_5_Handoff:** Generate `architecture-brief.json` (`references/brief-schema.json`). Read `references/MIGRATION_STRATEGIES.md` for gradual cutover. Handoff to `refactor` or `planning`.
 
-_CONTEXT LOADING RULE:_ Do NOT load design files (`references/architecture-patterns.md`) during Mode A.
+- **Mode_B_Design:**
+- **Constraint_Context:** NEVER load diagnostic templates (`dispatch-template.md`, `DOMAIN_INTERVIEW.md`, `SEAMS_BY_EXAMPLE.md`).
+- **Step_1_Diagnose:** Isolate Core Domain vs. Mechanism.
+- **Step_2_Pattern:** Read `references/architecture-patterns.md`; select optimal pattern.
+- **Step_3_Stress_Test:** Apply Swap Test (If [mechanism] changes, what breaks?).
+- **Step_4_ADR:** Generate ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
+- **Step_5_Scaffold:** - Generate `architecture-brief.json` (`references/brief-schema.json`).
+- Read `references/MIGRATION_STRATEGIES.md` for integration cutovers.
+- Run `python scaffold_boundary.py <domain> [pattern] [output_dir=src] [--force]`. _(Valid patterns: hexagonal, vertical-slice, layered, clean-architecture, cqrs. Others require manual creation)._
 
-1. **Explore** (Phase 1):
-   - Detect tech stack.
-   - Run from `scripts/` (all accept a target dir positional arg, default shown):
-     - `python check_locality.py [dir=src]`
-     - `python detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
-     - `python git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
-     - `python detect_hotspots.py [dir=src] [infra=express,typeorm,prisma,fs,path,react,mongoose,sqlalchemy,django,flask] [--since "6 months ago"]`
-   - **Fallback**: Manually analyze imports, "God" modules (>500 lines/20+ exports), and history.
-   - Dispatch `general-purpose` agent using [`references/dispatch-template.md`](references/dispatch-template.md). **MANDATORY**: Only load this specific template when dispatching.
-2. **Present** (Phase 2): List 3-6 opportunities: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. End by asking: "Which of these candidates interests you most?"
-3. **Align**:
-   - **MANDATORY - LOAD ON DEMAND**: Read [`references/DOMAIN_INTERVIEW.md`](references/DOMAIN_INTERVIEW.md) only when starting the domain interview.
-   - **MANDATORY - READ BEFORE PROPOSING SEAM**: Read [`references/INTERFACE_SHAPES.md`](references/INTERFACE_SHAPES.md) and [`references/SEAMS_BY_EXAMPLE.md`](references/SEAMS_BY_EXAMPLE.md) completely to design the interface boundaries and data flows.
-4. **Record ADR**: Write an ADR in `docs/adr/` using [`references/ADR_TEMPLATE.md`](references/ADR_TEMPLATE.md) as a reference.
-5. **Brief & Handoff**: Write `architecture-brief.json` conforming to [`references/brief-schema.json`](references/brief-schema.json). Read [`references/MIGRATION_STRATEGIES.md`](references/MIGRATION_STRATEGIES.md) to choose a gradual migration path. Handoff to `refactor` or `planning`.
+- **Heuristics:**
+- **Deletion:** Removal must not scatter complexity across callers.
+- **Seam:** Logic must be testable strictly without I/O (DB/HTTP).
+- **Locality:** Module must be comprehensible without tracing 5+ dependents.
+- **Stability:** UI/DB depends on Domain. Never reverse.
+- **Scale (YAGNI):** Skip formal patterns for <1,000 lines, throwaways, or single-dev setups.
 
-**action: MODE B — DESIGN**
+- **Next_Skills:**
+- **refactor:** Implement localized diagnostic improvements.
+- **planning:** Formalize specs for new designs or major seam extractions.
+- **multi-agent-development:** Execute complex architectural changes.
+- **diagnose:** Isolate live bugs surfaced during Mode A exploration.
 
-_CONTEXT LOADING RULE:_ Do NOT load diagnostic templates (`references/dispatch-template.md`, `references/DOMAIN_INTERVIEW.md`, `references/SEAMS_BY_EXAMPLE.md`) during Mode B.
-
-1. **Diagnose**: Identify Core Domain vs Mechanism.
-2. **Select Pattern**: Read [`references/architecture-patterns.md`](references/architecture-patterns.md) to choose the optimal architecture pattern.
-3. **Stress Test**: Apply Swap Test (If [mechanism] changes, what breaks?).
-4. **Record ADR**: Write an ADR in `docs/adr/` using [`references/ADR_TEMPLATE.md`](references/ADR_TEMPLATE.md) as a reference.
-5. **Scaffold**: Write `architecture-brief.json` conforming to [`references/brief-schema.json`](references/brief-schema.json). If integrating with an existing system, read [`references/MIGRATION_STRATEGIES.md`](references/MIGRATION_STRATEGIES.md) for the cutover plan. Run `python scaffold_boundary.py <domain> [pattern=hexagonal] [output_dir=src] [--force]` — `pattern` is one of `hexagonal`, `vertical-slice`, `layered`, `clean-architecture`, `cqrs` (the other patterns in `references/architecture-patterns.md` — event-driven, event sourcing, modular monolith — have no scaffold and must be created manually).
-
-**heuristics:**
-
-- **Deletion:** Would removal scatter complexity across callers?
-- **Seam:** Is logic testable without I/O (DB/HTTP)?
-- **Locality:** Can module be understood without reading 5+ dependents?
-- **Stability:** UI/DB depends on Domain; never reverse.
-- **Scale:** Single-developer, throwaway, or <1,000 lines? Skip formal patterns (hexagonal, CQRS, etc.) — the boilerplate isn't repaid at this scale. Say so explicitly (YAGNI).
-
-**next skills:**
-
-- `refactor`: To implement localized improvements found during diagnosis.
-- `planning`: To create a formal spec for a new architectural design or major seam extraction.
-- `multi-agent-development`: To execute the implementation of complex architectural changes.
-- `diagnose`: If Mode A exploration surfaces a live bug (not just structural smell) that needs root-cause isolation before the architectural fix.
-
-**constraint:**
-
-- **Never use PubSub for direct coupling** because asynchronous message brokers should model notifications or eventual consistency; using them for synchronous, blocking logic obscures data flow and makes debugging extremely difficult. Use direct composition or interface dependency injection instead.
-- **Never use `utils/`, `common/`, or `shared/` directories** because they quickly become catch-all bins that attract unrelated responsibilities, resulting in circular dependencies and broken boundaries. Group code by domain or feature instead.
-- **Never extract a base class if composition is possible** because inheritance creates tight compile-time coupling and forces subclasses to inherit unnecessary behaviors, violating the Single Responsibility Principle. Use interface delegation or object composition instead.
-- **Never share DB schemas across bounded contexts** because schema-level sharing bypasses domain code, creating hidden database-level coupling that prevents services from scaling, migrating, or deploying independently. Share data via APIs or events instead.
-
-## Additional Resources
-
-### Reference Files
-
-For detailed workflows and templates, consult:
-
-- **[`references/dispatch-template.md`](references/dispatch-template.md)** - Routing parameters for dispatching subagents.
-- **[`references/DOMAIN_INTERVIEW.md`](references/DOMAIN_INTERVIEW.md)** - Interview guide for mapping architectural domains.
-- **[`references/INTERFACE_SHAPES.md`](references/INTERFACE_SHAPES.md)** - Design guidelines and patterns for interfaces.
-- **[`references/SEAMS_BY_EXAMPLE.md`](references/SEAMS_BY_EXAMPLE.md)** - Concrete code examples of good vs bad seams.
-- **[`references/ADR_TEMPLATE.md`](references/ADR_TEMPLATE.md)** - Standard template for Architecture Decision Records (ADRs).
-- **[`references/brief-schema.json`](references/brief-schema.json)** - Schema for architecture handoff briefs.
-- **[`references/MIGRATION_STRATEGIES.md`](references/MIGRATION_STRATEGIES.md)** - Strategies for phased cutover and migrations.
-- **[`references/architecture-patterns.md`](references/architecture-patterns.md)** - Cheat sheet for modular/architectural patterns.
+- **Constraints_Strict:**
+- **No_PubSub_Coupling:** Ban pub/sub for synchronous logic. Use direct composition/dependency injection.
+- **No_Utility_Bins:** Ban `utils/`, `common/`, or `shared/` directories. Group by domain/feature.
+- **No_Base_Classes:** Ban inheritance if composition works. Use interface delegation.
+- **No_Shared_Schemas:** Ban DB schema sharing across bounded contexts. Expose data via APIs/events strictly.

@@ -36,83 +36,75 @@ Start: TDD Request -> Carve-out applies (spike/trivial/CSS)? -- yes --> AskUserQ
                                                        -- yes --> verification-before-completion (handoff)
 ```
 
-**trigger:** TDD, write tests, implement feature, build this.
-**constraint:** No implementation code WITHOUT a failing test.
-**constraint:** Execute exactly ONE scenario per cycle. No horizontal slicing.
-**example:** WRONG — write failing tests for `calculate_discount`, `apply_tax`, and `format_price` before implementing any of them. RIGHT — RED+GREEN+REFACTOR `calculate_discount` fully, then start the next scenario.
+**Trigger:** TDD, write tests, implement feature, build this.
 
-## Step 0: Confirm
+**Rules:**
 
-**action: TDD Confirmation**
-Confirm the start of an autonomous session via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
+- Write a failing test _before_ writing any code.
+- Do exactly ONE thing at a time. No skipping ahead.
+- Example: Finish RED+GREEN+REFACTOR for one small piece completely before starting the next test.
 
-1. ✅ **Recommended** — Proceed with TDD for [specific function/feature].
-2. **Alternative** — [Non-TDD approach, e.g. spike/throwaway exploration first] + the reason it fits this case better.
+## Step 0: Ask First
 
-## Step 1: Pre-TDD Interface
+Ask the user how to start using `AskUserQuestion`:
 
-**action: Document Interface**
-Propose and confirm the public surface via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
+1. **Recommended:** Start TDD for [feature].
+2. **Alternative:** Try something else first (like exploring) and explain why.
 
-1. ✅ **Recommended** — Signature: [name(params) -> return_type] based on [requirements/conventions].
-2. **Alternative** — [Alternative Signature] + the justification for the different shape.
+## Step 1: Plan the Code Shape
 
-3. **Error Cases:** Explicit exception types.
-4. **Usage:** 2-3 realistic scenarios.
-5. **Target:** Identify test file path.
-6. **Sanity Check:** Run the existing test suite to verify that the test runner and project configuration are active and healthy before writing the new failing test.
+Ask the user to confirm how the code will work using `AskUserQuestion`:
+
+1. **Recommended:** Use this shape: `name(inputs) -> output`.
+2. **Alternative:** Suggest a different shape and explain why.
+
+- List errors that might happen.
+- Show 2-3 examples of how to use it.
+- Tell them where the test file goes.
+- **Check:** Run all old tests first to make sure everything works before adding new ones.
 
 ## Step 2: RED (Failing Test)
 
-**MANDATORY:** For JavaScript/TypeScript projects, read [js-ts-patterns.md](references/js-ts-patterns.md) completely from start to finish. Do NOT set any range limits when reading this file. Do NOT load this file if the project is written in Python.
+_If using JavaScript/TypeScript, read `references/js-ts-patterns.md` fully._
 
-**action:** Write simplest test for single core behavior.
-**action:** Write minimal stub to allow compilation (e.g., `pass`, `return null`).
-**action:** Run test.
-**gate:** Confirm failure (Assertion Fail). If pass, delete and rewrite.
+1. Write the simplest test for one small thing.
+2. Write blank code (like `return null`) just so it runs.
+3. Run the test.
+4. **Stop:** Make sure it FAILS. If it passes, delete it and write it differently.
 
-### N-1 Test (False-Green Elimination)
+### The Make-Sure Test
 
-A test that never fails proves nothing. Before trusting any GREEN result (here or in `verification-before-completion`):
+Before you trust a passing test:
 
-1. **Revert** the implementation change (stash or comment it out) while keeping the test.
-2. **Fail** — run the test, confirm it fails. If it still passes, the test is not exercising the behavior; rewrite it.
-3. **Fix** — restore the implementation.
-4. **Pass** — run the test again, confirm it passes.
+1. Take out your code fix.
+2. Run the test to make sure it fails again.
+3. Put your code fix back in.
+4. Run the test to make sure it passes.
 
-Use this whenever a test's failure mode is non-obvious (e.g., async code, mocked boundaries, snapshot tests).
+## Step 3: GREEN (Make it Pass)
 
-## Step 3: GREEN (Minimal Implementation)
+_If stuck on how simple to be, read `references/minimal-impl-examples.md` fully._
 
-**MANDATORY:** If the "absolute minimum" implementation is unclear for the domain (e.g., math, validation, parsing, class extraction), read [minimal-impl-examples.md](references/minimal-impl-examples.md) completely from start to finish. Do NOT set any range limits when reading this file. Skip if the minimal implementation is obvious.
+1. Save your work first.
+2. Write the **smallest amount of code possible** to make the test pass.
+3. Do not add extra code "just in case."
+4. If you fail 3 times, start over with a smaller test.
+5. If still stuck, use `diagnose` or `planning` tools.
 
-**action:** Commit/stash before editing.
-**action:** Write **absolute minimum** code to pass the test.
-**constraint:** No speculative abstractions or "just-in-case" logic.
-**escalation:** If stuck 3+ attempts, revert and write a smaller test.
-**escalation:** If still stuck, invoke `diagnose` or `planning`.
+## Step 4: REFACTOR (Clean Up)
 
-## Step 4: REFACTOR (Cleanup)
+- **Stop:** Only do this if tests are passing (GREEN).
+- Clean up the code (rename things, remove repeated code).
+- Do not fix code and clean up at the same time. They must be separate steps.
+- Run tests again after cleaning.
 
-**gate:** Enter ONLY when tests are GREEN.
-**action:** Perform surgical improvements (Rename, Decompose, Flatten, DRY).
-**constraint:** Refactor and Implementation must be separate tool calls. Run tests between them.
-**example:** WRONG — spotting duplicate logic while still RED and cleaning it up alongside the fix. RIGHT — get GREEN first (duplication and all), run tests, then refactor as its own step, then run tests again.
+## Strict Rules
 
-**next skills:**
+- Only fake (mock) outside things like databases or APIs. Never fake your own code.
+- Never write a second test until the first one is completely done.
+- Always run tests between the RED and GREEN steps.
+- Never change a test just to force it to pass. Fix your code instead. If the test is broken, go back to RED and explain why before changing it.
 
-- `verification-before-completion`: Once all scenarios are covered and passing, to perform final regression sweeps and manual verification.
+## Next Steps
 
-**transition:** Invoke `verification-before-completion` after final REFACTOR pass.
-
-## Mandatory Rules
-
-**constraint:** Never mock internal collaborators. Mock only at system boundaries (API, DB, I/O).
-**constraint:** Never bypass public interfaces for setup.
-**constraint:** Never write multiple tests before implementing the first one.
-**constraint:** Never skip "Run Test" between RED and GREEN.
-**constraint:** Never edit a test's assertions to force GREEN. Fix the implementation; if the test itself was wrong, revert to RED and state why before changing it.
-
-## Transition
-
-**next:** Invoke `verification-before-completion` after final REFACTOR pass.
+When everything is done and clean, use `verification-before-completion` to double-check your work.

@@ -24,75 +24,50 @@ Start: Feedback Received
   -- all items fixed --> verification-before-completion (handoff)
 ```
 
-## NEVER Do This
+## Strict Prohibitions
 
-- **NEVER** write a performative-agreement phrase or thank the reviewer (e.g., \"you're right\", \"great catch\"). **WHY:** LLM sycophancy masks technical gaps. The fix is the acknowledgment.
-- **NEVER** implement a finding you haven't verified against this codebase. **WHY:** Reviewers (human or AI) can be wrong about local context.
-- **NEVER** batch-implement several items then test once. **WHY:** It makes it impossible to isolate which fix caused a regression. **FIX:** One fix, one test, repeat.
-- **NEVER** silently accept a suggestion that contradicts a user decision or `AGENTS.md`. **FIX:** Surface the conflict immediately.
-- **NEVER** proceed autonomously if a review suggests a rewrite of >10 files or a core architectural change. **FIX:** Stop and ask the user for a \"Directive\" before proceeding.
-- **NEVER** dispatch a third re-review of the same range without checking in with the user first.
+**Sycophancy**: NEVER say "you're right" or thank the reviewer. Just fix it.
+**Blind Fixes**: NEVER apply a fix without checking if it fits this specific code.
+**Batching**: NEVER fix many things and test once. Fix one, test one, repeat.
+**Conflicts**: NEVER ignore user choices or `AGENTS.md`. Tell the user if rules clash.
+**Giant Changes**: NEVER rewrite more than 10 files or change core design without asking first.
+**Endless Loops**: NEVER do a 3rd code review on the same code. Ask the user instead.
 
-## 0. Identify the Source
+## Source Handling
 
-- **`request-code-review`'s dispatched subagent:** Treat as external — it had zero conversational context. Verify findings against the actual codebase; it can be wrong about intent it never saw. Tiers referenced below come from that skill's rubric (Tier 1 security, Tier 2 correctness, Tier 3 performance, Tier 4 reuse/hygiene) — apply the same tiering to non-tiered feedback from the other two sources.
-- **Human partner, directly:** Trusted — implement after understanding. Still ask if scope is unclear.
-- **External GitHub reviewer/bot/PR comment:** Most scrutiny required.
-  - **Tooling:** Use `gh pr view <number> --comments` to read.
-  - **Reply:** Reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body=\"...\"`), not as a top-level comment, so the reply stays attached to the line under discussion.
+**Subagent (`request-code-review`)**: Untrusted. Check everything it says.
+**Human**: Trusted. Fix it, but ask if you are confused.
+**GitHub PR/Bot**: Untrusted. Read with `gh pr view <number> --comments`. Reply directly in the thread using `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body="..."`.
 
-## 1. Read Before Reacting
+## Clarify First
 
-**action: Clarify Feedback**
+**Read First**: Read all feedback before doing any work.
+**Confusion**: Use `AskUserQuestion` to ask about unclear items all at once (up to 4 questions).
+**Pausing**: Do not start fixing if related parts are still confusing.
 
-1. Read every item before responding to any of it.
-2. If any item is unclear, confirm via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually. Batch every unclear item from this review into one call (one question per item, up to 4) rather than one round-trip per item:
-   - ✅ **Recommended** — [Clarification Proposal] for [unclear item], grounded in the codebase usage you'd verify against in step 2.
-   - **Alternative** — [Alternative Interpretation] + the query that would disambiguate it.
+## Mandatory Checks
 
-3. Do not implement the items you understand while a related item is still ambiguous; partial understanding produces a wrong implementation.
+**Docs**: Always read `AGENTS.md` before writing code.
+**Local Match**: Check if the code actually needs this fix (use `git grep` and tests).
+**Breaks**: Run tests before and after to make sure you didn't break anything.
+**On Purpose**: Check if the code was written this way for a specific reason.
+**Dead Code (YAGNI)**: If the code is never used, ask to delete it instead of fixing it.
 
-## 2. Verify (mandatory before implementing)
+## How to Reply
 
-**MANDATORY**: Read `AGENTS.md` (and `CLAUDE.md`/`GEMINI.md`) to ensure the feedback doesn't contradict established project conventions.
+**Good Fix**: "Fixed. [what changed]"
+**Bad Idea**: Push back. Say why it is wrong using proof from the code.
+**Needs Proof**: "Can't verify this without [X]. Should I proceed?"
+**Oops**: "Checked [X]. Fixing." (NEVER say sorry).
 
-For each finding, before touching code, check:
+## Doing the Work
 
-- [ ] **Codebase-specific correctness:** does this codebase's actual usage (check via `git grep`, tests, or call sites) support the finding, or is it a generic best practice that doesn't apply here?
-- [ ] **Regression risk:** does the suggested fix break an existing test or caller? Run the relevant test before and after.
-- [ ] **Intentional deviation:** is there a comment, commit message, or prior decision in this conversation explaining why the current code looks this way?
-- [ ] **Conflict with a prior decision:** does the suggestion contradict something the user already decided, or `CLAUDE.md`/`AGENTS.md`? If so, stop and raise it — do not silently override either side.
-- [ ] **YAGNI:** for \"implement this properly\" suggestions, `git grep` for actual usage. If unused, ask whether to remove it instead of building it out.
+**Order**: 1. Big bugs (Security/Correctness). 2. Easy typos. 3. Hard changes.
+**Testing**: Test every single fix immediately.
 
-If you can't verify a finding without more information, say so and ask how to proceed — never implement a guess.
+## Routing & Skills
 
-## 3. Respond
-
-Never use a performative-agreement phrase or thank the reviewer.
-
-- Correct and verified: state the fix factually — `\"Fixed. [what changed]\"` — or just make the change and let the diff speak.
-- Wrong, with evidence: push back with technical reasoning, citing the specific file/test/constraint that contradicts the suggestion.
-- Can't verify: state the limitation and ask — `\"Can't verify this without [X]. Should I [investigate/ask/proceed]?\"`
-- You pushed back earlier and were wrong: `\"Checked [X] — it does [Y]. Fixing.\"` State the correction and move on, no apology spiral.
-
-## 4. Implement in Severity Order
-
-1. Blocking issues first (Tier 1 security, Tier 2 correctness, or equivalent \"must fix\" items from a human/external reviewer).
-2. Simple fixes (typos, imports).
-3. Complex fixes (refactoring, logic changes).
-
-Test each fix individually as you go — never batch several fixes and run tests once at the end.
-
-**next skills:**
-
-- `diagnose`: For Tier 1/2 blocking issues (security/correctness) that require systematic root-cause analysis.
-- `refactor`: For Tier 4 hygiene or structural feedback that requires code cleanup.
-- `verification-before-completion`: Once all feedback items are implemented and tested, to perform a final clean sweep.
-
-## Routing Blocking Issues
-
-- **Tier 1 / Tier 2 (security or correctness):** Invoke `diagnose` to root-cause the issue rather than patching the symptom.
-- **Tier 4 (reuse/hygiene) or structural feedback:** Invoke `refactor`.
-- After the fix lands: `verification-before-completion`, then back to `request-code-review` for re-review of the same range.
-- **Cap at 2 re-review cycles** for the same range. If it fails a second time, stop and report the recurring findings to the user instead of dispatching a third review — repeated failure signals a misunderstanding of the requirement, not a fixable diff.
-- **Terminal state after escalation:** reporting to the user is not the same as completion. The task remains **BLOCKED**, not done — do not route to `verification-before-completion` or claim the work is finished while a Tier 1/2 finding is still open. The user's reply determines the next step: a corrected directive (re-enter step 4 Implement), an explicit waiver to ship with the known issue documented, or abandoning the change. Do not pick one of these on the agent's own judgment.
+**Tier 1/2 (Bugs/Security)**: Use `diagnose` to find the real problem.
+**Tier 4 (Cleanup)**: Use `refactor`.
+**Done**: Use `verification-before-completion`, then ask for a new review.
+**Failing Twice**: Stop. Mark as **BLOCKED**. Wait for the user to tell you what to do next. Do not keep trying.

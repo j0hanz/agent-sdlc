@@ -21,104 +21,84 @@ Phase 1: Build Feedback Loop (pass/fail signal)
   -> Phase 6: Finalization (de-instrument / verify)
 ```
 
-**trigger:** debug, fix crash, unexpected behavior.
-**constraint:** never apply multiple changes simultaneously. One hypothesis per run.
-**constraint:** never modify original source directly. Use working copy.
-**constraint:** never accept "works on my machine" as root cause.
+**trigger:** debug, fix crash, unexpected behavior
+**constraint:** apply 1 hypothesis per run
+**constraint:** modify working copy only
+**constraint:** reject "works on my machine"
 
-## Phase 1: Build Feedback Loop
+## Phase 1: Feedback Loop
 
-**action:** Create deterministic < 2s pass/fail signal.
-**action:** Isolate filesystem, pin seeds/time.
-**MANDATORY - READ ENTIRE FILE:** Before setting up a feedback loop, read [feedback-loops.md](references/feedback-loops.md) completely. Do NOT load [phases.md](references/phases.md) during Phase 1.
-**gate:** If no code execution, request logs/telemetry. Do not proceed without loop.
+**action:** create <2s deterministic pass/fail signal
+**action:** isolate filesystem, pin seeds/time
+**mandatory:** read `references/feedback-loops.md` (do NOT load `phases.md`)
+**gate:** require loop or request telemetry/logs
 
 ## Phase 2: Reproduce
 
-**action:** Achieve >50% reproduction rate before hypothesis testing.
-**gate:** Do not advance to Phase 3 without a logged reproduction rate. A root cause declared in Phase 3 without a confirmed repro signal here is not a diagnosis — it's a guess.
+**action:** achieve >50% reproduction rate
+**gate:** require logged repro signal before Phase 3
 
 ## Phase 3: Hypothesize & Falsify
 
-**MANDATORY - READ ENTIRE FILE:** Before proposing or testing hypotheses, read [phases.md](references/phases.md) completely. Do NOT load [feedback-loops.md](references/feedback-loops.md) during Phase 3.
-
-**action: Present Hypotheses**
-Propose 3-5 falsifiable hypotheses via `AskUserQuestion`. Surface the top 3 as real options (the tool caps at 4 and supplies a free-text "Other" automatically — never add one manually); log any remaining hypotheses in the session/diagnosis notes as queued, not dropped:
-
-1. ✅ **Recommended** — [Primary Hypothesis] based on [Recent Changes > Logic > Env].
-2. **Alternative** — [Second Hypothesis] + condition for testing.
-3. **Alternative** — [Third Hypothesis] + condition for testing, if a third falsifiable candidate exists.
-
+**mandatory:** read `references/phases.md` (do NOT load `feedback-loops.md`)
+**action:** propose 3-5 falsifiable hypotheses via `AskUserQuestion` (surface top 3, queue rest)
 **format:** "If [X] is the cause, then [Y] will change when I do [Z]."
-**dispatch:** If hypotheses are independent, use `multi-agent-dispatch`. Each hypothesis agent must be a **Writer with `isolation: worktree`** (not the read-only Investigator role) — instrumenting and running an experiment mutates a working copy, so each agent needs its own worktree. Disjoint by construction since each agent tests a different hypothesis.
-**gate:** Do not declare a root cause until a hypothesis has been confirmed via Phase 4 instrumentation (a logged probe result that distinguishes it from the alternatives) — not by elimination-by-plausibility alone. If no hypothesis survives falsification, return to Phase 3 with new candidates rather than picking the "least falsified" one.
+**dispatch:** use `multi-agent-dispatch` for independent hypotheses (require `isolation: worktree`)
+**gate:** require confirmed probe result (no guessing by elimination)
 
 ## Phase 4: Instrumentation
 
-**action:** Instrument code dynamically at decision boundaries.
-**format:** Prefix debug logs with `[DEBUG-XXXX]`.
-**constraint:** Never "log everything." Use profilers (`time.perf_counter`) for perf issues.
+**action:** instrument decision boundaries dynamically
+**format:** prefix logs with `[DEBUG-XXXX]`
+**constraint:** target logs strictly; use profilers for performance
 
 ## Phase 5: Red-Green Fix
 
-**action:** Write regression test targeting failing seam **before** fix. If no correct seam exists (e.g. environment-specific dependency), document the limitation in the fix and request telemetry or user verification approval.
-**action:** Confirm RED (test fails).
-**action:** Apply minimal fix on working copy.
-**action:** Confirm GREEN (test passes).
-**action:** Run the N-1 test (see [`test-driven-development`](../test-driven-development/SKILL.md#n-1-test-false-green-elimination)) — revert the fix, confirm the regression test fails again, then restore the fix. A regression test written after the fix and never proven RED against the unfixed code is not evidence the bug is fixed.
+**action:** write regression test targeting failing seam
+**action:** confirm RED
+**action:** apply minimal fix on working copy
+**action:** confirm GREEN
+**action:** execute N-1 test (revert fix -> confirm RED -> restore fix)
 
 ## Phase 6: Finalization
 
-**action:** Remove all `[DEBUG-XXXX]` tags.
-**action:** Verify fix via Phase 1 loop.
-**action:** Delete throwaway scripts or promote to test suite.
+**action:** remove all `[DEBUG-XXXX]` tags
+**action:** verify fix via Phase 1 loop
+**action:** promote scripts to test suite or delete
 
-**next skills:**
+## Next Skills
 
-- `test-driven-development`: To implement the verified fix if it involves new logic or refactoring.
-- `refactor`: If the diagnosis reveals a structural "mess" confined to one file/function that needs cleanup after the fix is verified.
-- `architecting`: If the "mess" spans multiple files or module boundaries rather than one file.
-- `planning`: If the bug reveals a major gap in the original specification or architecture.
+**test-driven-development:** implement new logic/tests
+**refactor:** clean up 1 file/function
+**architecting:** clean up multiple files/modules
+**planning:** address major specification gaps
 
-## Transition
+## Transitions
 
-| Triggering Skill                 | Return Destination                                                       |
-| :------------------------------- | :----------------------------------------------------------------------- |
-| `verification-before-completion` | Re-verify in same skill                                                  |
-| `test-driven-development`        | Current task/phase                                                       |
-| `multi-agent-development`        | Current task/phase                                                       |
-| `refactor`                       | Resume refactor cycle                                                    |
-| `multi-agent-dispatch`           | INTEGRATE step (re-run validation once the conflict/regression is fixed) |
-| `receive-code-review`            | Step 4 Implement (continue the severity-ordered fix loop)                |
-| `codebase-init`                  | Failure Recovery step that invoked diagnose (resume Phase 1/2/3)         |
-| `github-automation`              | The script/PR step that failed (resume once root cause is fixed)         |
+**verification-before-completion:** re-verify in same skill
+**test-driven-development:** resume current task/phase
+**multi-agent-development:** resume current task/phase
+**refactor:** resume refactor cycle
+**multi-agent-dispatch:** resume INTEGRATE step
+**receive-code-review:** resume Step 4 Implement
+**codebase-init:** resume Failure Recovery step
+**github-automation:** resume failed script/PR step
 
-## Sibling Exclusions
+## Exclusions
 
-- **Do NOT use** this skill for writing new feature tests (use [`test-driven-development`](../test-driven-development/SKILL.md) instead).
-- **Do NOT use** this skill for refactoring non-bug structural issues (use [`refactor`](../refactor/SKILL.md) instead).
+**test-driven-development:** use for writing new feature tests
+**refactor:** use for non-bug structural issues
 
-## Additional Resources
+## References
 
-### Reference Files
-
-For detailed patterns, procedures, and setup techniques, consult:
-
-- **`references/feedback-loops.md`** - Setup patterns by system type (CLI, API, Node.js, Frontend, etc.)
-- **`references/phases.md`** - Detailed phases, hypothesis prioritization, and profiling guidelines
+**references/feedback-loops.md:** setup patterns by system type
+**references/phases.md:** detailed phases, hypothesis prioritization, profiling
 
 ## Output Format
-
-```markdown
-## Diagnosis Summary
 
 **symptom:** [Description]
 **root_cause:** [Correct Hypothesis]
 **fix:** [Changes]
 **feedback_loop:** [Reproduction Script]
-
-## Post-Mortem
-
 **prevention:** [Architecture/Test improvement]
 **next_steps:** [Follow-up tasks]
-```

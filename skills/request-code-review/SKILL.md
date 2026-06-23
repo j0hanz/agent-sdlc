@@ -25,43 +25,33 @@ Start: Review Request -> 0. Confirm with user -> Pre-Review Checkpoint (tests, c
 
 ## Step 0: Confirm
 
-**action: Review Confirmation**
-Confirm the start of an autonomous review session via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
-
-1. ✅ **Recommended** — Dispatch fresh-context review for [range/summary].
-2. **Alternative** — Inline review instead, if the diff is small or uncommitted and can't be dispatched.
+Action: AskUserQuestion (no manual "Other" option)
+Option 1 (Recommended): Dispatch fresh-context review
+Option 2 (Alternative): Inline review for small/uncommitted diffs
 
 ## Pre-Review Checkpoint
 
-1. **Verification:** Confirm unit tests passed (`verification-before-completion`).
-2. **Gather context:** Get the commit range (`git log --oneline -10` if unsure which commit started this work) and a one-paragraph summary of what was supposed to be built (from the plan/spec if one exists, otherwise from the user's original request).
-3. **Diffable?** If there's nothing to diff against (e.g. uncommitted scratch work), skip dispatch — request `Before/After` blocks for each file and review inline instead. A subagent can't read code that isn't on disk or in git.
+Verification: Confirm unit tests passed
+Context: Get commit range (`git log --oneline -10`) and 1-paragraph summary
+Diff Check: If no commits, skip dispatch and request Before/After blocks for inline review
 
 ## Phase 1: Dispatch
 
-1. **Stat check:** `git diff --stat {{base}}..{{head}}` to confirm the range is what you expect before dispatching.
-2. **Build the prompt:** Fill in `references/reviewer-dispatch-prompt.md` with the base commit, head commit, repo path, requirements summary, and the path to `references/patterns.md`.
-3. **Dispatch read-only:** `Agent(subagent_type: general-purpose, description: "Code review of <range>", prompt: <filled template>)`. Restrict the subagent's tools to exclude Write/Edit if the harness supports passing tool restrictions to the call — the prompt template's "read-only" instruction is not a substitute for an enforced restriction. Do not run the scan yourself; the subagent does the reading and judging.
-4. **Verify no writes occurred:** After the subagent returns, run `git status --porcelain` against the same range. If it shows changes the subagent shouldn't have made, treat the review as compromised — discard the result, restore the tree, and re-dispatch. This is the fallback check for the gap in step 3: an instruction not to write is not an enforced restriction.
-5. **Malformed output:** If the response is not a well-formed `## Code Review Result` block (truncated, crashed, wrong shape), re-dispatch once with the same prompt. If the retry also fails, tell the user the review could not complete and ask how to proceed — never treat a malformed response as PASS.
+Stat Check: Run `git diff --stat {{base}}..{{head}}`
+Prompt: Fill `references/reviewer-dispatch-prompt.md`
+Dispatch: Run read-only `Agent` (strictly exclude Write/Edit tools)
+Safety Check: Run `git status --porcelain` (if modified: discard, restore, re-dispatch)
+Output Validation: Require `## Code Review Result` block (retry once if missing, then fail)
 
 ## Phase 2: Hand Off
 
-Take the subagent's `## Code Review Result` output verbatim — do not edit, soften, or re-summarize it. Hand it to `receive-code-review` for verification and implementation.
+Action: Keep subagent output verbatim (do not edit)
+On PASS: Prompt user "Run `/github-automation`"
+On FAIL: Invoke `receive-code-review` (do not fix directly)
 
-**next skills:**
+## Strict Rules (NEVER)
 
-- `github-automation`: If the review is a PASS, to proceed with opening the Pull Request.
-- `receive-code-review`: If the review is a FAIL or contains blocking issues, to process and implement the feedback.
-
-## Transition
-
-1. **PASS:** Prompt user: "Run `/github-automation` to open the PR."
-2. **FAIL (any blocking tier):** Invoke `receive-code-review` with the full result. Do not start fixing things directly from this skill.
-
-## NEVER
-
-- Never review your own diff in the same thread you wrote it in.
-- Never let the dispatched subagent edit files — restrict its tools where possible; the prompt's read-only instruction alone is not enforcement.
-- Never accept a response without a stated `## Code Review Result` block; retry once, then escalate to the user.
-- Never review in isolation; always require a diff or explicit before/after blocks.
+Self-Review: Forbidden in the same thread
+Subagent Writes: Forbidden (enforce tool limits)
+Invalid Output: Forbidden (never accept without `## Code Review Result` block)
+Isolated Review: Forbidden (diff or before/after blocks required)
