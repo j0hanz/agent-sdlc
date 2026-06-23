@@ -34,7 +34,13 @@ from typing import TypedDict
 _here = str(Path(__file__).parent)
 if _here not in sys.path:
     sys.path.insert(0, _here)
-from spec_parser import parse_spec, parse_plan, PLAN_MANDATORY_FIELDS, IMPL_PREFIXES  # noqa: E402
+from spec_parser import (  # noqa: E402
+    parse_spec,
+    parse_plan,
+    feature_name,
+    PLAN_MANDATORY_FIELDS,
+    IMPL_PREFIXES,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -76,7 +82,9 @@ SECTIONS_BY_LEVEL: dict[str, list[str]] = {
 
 _REQ_STMT_RE = re.compile(r"^[ ]{0,2}-\s+`?(REQ|SEC|PERF|COMP)-\d+`?[\s:]*")
 _PASSIVE_VOICE_RE = re.compile(
-    r"\bbe\s+(?!(?:red|bed|fed|led|shed)\b)\w+ed\b", re.IGNORECASE
+    r"\b(?:be|is|was|are|were|been|being)\s+"
+    r"(?!(?:red|bed|fed|led|shed)\b)\w+ed\b",
+    re.IGNORECASE,
 )
 
 
@@ -88,6 +96,17 @@ class CoverageMatrix(TypedDict):
     orphan_count: int
     ac_covered: list[str]
     ac_uncovered: list[str]
+
+
+_EMPTY_MATRIX: CoverageMatrix = {
+    "spec_impl_ids": [],
+    "spec_ac_ids": [],
+    "covered": [],
+    "uncovered": [],
+    "orphan_count": 0,
+    "ac_covered": [],
+    "ac_uncovered": [],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -229,12 +248,12 @@ def validate_cross(
     try:
         spec = parse_spec(spec_path)
     except FileNotFoundError:
-        return [f"Spec file not found: {spec_path}"], [], {}
+        return [f"Spec file not found: {spec_path}"], [], _EMPTY_MATRIX
 
     try:
         plan = parse_plan(plan_path)
     except FileNotFoundError:
-        return [f"Plan file not found: {plan_path}"], [], {}
+        return [f"Plan file not found: {plan_path}"], [], _EMPTY_MATRIX
 
     impl_ids = {
         id_ for id_ in spec.reqs if any(id_.startswith(p) for p in IMPL_PREFIXES)
@@ -294,7 +313,7 @@ def validate_review(spec_path: Path) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
 
     # Infer review path from spec path
-    review_path = spec_path.parent / f"{spec_path.stem.replace('.specs', '')}.review.md"
+    review_path = spec_path.parent / f"{feature_name(spec_path)}.review.md"
 
     if not review_path.exists():
         errors.append(
@@ -337,7 +356,7 @@ def _print_results(
         print("ERRORS:")
         for err in errors:
             print(f"  [X] {err}")
-    if matrix:
+    if matrix and (matrix["spec_impl_ids"] or matrix["spec_ac_ids"]):
         covered = len(matrix["covered"])
         total = len(matrix["spec_impl_ids"])
         ac_cov = len(matrix["ac_covered"])
@@ -427,7 +446,7 @@ def main() -> None:
         all_errors.extend(errs)
 
     if run_review:
-        print(f"\n--- Review: {spec_path.stem.replace('.specs', '')}.review.md ---")
+        print(f"\n--- Review: {feature_name(spec_path)}.review.md ---")
         errs, warns = validate_review(spec_path)
         _print_results("Review", errs, warns)
         all_errors.extend(errs)

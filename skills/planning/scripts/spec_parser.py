@@ -16,9 +16,16 @@ __all__ = [
     "PlanTask",
     "parse_spec",
     "parse_plan",
+    "feature_name",
     "PLAN_MANDATORY_FIELDS",
     "IMPL_PREFIXES",
 ]
+
+
+def feature_name(spec_path: str | Path) -> str:
+    """Derive the feature stem from a <name>.specs.md path (strips '.specs')."""
+    return Path(spec_path).stem.replace(".specs", "")
+
 
 # Prefixes that require implementation tasks (not CON/AC/VAL — those don't need impl tasks)
 IMPL_PREFIXES: tuple[str, ...] = ("REQ-", "SEC-", "PERF-", "COMP-")

@@ -17,6 +17,14 @@ import argparse
 import sys
 from pathlib import Path
 
+# Windows reserved device names (case-insensitive, with or without extension)
+_WINDOWS_RESERVED = frozenset(
+    {"CON", "PRN", "AUX", "NUL"}
+    | {f"COM{i}" for i in range(1, 10)}
+    | {f"LPT{i}" for i in range(1, 10)}
+)
+_ILLEGAL_NAME_CHARS = '<>:"/\\|?*\x00'
+
 
 # ---------------------------------------------------------------------------
 # Spec templates by depth
@@ -265,9 +273,15 @@ def scaffold(
     force: bool = False,
 ) -> tuple[Path, Path]:
     """Write paired spec + plan files. Returns (spec_path, plan_path)."""
-    if "/" in name or "\\" in name or name.startswith(".") or "\x00" in name:
+    if (
+        not name
+        or name.startswith(".")
+        or any(c in name for c in _ILLEGAL_NAME_CHARS)
+        or name.split(".")[0].upper() in _WINDOWS_RESERVED
+    ):
         raise ValueError(
-            f"Invalid name {name!r}: must be a plain filename stem with no path separators"
+            f"Invalid name {name!r}: must be a non-empty plain filename stem with "
+            "no path separators, illegal characters, or Windows-reserved device names"
         )
     if depth not in _SPEC_TEMPLATES:
         raise ValueError(

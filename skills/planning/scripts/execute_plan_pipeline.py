@@ -1,18 +1,42 @@
+#!/usr/bin/env python3
+"""execute_plan_pipeline.py — Run the validate -> sync -> validate -> cross-validate
+pipeline for a scaffolded spec/plan pair.
+
+Usage:
+    python execute_plan_pipeline.py --name <name> [--dir plan]
+"""
+
 import argparse
-import os
 import subprocess
 import sys
 from pathlib import Path
+
+_INVALID_NAME_CHARS = ("/", "\\", "\x00")
+
+
+def _validate_name(name: str) -> None:
+    if not name or name.startswith(".") or any(c in name for c in _INVALID_NAME_CHARS):
+        raise ValueError(f"Invalid --name {name!r}: must be a plain filename stem")
+
+
+def _run_step(label: str, scripts_dir: Path, script: str, *extra: str) -> None:
+    print(f"[*] {label}...")
+    res = subprocess.run([sys.executable, str(scripts_dir / script), *extra])
+    if res.returncode != 0:
+        print(f"\n[!] {label} failed.")
+        sys.exit(res.returncode)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", required=True)
+    parser.add_argument("--dir", default="plan", metavar="DIR")
     args = parser.parse_args()
     name = args.name
+    _validate_name(name)
 
-    scripts_dir = Path(os.path.abspath(__file__)).parent
-    plan_dir = Path("plan").resolve()
+    scripts_dir = Path(__file__).resolve().parent
+    plan_dir = Path(args.dir).resolve()
 
     spec_path = plan_dir / f"{name}.specs.md"
     plan_path = plan_dir / f"{name}.plan.md"
@@ -23,42 +47,17 @@ def main() -> None:
             print(f"[!] {path_obj} not found. Run scaffold.py and author it first.")
             sys.exit(1)
 
-    # 1. Validate spec
-    print("[*] Validating Spec...")
-    res_spec = subprocess.run(
-        ["python", str(scripts_dir / "validate.py"), name, "--spec"]
-    )
-    if res_spec.returncode != 0:
-        print("\n[!] Spec validation failed. Please fix the spec file and re-run.")
-        sys.exit(res_spec.returncode)
-
-    # 2. Sync Satisfies: fields from spec into plan
-    print("[*] Syncing...")
-    res_sync = subprocess.run(["python", str(scripts_dir / "sync.py"), str(spec_path)])
-    if res_sync.returncode != 0:
-        print("\n[!] Sync failed. Fix the spec file and re-run.")
-        sys.exit(res_sync.returncode)
-
-    # 3. Validate plan
-    print("[*] Validating Plan...")
-    res_plan = subprocess.run(
-        ["python", str(scripts_dir / "validate.py"), name, "--plan"]
-    )
-    if res_plan.returncode != 0:
-        print("\n[!] Plan validation failed. Please fix the plan file and re-run.")
-        sys.exit(res_plan.returncode)
-
-    # 4. Cross-validate spec ↔ plan traceability
-    print("[*] Cross-Validating...")
-    res_cross = subprocess.run(
-        ["python", str(scripts_dir / "validate.py"), name, "--cross"]
-    )
-    if res_cross.returncode != 0:
-        print("\n[!] Cross validation failed.")
-        sys.exit(res_cross.returncode)
+    _run_step("Validating Spec", scripts_dir, "validate.py", name, "--spec")
+    _run_step("Syncing", scripts_dir, "sync.py", str(spec_path))
+    _run_step("Validating Plan", scripts_dir, "validate.py", name, "--plan")
+    _run_step("Cross-Validating", scripts_dir, "validate.py", name, "--cross")
 
     print("\n[+] Pipeline completed successfully. All validations passed.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"execute_plan_pipeline.py: {e}", file=sys.stderr)
+        sys.exit(1)

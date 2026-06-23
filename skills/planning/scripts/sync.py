@@ -23,7 +23,9 @@ from pathlib import Path
 _here = str(Path(__file__).parent)
 if _here not in sys.path:
     sys.path.insert(0, _here)
-from spec_parser import parse_spec, parse_plan, PlanTask, IMPL_PREFIXES  # noqa: E402
+from spec_parser import parse_spec, parse_plan, feature_name, PlanTask, IMPL_PREFIXES  # noqa: E402
+
+_PHASE_END_RE = re.compile(r"^## PHASE-END[^\n]*", re.MULTILINE)
 
 
 def _is_impl_id(id_str: str) -> bool:
@@ -104,7 +106,10 @@ def sync(spec_path: Path, plan_path: Path) -> int:
         (t for t in reversed(existing_tasks) if "acceptance" not in t.title.lower()),
         None,
     )
-    prev_depends = last_impl.id if last_impl else "none"
+    # Fall back to the most recent task of any kind (e.g. an acceptance task)
+    # before "none", so the chain only breaks when the plan is truly empty.
+    last_any = existing_tasks[-1] if existing_tasks else None
+    prev_depends = (last_impl or last_any).id if (last_impl or last_any) else "none"
 
     for spec_id in missing_impl:
         tid = f"TASK-{next_num:03}"
@@ -116,31 +121,38 @@ def sync(spec_path: Path, plan_path: Path) -> int:
     existing_ac = next(
         (t for t in existing_tasks if "acceptance" in t.title.lower()), None
     )
-    if not ac_covered and ac_ids and existing_ac is None:
-        tid = f"TASK-{next_num:03}"
-        ac_stub = _acceptance_stub(tid, ac_ids, prev_depends)
+    if not ac_covered and ac_ids:
+        if existing_ac is None:
+            tid = f"TASK-{next_num:03}"
+            ac_stub = _acceptance_stub(tid, ac_ids, prev_depends)
+        else:
+            missing_acs = sorted(set(ac_ids) - covered)
+            print(
+                f"sync: WARNING — acceptance task {existing_ac.id} exists but does "
+                f"not cover all ACs: missing {missing_acs}. Update it manually.",
+                file=sys.stderr,
+            )
 
     if plan_exists:
         original = plan_path.read_text(encoding="utf-8")
         updated = original
         if impl_stubs:
             impl_text = "\n".join(impl_stubs) + "\n"
-            if "## PHASE-END" in updated:
-                updated = updated.replace("## PHASE-END", impl_text + "## PHASE-END", 1)
+            if _PHASE_END_RE.search(updated):
+                updated = _PHASE_END_RE.sub(
+                    lambda m: impl_text + m.group(0), updated, count=1
+                )
             else:
                 updated = updated.rstrip() + "\n\n" + impl_text
         if ac_stub:
-            if "## PHASE-END" in updated:
-                parts = re.split(r"(## PHASE-END[^\n]*)", updated, maxsplit=1)
-                if len(parts) == 3:
-                    updated = parts[0] + parts[1] + "\n\n" + ac_stub + parts[2]
-                else:
-                    updated = updated.rstrip() + "\n\n" + ac_stub
+            m = _PHASE_END_RE.search(updated)
+            if m:
+                updated = updated[: m.end()] + "\n\n" + ac_stub + updated[m.end() :]
             else:
                 updated = updated.rstrip() + "\n\n" + ac_stub
         plan_path.write_text(updated, encoding="utf-8")
     else:
-        feat_name = spec_path.stem.replace(".specs", "")
+        feat_name = feature_name(spec_path)
         goal_content = spec.sections.get(
             "Goal", "One sentence: what capability or outcome?"
         ).strip()
@@ -192,7 +204,7 @@ def main() -> None:
     plan_path = (
         Path(args.plan)
         if args.plan
-        else spec_path.parent / (spec_path.stem.replace(".specs", "") + ".plan.md")
+        else spec_path.parent / (feature_name(spec_path) + ".plan.md")
     )
 
     sync(spec_path, plan_path)

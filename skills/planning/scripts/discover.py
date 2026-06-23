@@ -101,7 +101,7 @@ Options:
   --files <globs>   Comma-separated file globs (e.g. "src/**/*.{ts,tsx},**/*.md")
   --names <list>    Comma-separated symbol names or /regex/ patterns
   --ext  <list>     Comma-separated extensions filter (e.g. "ts,tsx,js")
-  --max  <n>        Max matches per category (default: 200)
+  --max  <n>        Max matches per category (default: 200; 0 also means default)
   --json            Emit JSON instead of Markdown
   --no-lines        Omit line numbers from symbol links
   -h, --help        Show this help
@@ -325,6 +325,7 @@ def collect_matched_symbols(
     name_patterns: list[re.Pattern[str]],
     ext_filter: frozenset[str],
     max_results: int,
+    literal_tokens: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     if not name_patterns:
         return []
@@ -346,6 +347,10 @@ def collect_matched_symbols(
         try:
             content = abs_path.read_text(encoding="utf-8", errors="replace")
         except OSError:
+            continue
+        # Cheap substring pre-check: skip the per-line regex scan entirely
+        # when every name token is a plain word and none appear in the file.
+        if literal_tokens and not any(tok in content for tok in literal_tokens):
             continue
         for hit in find_symbols(content, name_patterns, rel_posix):
             out.append(hit)
@@ -391,11 +396,15 @@ def main() -> int:
         print(f"discover.py {VERSION} (python {sys.version.split()[0]})")
         return 0
 
+    if args.max < 0:
+        print("discover.py: --max must be >= 0", file=sys.stderr)
+        return 2
+
     root = Path(args.root) if args.root else Path.cwd()
     file_patterns = split_list(args.files)
     names = split_list(args.names)
     ext_filter = frozenset(e.lstrip(".").lower() for e in split_list(args.ext))
-    max_results = args.max if args.max > 0 else 200
+    max_results = args.max if args.max else 200
     with_lines = not args.no_lines
 
     if not file_patterns and not names:
@@ -406,9 +415,13 @@ def main() -> int:
         return 2
 
     name_patterns = [compile_name_pattern(n) for n in names]
+    is_regex_token = re.compile(r"^/.+/[gimsuy]*$")
+    literal_tokens = (
+        names if names and all(not is_regex_token.match(n) for n in names) else []
+    )
     matched_files = collect_matched_files(root, file_patterns, ext_filter, max_results)
     matched_symbols = collect_matched_symbols(
-        root, name_patterns, ext_filter, max_results
+        root, name_patterns, ext_filter, max_results, literal_tokens
     )
 
     matched_files.sort()
