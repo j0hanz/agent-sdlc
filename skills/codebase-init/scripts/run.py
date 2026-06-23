@@ -89,6 +89,11 @@ class Config:
                 ("Lint", "pnpm eslint path/to/file.ts"),
                 ("Test", "pnpm jest path/to/file.test.ts"),
             ],
+            "conventions": [
+                ("imports", "ESM import/export syntax only — no CommonJS require()"),
+                ("types", "strict TypeScript types for all function signatures — no implicit or explicit any"),
+                ("async-errors", "use async/await with try-catch blocks for asynchronous operations — avoid raw promises"),
+            ],
         },
         "python": {
             "pm": "uv",
@@ -106,6 +111,11 @@ class Config:
                 ("Lint", "uv run ruff check path/to/file.py"),
                 ("Test", "uv run pytest path/to/test_file.py::test_name"),
             ],
+            "conventions": [
+                ("typing", "use Type Annotations (PEP 484) on all public function definitions"),
+                ("style", "follow PEP 8 styling with black formatter — ruff check is the source of truth"),
+                ("dependencies", "manage dependencies strictly in pyproject.toml — never run pip directly"),
+            ],
         },
         "go": {
             "pm": "Go Modules",
@@ -122,6 +132,11 @@ class Config:
                 ("Lint", "golangci-lint run path/to/file.go"),
                 ("Test", "go test -run TestName path/to/package"),
             ],
+            "conventions": [
+                ("error-handling", "explicitly handle every returned error immediately — do not ignore with _"),
+                ("struct-tags", "use camelCase for JSON tags on public structs (e.g. json:\"camelCase\")"),
+                ("context", "pass context.Context as the first argument to all network and database functions"),
+            ],
         },
         "rust": {
             "pm": "Cargo",
@@ -134,6 +149,11 @@ class Config:
             "commands": [
                 ("Lint", "cargo clippy --package <pkg_name> -- -D warnings"),
                 ("Test", "cargo test --package <pkg_name> test_name"),
+            ],
+            "conventions": [
+                ("error-handling", "use Result<T, E> and the ? operator for propagation — avoid unwrap() and expect()"),
+                ("lifetimes", "prefer owned types (String, Vec) in structs to avoid complex lifetime annotations unless performance-critical"),
+                ("clippy", "ensure code compiles cleanly with cargo clippy warnings treated as errors"),
             ],
         },
         "java": {
@@ -155,6 +175,11 @@ class Config:
                 ),
                 ("Test", "mvn test -Dtest=TestClass#testMethod -pl :<module>"),
             ],
+            "conventions": [
+                ("null-safety", "use Optional<T> for return types that can be empty — never return null"),
+                ("dependency-injection", "use constructor injection only — avoid field injection with @Autowired or @Inject"),
+                ("naming", "follow standard camelCase for variables/methods and PascalCase for classes"),
+            ],
         },
         "dotnet": {
             "pm": "dotnet",
@@ -171,6 +196,11 @@ class Config:
                 ("Build", "dotnet build -p :<ProjectName>"),
                 ("Test", "dotnet test --filter FullyQualifiedName~TestClassName"),
             ],
+            "conventions": [
+                ("async-await", "append the Async suffix to all asynchronous method names and await them"),
+                ("null-safety", "enable nullable reference types (<Nullable>enable</Nullable>) and resolve all compiler warnings"),
+                ("naming", "use PascalCase for public properties/methods and camelCase for private fields with _ prefix"),
+            ],
         },
         "bun": {
             "pm": "bun",
@@ -183,6 +213,11 @@ class Config:
             "commands": [
                 ("Test", "bun test path/to/file.test.ts"),
                 ("Run", "bun path/to/file.ts"),
+            ],
+            "conventions": [
+                ("imports", "ESM import/export syntax for files and packages — no CommonJS require()"),
+                ("jsx", "use .tsx or .jsx file extensions for components; never put JSX in .ts or .js files"),
+                ("apis", "prefer native Bun APIs (e.g. Bun.serve, Bun.file) over Node.js compat equivalents"),
             ],
         },
     }
@@ -676,7 +711,11 @@ def render_agents_md_skeleton(
         "",
         "## Key Conventions",
         "",
-        "# TODO: 3-7 kv lines grounded in real repo facts from Phase 1/1.5 — never invented",
+    ]
+    for key, value in defaults["conventions"]:
+        lines.append(f"{key}: {value}")
+
+    lines += [
         "",
         "## Commit Attribution",
         "",

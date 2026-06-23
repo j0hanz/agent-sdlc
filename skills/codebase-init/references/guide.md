@@ -21,12 +21,12 @@ python scripts/run.py scaffold-agents-md \
   [--out AGENTS.md]
 ```
 
-Output: H1, `purpose:`, `## Hard Rules` (full sentences + marker), `## Package Manager`, `## Dependency Locations`, `## File-Scoped Commands` table, a `## Key Conventions` TODO placeholder, `## Commit Attribution`.
+Output: H1, `purpose:`, `## Hard Rules` (full sentences + marker), `## Package Manager`, `## Dependency Locations`, `## File-Scoped Commands` table, language-appropriate defaults under `## Key Conventions`, `## Commit Attribution`.
 
 After running it:
 
 1. Override any default Phase 1 found wrong — re-run with `--pm`/`--set key=value`, don't hand-edit a wrong default into something else wrong.
-2. Replace the `## Key Conventions` TODO with 3-7 real `key: value` lines grounded in the actual repo (see §2.5) — the script never invents these.
+2. Review the scaffolded `## Key Conventions` defaults and refine/extend them (to have 3-7 real `key: value` lines) grounded in the actual repo (see §2.5).
 3. No language match (PHP, Ruby, etc.)? Pick the closest `--language`, then override every toolchain value with `--set` — treat the defaults as scratch, not fact.
 
 ### Shapes the script doesn't cover
