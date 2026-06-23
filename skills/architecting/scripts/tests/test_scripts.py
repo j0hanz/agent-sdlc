@@ -1,10 +1,15 @@
 import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 from check_locality import run_locality_check
 from detect_bleed import run_bleed_detection
 from detect_hotspots import run_hotspot_detection
-from scaffold_boundary import scaffold
+from scaffold_boundary import PATTERNS, scaffold
+
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 
 
 def test_check_locality_cycles(tmp_path):
@@ -60,12 +65,17 @@ def test_scaffold_refuses_output_dir_outside_cwd(tmp_path, monkeypatch):
     assert not outside.exists()
 
 
-def test_scaffold_writes_within_cwd(tmp_path, monkeypatch):
+@pytest.mark.parametrize("pattern", sorted(PATTERNS.keys()))
+def test_scaffold_writes_within_cwd(tmp_path, monkeypatch, pattern):
     monkeypatch.chdir(tmp_path)
 
-    scaffold("billing", "hexagonal", "src")
+    scaffold("billing", pattern, "src")
 
-    assert (tmp_path / "src" / "billing" / "domain" / "billing.ts").exists()
+    written = list((tmp_path / "src" / "billing").rglob("*"))
+    files = [p for p in written if p.is_file()]
+    assert files, f"pattern {pattern!r} wrote no files"
+    for f in files:
+        assert f.read_text(), f"{f} is empty for pattern {pattern!r}"
 
 
 def test_hotspot_detection_warns_when_not_a_git_repo(tmp_path, capsys):
@@ -74,3 +84,71 @@ def test_hotspot_detection_warns_when_not_a_git_repo(tmp_path, capsys):
     run_hotspot_detection(str(tmp_path))
 
     assert "git churn data unavailable" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "script",
+    ["check_locality.py", "detect_bleed.py", "detect_hotspots.py"],
+)
+def test_script_cli_runs_against_real_dir(tmp_path, script):
+    (tmp_path / "a.ts").write_text("export const a = 1;")
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS_DIR / script), str(tmp_path)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_git_coupling_cli_runs_against_real_git_repo(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "a@b.c"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "test"], cwd=tmp_path, check=True)
+    (tmp_path / "a.ts").write_text("export const a = 1;")
+    (tmp_path / "b.ts").write_text("export const b = 1;")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=tmp_path, check=True)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS_DIR / "git_coupling.py"),
+            str(tmp_path),
+            "--min-count",
+            "1",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "a.ts" in result.stdout and "b.ts" in result.stdout
+
+
+def test_git_coupling_cli_errors_outside_git_repo(tmp_path):
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS_DIR / "git_coupling.py"), str(tmp_path)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "git repository" in result.stderr.lower()
+
+
+@pytest.mark.parametrize(
+    "script", ["check_locality.py", "detect_bleed.py", "detect_hotspots.py"]
+)
+def test_script_cli_errors_on_missing_dir(tmp_path, script):
+    missing = tmp_path / "does-not-exist"
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS_DIR / script), str(missing)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "not found" in result.stderr.lower()

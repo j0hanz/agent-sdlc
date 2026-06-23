@@ -6,6 +6,8 @@ A **seam** is a boundary where behavior can be altered without editing code in p
 
 ## Example 1: Authentication Seam (Good)
 
+_Same scenario as [`INTERFACE_SHAPES.md`](INTERFACE_SHAPES.md) Example 1, different angle: this file asks how to split the **internals** into testable seams; that file asks what the **public interface** should look like. Read both when designing a real boundary._
+
 **Bad seam** — logic scattered across files:
 
 ```typescript

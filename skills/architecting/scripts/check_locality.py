@@ -149,6 +149,9 @@ if __name__ == "__main__":
     abs_dir = Path(args.dir).resolve()
 
     try:
+        if not abs_dir.is_dir():
+            raise FileNotFoundError(f"Directory not found: {args.dir}")
+
         cycles, fan_out = run_locality_check(abs_dir)
 
         print("\n--- Circular Dependencies ---")

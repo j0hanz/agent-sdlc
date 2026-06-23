@@ -11,6 +11,7 @@ import subprocess
 import sys
 import traceback
 from collections import Counter
+from pathlib import Path
 from typing import Any
 
 from check_locality import run_locality_check
@@ -163,6 +164,9 @@ if __name__ == "__main__":
     print(f"Git window: since {args.since}\n")
 
     try:
+        if not Path(args.dir).is_dir():
+            raise FileNotFoundError(f"Directory not found: {args.dir}")
+
         results = run_hotspot_detection(args.dir, infra_pkgs, since=args.since)
 
         if not results:
@@ -185,6 +189,9 @@ if __name__ == "__main__":
                 f"\n⚠  {len(high)} HIGH-risk file(s) found. These are your top refactoring targets."
             )
 
+    except FileNotFoundError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
     except Exception:
         traceback.print_exc()
         sys.exit(1)

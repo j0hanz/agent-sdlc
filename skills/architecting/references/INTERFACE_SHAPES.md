@@ -16,6 +16,8 @@ An **interface shape** describes:
 
 ## Example 1: Extracting Auth from Scattered Files
 
+_Same scenario as [`SEAMS_BY_EXAMPLE.md`](SEAMS_BY_EXAMPLE.md) Example 1, different angle: this file asks what the **public interface** should look like; that file asks how to split the **internals** into testable seams. Read both when designing a real boundary._
+
 ### Current State (Scattered, Bad Shape)
 
 **Problem**: Auth logic is split across three files. Callers have to know about all of them.

@@ -1,6 +1,6 @@
 ---
 name: architecting
-description: "Conducts architecture reviews and system design. Not for single-file cleanup (see refactor). Trigger on: 'conduct an architecture review', 'restructure across modules', 'design this system', 'map dependencies', 'resolve circular dependencies', 'troubleshoot a God class', 'domain boundaries'."
+description: "Expert architecture review and system design for problems spanning 2+ files or crossing module boundaries — circular dependencies, God modules, or boundary violations (bleed). Not for single-file cleanup (see refactor). Trigger on: 'architecture review', 'restructure across modules', 'too coupled', 'design this system', 'where should this code live', 'God class', 'circular deps', 'dependency mapping', 'domain boundaries'."
 disable-model-invocation: false
 allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion
 ---
@@ -45,9 +45,9 @@ _CONTEXT LOADING RULE:_ Do NOT load design files (`references/architecture-patte
    - Detect tech stack.
    - Run from `scripts/` (all accept a target dir positional arg, default shown):
      - `python check_locality.py [dir=src]`
-     - `python detect_bleed.py [dir=src/domain] [--infra-prefixes express,typeorm,prisma,fs,path,react,mongoose]`
+     - `python detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
      - `python git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
-     - `python detect_hotspots.py [dir=src] [--since "6 months ago"]`
+     - `python detect_hotspots.py [dir=src] [infra=express,typeorm,prisma,fs,path,react,mongoose,sqlalchemy,django,flask] [--since "6 months ago"]`
    - **Fallback**: Manually analyze imports, "God" modules (>500 lines/20+ exports), and history.
    - Dispatch `general-purpose` agent using [`references/dispatch-template.md`](references/dispatch-template.md). **MANDATORY**: Only load this specific template when dispatching.
 2. **Present** (Phase 2): List 3-6 opportunities: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. End by asking: "Which of these candidates interests you most?"
