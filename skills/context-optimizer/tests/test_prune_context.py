@@ -63,10 +63,12 @@ def test_update_rolling_summary(tmp_path):
         blocking="none",
         next_step="test endpoints",
         decisions="use fastAPI",
+        current_skill="test-driven-development",
     )
 
     content1 = summary_file.read_text(encoding="utf-8")
     assert "done: created api stub" in content1
+    assert "current_skill: test-driven-development" in content1
     assert "## Session: 2026-06-21T10:00:00" in content1
 
     # 2. Second entry

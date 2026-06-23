@@ -75,6 +75,7 @@ Step 1: Intake & Mapping (brief/interview) -> Step 2: Artifact Authoring (scaffo
 - **Target `test-driven-development`:** Single focused feature/fix.
 - **Target `multi-agent-development`:** Sequential multi-task execution with gated reviews.
 - **Target `multi-agent-dispatch`:** Parallel independent task clusters.
+- **Target `context-optimizer`:** If context bloats during Step 1/2's mandatory reference reads, before continuing.
 
 ## Canonical Task Block Schema
 

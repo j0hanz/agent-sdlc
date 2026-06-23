@@ -103,3 +103,4 @@ python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/validate_skill.py" <name
 **Next Skills:**
 
 - `architecting`: Trigger ONLY if structural questions arise during drafting (e.g., circular references or shared logic placement). Otherwise, this is a terminal skill with no next step.
+- `context-optimizer`: If context bloats mid-skill (long reads, many tool calls).

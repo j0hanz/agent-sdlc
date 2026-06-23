@@ -105,6 +105,7 @@ Loading is path-conditional and embedded as MANDATORY steps above — this is ju
 - `verification-before-completion`: After updating workflows or automation scripts, to verify they pass linting and initial validation before committing.
 - `diagnose`: If any `gh` or automation script fails at runtime, to root-cause the error trace rather than patching it blind.
 - `refactor`: If validation/audit flags a structural or hygiene issue (not a runtime failure) in the workflow/script.
+- `context-optimizer`: If context bloats mid-skill (long reads, many tool calls).
 
 ## Transition
 

@@ -79,6 +79,7 @@ Output exactly this format:
 - `architecting`: For changes across multiple files.
 - `diagnose`: To fix bugs you found.
 - `verification-before-completion`: Run this after your final tests pass.
+- `context-optimizer`: If context bloats mid-skill (long reads, many tool calls).
 
 ## Critical Rules
 

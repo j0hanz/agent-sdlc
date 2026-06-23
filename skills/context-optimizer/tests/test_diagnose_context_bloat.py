@@ -10,7 +10,9 @@ import diagnose_context_bloat  # noqa: E402
 
 
 def test_parse_gitignore(tmp_path):
-    (tmp_path / ".gitignore").write_text("node_modules/\n# comment\ndist\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text(
+        "node_modules/\n# comment\ndist\n", encoding="utf-8"
+    )
     ignores = diagnose_context_bloat.parse_gitignore(tmp_path)
     assert ignores == {"node_modules", "dist"}
 
@@ -23,7 +25,9 @@ def test_scan_files_flags_unignored_heavy_dir(tmp_path):
 
 def test_scan_files_respects_gitignore(tmp_path):
     (tmp_path / "node_modules").mkdir()
-    large_files, unignored_dirs = diagnose_context_bloat.scan_files(tmp_path, {"node_modules"})
+    large_files, unignored_dirs = diagnose_context_bloat.scan_files(
+        tmp_path, {"node_modules"}
+    )
     assert "node_modules" not in unignored_dirs
 
 
@@ -41,7 +45,9 @@ def test_scan_files_flags_lockfile(tmp_path):
 
 
 def test_check_instruction_stubs_flags_verbose_claude_md(tmp_path):
-    (tmp_path / "CLAUDE.md").write_text("\n".join(f"line {i}" for i in range(10)), encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text(
+        "\n".join(f"line {i}" for i in range(10)), encoding="utf-8"
+    )
     warnings = diagnose_context_bloat.check_instruction_stubs(tmp_path)
     assert warnings
 

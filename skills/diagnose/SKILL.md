@@ -72,6 +72,7 @@ Phase 1: Build Feedback Loop (pass/fail signal)
 **refactor:** clean up 1 file/function
 **architecting:** clean up multiple files/modules
 **planning:** address major specification gaps
+**context-optimizer:** if context bloats mid-skill (long reads, many tool calls)
 
 ## Transitions
 

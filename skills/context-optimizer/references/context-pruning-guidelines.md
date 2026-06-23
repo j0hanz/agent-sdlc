@@ -66,6 +66,7 @@ Format:
 ## Current Session State
 
 timestamp: 2026-06-23T23:18:04+02:00
+current_skill: multi-agent-development
 done: fixed null pointer in auth.py, updated tests
 blocking: None
 next: implement rate limiting middleware
@@ -78,3 +79,5 @@ key_decisions: using sliding window rate limiter at Redis level
 ```
 
 By collapsing older sessions into single-line lists, we retain historical context without sending hundreds of lines of conversation history.
+
+`current_skill` records which skill/gate was active at `/clear` time, so resume re-enters that skill directly instead of re-deriving the route from `using-agent-dev-skills` Gate 0.

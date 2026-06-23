@@ -15,6 +15,7 @@ If a skill has any potential relevance (greater than 0%) to your task, you MUST 
 
 ```
 Start: New Task
+  -> [Any Gate] Context Bloated / Token Limit Near? --> context-optimizer --> resume same gate
   -> Gate 0: Repo Onboarded?
        -- no AGENTS.md (recommendation) --> codebase-init --> Gate 1
        -- onboarded ------------------------------------------> Gate 1
@@ -56,7 +57,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **Immediate Invocation:** Activate and follow a skill immediately once a route is identified.
 - **Notification:** Announce the route via `AskUserQuestion` stating: `✅ Routing to [<skill-name>]: [reason]`. Do not add a manual "Other" option.
 - **No Skips:** Never bypass process gates for "simple" or "quick" tasks.
-- **Context Constraints:** Route to `context-optimizer` at any gate if the active context is bloated or token limits are approached, pruning memory before continuing the task.
+- **Context Constraints:** Route to `context-optimizer` at any gate if the active context is bloated or token limits are approached, pruning memory before continuing the task (see the `[Any Gate]` branch in the diagram above — it preempts whichever gate is active).
 
 ---
 

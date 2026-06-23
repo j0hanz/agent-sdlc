@@ -127,7 +127,7 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 - **Brief Format:** `markdown-kv` containing: Chosen Approach, Why, Scope, Success Criteria, Constraints, Interface, Architecture, Risk Register, Review Disposition, First Step.
 - **Persistence:** Write to `docs/design/YYYY-MM-DD-<topic>-design.md`. Present in chat first.
 - **Commit Guard:** Ask before git commit. Default to NO. Skip if not a git repository.
-- **Next Skills:** `planning`, `architecting`.
+- **Next Skills:** `planning`, `architecting`, `context-optimizer` (if context bloats mid-session).
 - **Log Entry:** Append final brief. Update frontmatter `status: done`.
 
 ---

@@ -74,3 +74,4 @@ All results are combined, tests are GREEN, and tasks are passed to `verification
 - `verification-before-completion`: Run this to check final work.
 - `multi-agent-development`: Run this if tasks depend on each other (sequential).
 - `diagnose`: Run this if combining the code causes errors.
+- `context-optimizer`: Run this if context bloats while collecting parallel results.

@@ -27,7 +27,8 @@ Phase 3: Code Quality
   -- CRITICAL / IMPORTANT (retry) -> back to Phase 1
 
 Next Task?
-  -- yes --> loop to Start
+  -- yes --> Orchestrator Context Bloated? -- yes --> context-optimizer --> resume loop
+                                            -- no  --> loop to Start
   -- no  --> Final Validation (test & verify)
 ```
 
@@ -87,3 +88,4 @@ Next Task?
 - **Rejects**: Throw away bad work. Start over from a clean base.
 - **Conflicts**: If a merge fails, pause and ask the user.
 - **Resuming**: Check `git log` before restarting to avoid repeating work.
+- **Context**: The orchestrator thread accumulates summaries across every task loop even though subagents are isolated. If it bloats, run `context-optimizer` between loop iterations (never mid-task) before continuing.

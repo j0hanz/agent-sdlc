@@ -117,6 +117,7 @@ def update_rolling_summary(
     blocking: str,
     next_step: str,
     decisions: str,
+    current_skill: str = "None",
 ) -> str:
     """Updates the rolling summary file, archiving previous sessions."""
     existing_entries: list[str] = []
@@ -132,6 +133,7 @@ def update_rolling_summary(
 
     new_block = (
         f"timestamp: {timestamp}\n"
+        f"current_skill: {current_skill}\n"
         f"done: {done}\n"
         f"blocking: {blocking}\n"
         f"next: {next_step}\n"
@@ -197,6 +199,11 @@ def main() -> None:
         help="Summary path (default: <cwd>/.claude/rolling_summary.md)",
     )
     parser.add_argument("--timestamp", default="", help="Timestamp of current session")
+    parser.add_argument(
+        "--current-skill",
+        default="None",
+        help="Active skill/gate, so resume doesn't re-derive routing from scratch",
+    )
     parser.add_argument("--done", default="None", help="Completed tasks")
     parser.add_argument("--blocking", default="None", help="Blocking issues")
     parser.add_argument("--next-step", default="None", help="Immediate next action")
@@ -233,6 +240,7 @@ def main() -> None:
             args.blocking,
             args.next_step,
             args.decisions,
+            args.current_skill,
         )
         print(f"Summary written to {args.path}. Content:")
         print(result)

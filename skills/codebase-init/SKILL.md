@@ -152,6 +152,7 @@ Phase 1: Environment Discovery (analyze toolchain/structure)
 - architecting: Map patterns, "God" modules, circular dependencies.
 - brainstorming: Explore features.
 - planning: Create implementation plans.
+- context-optimizer: If context bloats mid-skill (long reads, many tool calls).
 
 ---
 

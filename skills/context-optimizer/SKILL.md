@@ -41,11 +41,11 @@ Select ONE strategy based on diagnostics:
 
 ## Step 3: Clear and Resume (For Bloated Sessions)
 
-1. Write a flat Key-Value status:
-   `python skills/context-optimizer/scripts/prune_context.py --summary --timestamp "$(date -Iseconds)" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"`
+1. Write a flat Key-Value status, including which skill/gate was active so resume doesn't re-derive routing from scratch:
+   `python skills/context-optimizer/scripts/prune_context.py --summary --timestamp "$(date -Iseconds)" --current-skill "<skill-name or gate>" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"`
 2. Tell the user: "Clearing history. Please type 'resume'."
 3. Run `/clear`.
-4. Reload `.claude/rolling_summary.md` to continue.
+4. Reload `.claude/rolling_summary.md` and resume the `current_skill` recorded there directly — do not re-enter `using-agent-dev-skills` from Gate 0.
 
 ## STRICT PROHIBITIONS
 
@@ -56,4 +56,5 @@ Select ONE strategy based on diagnostics:
 **Next Skills:**
 
 - `planning`: Trigger if context reveals major specification gaps.
-- `using-agent-dev-skills`: Return to the main router once optimized.
+- Whichever skill was recorded as `current_skill` in the rolling summary: resume it directly.
+- `using-agent-dev-skills`: Only if no `current_skill` was recorded (e.g. optimizing before any route was chosen).
