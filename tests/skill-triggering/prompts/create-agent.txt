@@ -1,1 +1,0 @@
-I need a subagent that can scan a codebase for security vulnerabilities and report findings. How do I build one?

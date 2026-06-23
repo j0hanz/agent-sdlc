@@ -4,27 +4,6 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 /**
- * Run `claude -p <prompt>` in an isolated temp directory.
- * Returns { stdout, stderr, exitCode }.
- */
-export function runClaude(prompt, { timeout = 120_000, allowedTools = [], cwd } = {}) {
-  const dir = cwd ?? mkdtempSync(join(tmpdir(), 'agent-dev-integration-'));
-  const toolFlag = allowedTools.length ? `--allowedTools "${allowedTools.join(',')}"` : '';
-  const cmd = `claude -p ${JSON.stringify(prompt)} --output-format json ${toolFlag}`;
-  try {
-    const stdout = execSync(cmd, {
-      cwd: dir,
-      timeout,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return { stdout, stderr: '', exitCode: 0, dir };
-  } catch (err) {
-    return { stdout: err.stdout ?? '', stderr: err.stderr ?? '', exitCode: err.status ?? 1, dir };
-  }
-}
-
-/**
  * Assert that `text` contains `pattern` (string or RegExp).
  * Throws with a clear message if it doesn't.
  */

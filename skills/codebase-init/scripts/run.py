@@ -321,7 +321,6 @@ class Config:
 class IssueLevel(Enum):
     """Levels for validation issues."""
 
-    INFO = auto()
     WARN = auto()
     FAIL = auto()
 
