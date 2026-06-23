@@ -43,11 +43,11 @@ fi
 
 if [ -f "$EVALS_FILE" ]; then
     echo "Found evals.json at $EVALS_FILE. Running evals loop."
-    CASE_IDS=$(jq -r '.[] | .id' "$EVALS_FILE" | tr -d '\r')
+    CASE_IDS=$(jq -r 'if type == "array" then .[] else .evals[] end | .id' "$EVALS_FILE" | tr -d '\r')
     for case_id in $CASE_IDS; do
         case_id=$(echo "$case_id" | tr -d '\r')
         echo "=== Eval Case ID: $case_id ==="
-        PROMPT=$(jq -r --argjson cid "$case_id" '.[] | select(.id == $cid) | .prompt' "$EVALS_FILE")
+        PROMPT=$(jq -r --argjson cid "$case_id" 'if type == "array" then .[] else .evals[] end | select(.id == $cid) | .prompt' "$EVALS_FILE")
         LOG_FILE="$OUTPUT_DIR/claude-output-case-${case_id}.json"
         
         echo "Running claude -p with plugin-dir: $PLUGIN_DIR for case $case_id"

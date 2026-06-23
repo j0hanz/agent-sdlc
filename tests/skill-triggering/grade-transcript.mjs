@@ -74,7 +74,8 @@ function main() {
     exitWithError(skill, caseId, `Failed to parse evals.json: ${e.message}`);
   }
 
-  const caseData = Array.isArray(evalsData) ? evalsData.find(c => c.id === caseId) : null;
+  const cases = Array.isArray(evalsData) ? evalsData : (evalsData?.evals || []);
+  const caseData = cases.find(c => c.id === caseId);
   if (!caseData) {
     exitWithError(skill, caseId, `Case ID ${caseId} not found in evals.json`);
   }
