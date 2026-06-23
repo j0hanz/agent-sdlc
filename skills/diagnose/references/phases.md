@@ -22,7 +22,7 @@
 ## Phase 2: Reproduce
 
 - **Risk:** "Wrong Bug" Trap. Ensure reproduced bug matches user report exactly.
-- **Flakiness_Threshold:** <50% repro rate is un-debuggable. Go back to Phase 1 and add stress/concurrency to increase rate.
+- **Flakiness_Threshold:** <50% repro rate is un-debuggable — signal-to-noise is too low to tell whether a later fix worked or the bug just didn't fire. Go back to Phase 1 and add stress/concurrency to increase rate.
 - **Capture_State:** Record full error, input, actual vs expected, timing, and environment before proceeding.
 
 ## Phase 3: Hypothesize
@@ -58,5 +58,6 @@
 - **Review_Question:** "What would have prevented this bug?"
 - **Delegation_Paths:**
   - "Better test coverage" -> Activate `test-driven-development` skill.
-  - "Tangled logic" -> Activate `architecting` skill.
+  - "Tangled logic confined to one file/function" -> Activate `refactor` skill.
+  - "Tangled logic spanning multiple files/modules" -> Activate `architecting` skill.
   - "API contract vague" -> Update docs.

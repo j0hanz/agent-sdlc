@@ -76,7 +76,8 @@ Propose 3-5 falsifiable hypotheses via `AskUserQuestion`. Surface the top 3 as r
 **next skills:**
 
 - `test-driven-development`: To implement the verified fix if it involves new logic or refactoring.
-- `refactor`: If the diagnosis reveals a structural "mess" that needs cleanup after the fix is verified.
+- `refactor`: If the diagnosis reveals a structural "mess" confined to one file/function that needs cleanup after the fix is verified.
+- `architecting`: If the "mess" spans multiple files or module boundaries rather than one file.
 - `planning`: If the bug reveals a major gap in the original specification or architecture.
 
 ## Transition
