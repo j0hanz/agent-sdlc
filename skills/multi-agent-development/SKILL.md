@@ -96,7 +96,8 @@ Execute Phases 1 → 2 → 3 in strict order.
 ### Phase 1: Implement
 
 - Dispatch a `general-purpose` subagent with `isolation: \"worktree\"`.
-- **Prompt Contract:** Read [`../multi-agent-dispatch/references/subagent-contract.md`](../multi-agent-dispatch/references/subagent-contract.md) and carry `SCOPE`, `OBJECTIVE`, `CONTEXT`, `CONSTRAINTS`, `OUTPUT SCHEMA`. (Shared with `multi-agent-dispatch` by reference, not copy — if that skill is ever removed/renamed, update this path too.)
+- **MANDATORY**: Read `references/implementer-prompt.md` and use its content to structure the prompt for the Implementer.
+- **Prompt Contract:** Read [`references/subagent-contract.md`](references/subagent-contract.md) and carry `SCOPE`, `OBJECTIVE`, `CONTEXT`, `CONSTRAINTS`, `OUTPUT SCHEMA`.
 - **Outcome:** `VERDICT: [DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]`, `FILES_TOUCHED`, `COMMIT`, `SUMMARY`.
 
 ### Phase 2: Spec Compliance Gate
@@ -122,16 +123,16 @@ Advance only after Phase 3 passes. After ALL tasks pass:
 
 1. Run the project's test and validate commands (read from `AGENTS.md` / package manifest — never assume `npm`).
 2. Invoke `verification-before-completion`.
-3. Invoke `request-code-review`. **MANDATORY, not optional** — Phase 3's quality gate does not check security (see Check 7 in `quality-reviewer-prompt.md`); `request-code-review` Tier 1 is the only security gate in this workflow.
+3. Invoke `request-code-review`. **MANDATORY, not optional** — while Phase 3's quality gate performs basic security sanity checks (see Check 7 in `quality-reviewer-prompt.md`), a fresh-context comprehensive security audit requires `request-code-review` Tier 1.
 
 **next skills:**
 
 - `verification-before-completion`: After all tasks in the plan are complete and pass quality gates, to ensure system-wide integrity.
-- `request-code-review`: Mandatory fresh-context security and correctness audit before merging — the quality gate in this skill does not cover security.
+- `request-code-review`: Mandatory fresh-context security and correctness audit before merging — the local quality gate performs only basic security sanity checks.
 
 ## Operational Rules
 
 - **Fresh agent per task.**
 - **Prompt Discipline:** Subagents start cold. Embed every fact.
 - **Commit Baseline:** Always provide `Baseline commit` and `Implementation commit` to reviewers for precise diffing.
-- **Rejection rollback policy:** when Phase 2 or Phase 3 sends a task back to Phase 1 (`SPEC_FAIL`/`CRITICAL`/`IMPORTANT`), the rejected attempt's worktree commit is discarded, not merged-then-reverted — the next Phase 1 dispatch starts a fresh agent in a fresh worktree from the same baseline commit, with the reviewer's findings embedded in its prompt. Never carry forward a rejected attempt's partial diff into the retry; a clean restart prevents compounding a flawed approach. Once a task fully passes Phase 3, its worktree commit is merged into the sequence baseline before the next task starts. **If the merge conflicts:** BLOCKED state — re-run the disjoint-files check (Partitioning & Scope section) and escalate to the user before attempting to manually resolve or skip the failed task.
+- **Rejection rollback policy:** when Phase 2 or Phase 3 sends a task back to Phase 1 (`SPEC_FAIL`/`CRITICAL`/`IMPORTANT`), the rejected attempt's worktree commit is discarded, not merged-then-reverted — the next Phase 1 dispatch starts a fresh agent in a fresh worktree from the same baseline commit, with the reviewer's findings embedded in its prompt. Never carry forward a rejected attempt's partial diff into the retry; restarting from the baseline commit prevents compounding a flawed approach. Once a task fully passes Phase 3, its worktree commit is merged into the sequence baseline before the next task starts. **If the merge conflicts:** BLOCKED state — re-run the disjoint-files check (Partitioning & Scope section) and escalate to the user before attempting to manually resolve or skip the failed task.

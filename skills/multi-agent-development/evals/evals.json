@@ -30,10 +30,10 @@
       "id": 3,
       "prompt": "Work through the plan tasks for the new API endpoint.",
       "expected_output": "Skill initiates the multi-agent development workflow for the relevant plan.",
-      "files": [],
+      "files": ["plan/new-api-endpoint.specs.md", "plan/new-api-endpoint.plan.md"],
       "expectations": [
-        "Skill triggers the multi-agent development loop",
-        "Skill asks for the plan file path if it cannot find an obvious candidate"
+        "Skill identifies plan/new-api-endpoint.plan.md as the target plan",
+        "Skill starts the Phase 1 Implement ➔ Phase 2 Spec Gate ➔ Phase 3 Quality Gate loop"
       ]
     }
   ]
