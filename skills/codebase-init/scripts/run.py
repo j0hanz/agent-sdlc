@@ -1166,6 +1166,12 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
 
 
 def wire_agents_files(source: Path, targets: list[Path]) -> int:
+    """Create one‑line redirect stubs in target files that point to *source*.
+
+    Each *target* file will contain a markdown link to the *source* file
+    using a relative POSIX path. Existing files are overwritten. Returns
+    ``0`` on success or ``1`` if any target could not be processed.
+    """
     """Write one-line redirect stubs (never full copies) pointing targets at source."""
     source = source.resolve()
     if not source.exists():
@@ -1278,6 +1284,10 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
 
 
 def run_full_audit(root_dir: Path) -> int:
+    """Orchestrate the full audit process for *root_dir*.
+
+    Returns the exit code from :func:`print_audit_report`.
+    """
     """Orchestrate the full audit process."""
     results = AuditResults()
     patterns = load_gitignore(root_dir) | Config.DEFAULT_IGNORE_PATTERNS
@@ -1431,6 +1441,11 @@ def _setup_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Entry point for the CLI.
+
+    Parses arguments, resolves the root directory and dispatches to the
+    appropriate sub‑command. Returns an appropriate exit status.
+    """
     parser = _setup_parser()
 
     args = parser.parse_args()
