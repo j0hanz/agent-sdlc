@@ -446,7 +446,7 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
         if rel_str == pat_clean or rel_str.startswith(pat_clean + "/"):
             return True
         if "*" in pat_clean:
-            if fnmatch.fnmatch(rel_str, pat_clean) or fnmatch.fnmatch(
+            if fnmatch.fnmatchcase(rel_str, pat_clean) or fnmatch.fnmatchcase(
                 rel_str, pat_clean + "/*"
             ):
                 return True
@@ -1080,8 +1080,29 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                         message=f"Hook entry under event '{event}' must be an object.",
                     )
                 )
+            hooks_val = hook_entry.get("hooks")
+            if hooks_val is None:
+                if "hooks" in hook_entry:
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.FAIL,
+                            message=f"Hooks list under event '{event}' must be an array.",
+                        )
+                    )
+                    continue
+                hooks_list = []
+            elif not isinstance(hooks_val, list):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Hooks list under event '{event}' must be an array.",
+                    )
+                )
                 continue
-            for hook in hook_entry.get("hooks", []):
+            else:
+                hooks_list = hooks_val
+
+            for hook in hooks_list:
                 if not isinstance(hook, dict):
                     issues.append(
                         ValidationIssue(

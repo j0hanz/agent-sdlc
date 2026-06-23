@@ -12,6 +12,9 @@ from run import (  # noqa: E402
     validate_hooks_config,
     validate_manifest_file,
     should_ignore,
+    wire_agents_files,
+    get_dependencies,
+    validate_skill_files,
 )
 
 
@@ -333,6 +336,32 @@ def test_hooks_config_with_arguments(tmp_path: Path) -> None:
     assert len(result.issues) == 0
 
 
+def test_hooks_config_with_null_hooks(tmp_path: Path) -> None:
+    hooks_file = tmp_path / "hooks" / "hooks.json"
+    hooks_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Null hooks key under a hook entry
+    hooks_content = """{
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "hooks": null
+                }
+            ]
+        }
+    }"""
+    hooks_file.write_text(hooks_content, encoding="utf-8")
+
+    # This should return a clean validation error/warning instead of crashing
+    result = validate_hooks_config(hooks_file)
+    assert result.success is False
+    assert any(
+        "must be an array" in str(issue).lower()
+        or "must be an object" in str(issue).lower()
+        for issue in result.issues
+    )
+
+
 def test_manifest_file_type_safety(tmp_path: Path) -> None:
     manifest_file = tmp_path / "plugin.json"
 
@@ -372,6 +401,13 @@ def test_should_ignore_leading_slash() -> None:
     assert should_ignore(Path("C:/my_project/subdir/dist"), {"dist"}, root) is True
 
 
+def test_should_ignore_case_sensitivity() -> None:
+    root = Path("C:/my_project")
+    # A wildcard pattern should match case-sensitively on all systems
+    assert should_ignore(Path("C:/my_project/Dist"), {"di*t"}, root) is False
+    assert should_ignore(Path("C:/my_project/dist"), {"di*t"}, root) is True
+
+
 def test_agents_md_multiline_comment_handling(tmp_path: Path) -> None:
     body = _BASE_BODY.replace(
         "## Commit Attribution",
@@ -393,3 +429,94 @@ def test_agents_md_multiline_comment_handling(tmp_path: Path) -> None:
     # Check that it detected the TODO but NOT the filler words inside the multiline comment
     assert any("Unresolved TODO detected" in str(issue) for issue in result.issues)
     assert not any("Filler text detected" in str(issue) for issue in result.issues)
+
+
+def test_wire_agents_files_success(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    source = tmp_path / "AGENTS.md"
+    source.write_text("Source content", encoding="utf-8")
+
+    target1 = tmp_path / "CLAUDE.md"
+    target2 = tmp_path / "GEMINI.md"
+
+    code = wire_agents_files(source, [target1, target2])
+    assert code == 0
+    assert target1.read_text(encoding="utf-8") == "# See [AGENTS.md](AGENTS.md)\n"
+    assert target2.read_text(encoding="utf-8") == "# See [AGENTS.md](AGENTS.md)\n"
+
+
+def test_wire_agents_files_outside_root(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    # Create source inside root
+    source = tmp_path / "AGENTS.md"
+    source.write_text("Source content", encoding="utf-8")
+
+    # Try target outside root (using parent directory)
+    outside_dir = tmp_path.parent
+    target = outside_dir / "CLAUDE.md"
+
+    code = wire_agents_files(source, [target])
+    assert code == 1
+    assert not target.exists()
+
+
+def test_get_dependencies(tmp_path: Path) -> None:
+    # Create fake node_modules directory with some files
+    node_modules = tmp_path / "node_modules"
+    node_modules.mkdir()
+
+    file1 = node_modules / "a.js"
+    file1.write_text("console.log(1);", encoding="utf-8")
+
+    sub = node_modules / "sub"
+    sub.mkdir()
+    file2 = sub / "b.js"
+    file2.write_text("x" * 1024 * 1024, encoding="utf-8")  # 1 MB
+
+    deps = get_dependencies(tmp_path)
+    assert len(deps) == 1
+    assert deps[0].name == "node_modules"
+    assert deps[0].size_mb > 0.9
+
+
+def test_validate_skill_files(tmp_path: Path) -> None:
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+
+    # Create a valid skill
+    skill1 = skills_dir / "valid-skill"
+    skill1.mkdir()
+    (skill1 / "SKILL.md").write_text(
+        "---\nname: valid-skill\ndescription: valid desc\n---\nBody content",
+        encoding="utf-8",
+    )
+
+    # Create an invalid skill (missing SKILL.md)
+    skill2 = skills_dir / "invalid-no-skill-md"
+    skill2.mkdir()
+
+    # Create an invalid skill (missing frontmatter name)
+    skill3 = skills_dir / "invalid-missing-name"
+    skill3.mkdir()
+    (skill3 / "SKILL.md").write_text(
+        "---\ndescription: missing name\n---\nBody", encoding="utf-8"
+    )
+
+    # Create a skill that is too long (above 150 lines default)
+    skill4 = skills_dir / "too-long"
+    skill4.mkdir()
+    long_content = "---\nname: too-long\ndescription: test desc\n---\n" + "\n".join(
+        ["line"] * 160
+    )
+    (skill4 / "SKILL.md").write_text(long_content, encoding="utf-8")
+
+    res = validate_skill_files(skills_dir)
+    assert res.success is False
+
+    # Find issues related to each skill
+    messages = [issue.message for issue in res.issues]
+    assert any("has no SKILL.md" in m for m in messages)
+    assert any("missing frontmatter key: 'name'" in m for m in messages)
+    assert any("is long (>150 lines)" in m for m in messages)
