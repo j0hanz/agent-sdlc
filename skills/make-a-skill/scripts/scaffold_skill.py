@@ -123,28 +123,12 @@ def _evals_stub(name: str) -> dict[str, Any]:
     }
 
 
-def _skill_rules_snippet(name: str) -> str:
-    snippet = {
-        name: {
-            "type": "domain",
-            "enforcement": "suggest",
-            "priority": "medium",
-            "promptTriggers": {
-                "keywords": ["FILL: keyword1", "FILL: keyword2"],
-                "intentPatterns": ["FILL: (regex|pattern)"],
-            },
-        }
-    }
-    return json.dumps(snippet, indent=2)
-
-
 def scaffold(
     name: str,
     out_dir: str | Path = ".claude/skills",
     with_scripts: bool = False,
     with_references: bool = False,
     with_evals: bool = False,
-    with_skill_rules: bool = False,
     force: bool = False,
 ) -> list[Path]:
     """Write a new skill skeleton. Returns the list of paths created."""
@@ -206,11 +190,6 @@ def scaffold(
             )
             created.append(evals_path)
 
-    if with_skill_rules:
-        print(f"\n--- Suggested skill-rules.json entry for '{name}' ---")
-        print(_skill_rules_snippet(name))
-        print("--------------------------------------------------\n")
-
     return created
 
 
@@ -234,11 +213,6 @@ def main() -> None:
     parser.add_argument(
         "--evals", action="store_true", help="Also stub evals/evals.json"
     )
-    parser.add_argument(
-        "--skill-rules",
-        action="store_true",
-        help="Print a JSON snippet for skill-rules.json",
-    )
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
 
     args = parser.parse_args()
@@ -248,7 +222,6 @@ def main() -> None:
         with_scripts=args.scripts,
         with_references=args.references,
         with_evals=args.evals,
-        with_skill_rules=args.skill_rules,
         force=args.force,
     )
     for path in created:

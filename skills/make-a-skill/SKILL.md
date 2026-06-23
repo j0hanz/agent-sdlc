@@ -23,10 +23,10 @@ Scaffold a new skill from a template, draft its body, then validate it before ca
 ## Step 1: Scaffold
 
 ```bash
-python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/scaffold_skill.py" <name> [--scripts] [--references] [--evals] [--skill-rules]
+python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/scaffold_skill.py" <name> [--scripts] [--references] [--evals]
 ```
 
-`<name>` must be a lowercase, kebab-case directory name (e.g. `make-a-skill`). Add `--scripts`/`--references`/`--evals` only for the sibling directories the skill actually needs — don't stub directories it won't use. Pass `--skill-rules` to print a suggested JSON snippet for `skill-rules.json` (for hook-based activation). Writes `.claude/skills/<name>/SKILL.md` by default (the standard project-level location); pass `--dir skills` instead when the skill being authored ships inside a plugin's own `skills/` directory. Every section, including `description`, is written as a `{{FILL: ...}}` placeholder except `name`.
+`<name>` must be a lowercase, kebab-case directory name (e.g. `make-a-skill`). Add `--scripts`/`--references`/`--evals` only for the sibling directories the skill actually needs — don't stub directories it won't use. Writes `.claude/skills/<name>/SKILL.md` by default (the standard project-level location); pass `--dir skills` instead when the skill being authored ships inside a plugin's own `skills/` directory. Every section, including `description`, is written as a `{{FILL: ...}}` placeholder except `name`.
 
 ## Step 2: Draft the body
 
