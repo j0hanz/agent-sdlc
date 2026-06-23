@@ -1,6 +1,6 @@
 ---
 name: make-a-skill
-description: "Guides the creation, scaffolding, and structural auditing of Claude Code skills to ensure they follow best practices (500-line rule, progressive disclosure). Use this to generate skill skeletons or to validate that an existing skill's structure, placeholders, and references are correct. Not for qualitative content review or critique. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill', 'validate skill structure'."
+description: "Guides the scaffolding, authoring, and structural verification of local development skills in the repository. Accepts a target skill name and required subdirectory flags as input, and outputs a complete file template skeleton or a detailed validation check report indicating structural errors. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill', 'validate skill structure'. Also triggers when troubleshooting path configurations, resolving leftover placeholders, or checking formatting rules. Always prefer this orchestrator over architecting when creating new instruction files or auditing skill structures."
 disable-model-invocation: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Evidence-based operational correctness verification. Mandatory execution check before task completion. Not for requesting a peer review of code quality or security (see request-code-review). Trigger on: 'ready to merge', 'looks good', 'mark as done', 'all tests pass', 'smoke test', 'manual verification'."
+description: "Verifies and guarantees operational correctness of completed workspace changes through execution evidence before marking a task complete. Accepts test runner results, manual execution scenarios, or codebase diffs as input, and outputs verified execution logs or structured manual verification reports proving no regression occurred. Also triggers when performing final smoke testing, running a linter checkout, checking for debug logs, or doing a final code sweep. Always prefer this skill over request-code-review when compiling verification evidence, routing to request-code-review only after behavior is verified clean. Trigger on: 'ready to merge', 'looks good', 'mark as done', 'all tests pass', 'smoke test', 'manual verification', 'task complete', 'verify changes'."
 disable-model-invocation: false
 ---
 

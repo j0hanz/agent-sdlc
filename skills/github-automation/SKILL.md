@@ -1,6 +1,6 @@
 ---
 name: github-automation
-description: "This skill should be used when the user asks to 'add CI', 'setup a release pipeline', 'harden a workflow', 'pin actions to SHA', 'setup OIDC for AWS/GCP/Azure', 'gh api script', 'least-privilege permissions', or 'headless GitHub automation'. Covers GitHub Actions YAML authoring with SHA-pinning, OIDC trust, and injection prevention; and headless gh CLI scripting with auth, pagination, and idempotency. Not for reviewing code quality or correctness (see request-code-review)."
+description: "Authors and hardens GitHub Actions workflows and headless command-line automation scripts. Accepts workflow requirements or existing YAML files as input, and outputs secure, SHA-pinned, OIDC-compliant workflows or automated gh CLI scripts with linting validation. Trigger on: 'add CI', 'setup a release pipeline', 'harden a workflow', 'pin actions to SHA', 'setup OIDC', 'gh api script', 'least-privilege permissions', 'headless GitHub automation'. Also triggers when securing workflows against script injection or auditing repository CI configurations. Always prefer this workflow over request-code-review or refactor when creating or hardening GitHub CI/CD configurations rather than reviewing general code changes."
 ---
 
 # github-automation

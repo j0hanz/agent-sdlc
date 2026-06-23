@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: 'MANDATORY before initiating any creative work, including building features, adding functionality, or altering behavior. This skill should be used when the user asks to "design a feature", "add functionality", "write a design doc", or "brainstorm a new solution".'
+description: "Conducts collaborative discovery, requirements analysis, and system brainstorming before initiating creative implementation or feature building, producing a markdown-kv Design Brief in docs/design/ and session logs in .brainstorm/. Trigger on: 'design a feature', 'add a feature', 'brainstorm a solution', 'write a design doc', 'conduct discovery', 'build a new feature', 'requirements discovery'. Also triggers when request details are ambiguous, require terminology clarity in a glossary, or have unstated stakeholders. Always prefer brainstorming over planning or architecting when requirements are still vague, unproven, or not yet codified into a clear technical specification."
 ---
 
 # brainstorming

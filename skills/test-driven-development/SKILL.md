@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: 'This skill should be used when the user asks to write tests, implement a feature using TDD, perform red-green-refactor cycles, write a unit test, cover scenarios, or do test-first development. It enforces a strict test-first workflow for new features, excluding pre-diagnosed bug fixes.'
+description: "Enforces a strict test-first development cycle for new feature implementation and codebase verification. Accepts design specifications, workspace requirements, or functional signatures as inputs, and outputs a suite of passing unit tests alongside matching minimal implementation code. Also triggers when generating new test suites, covering specific edge case scenarios, or executing red-green-refactor loops. Always prefer this skill over planning or refactor when ready to write code for a new feature under a strict test-first constraint. Trigger on: 'write tests', 'implement feature using TDD', 'red-green-refactor', 'write a unit test', 'cover scenarios', 'test-first development', 'implement a feature', 'add unit tests'."
 disable-model-invocation: false
 ---
 

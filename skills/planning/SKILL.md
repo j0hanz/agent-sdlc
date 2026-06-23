@@ -1,6 +1,6 @@
 ---
 name: planning
-description: 'This skill should be used when the user asks to "write a spec", "spec and plan this", "create implementation plan", "technical specification", "task decomposition", or "production rollout plan". Generates paired specification and implementation planning artifacts for a known goal. Not for vague/ambiguous requirements that need discovery first (see brainstorming), for restructuring/dependency mapping across existing modules (see architecting), or for executing an existing plan (see multi-agent-development, test-driven-development).'
+description: 'Generates paired requirements/interface specification (`plan/NAME.specs.md`) and atomic/ordered task planning (`plan/NAME.plan.md`) markdown artifacts from a feature description, design brief, or user prompt. Trigger on: "write a spec", "spec and plan this", "create implementation plan", "technical specification", "task decomposition", "production rollout plan". Also triggers when the implementation plan needs structured semantic verification gates, depth-based profiles (sketch, contract, blueprint), or task traceability mapping. Always prefer this skill over brainstorming when the requirements and goal are already known, over architecting when not restructuring across multiple existing module boundaries, and over multi-agent-development when planning the implementation tasks before executing them.'
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
