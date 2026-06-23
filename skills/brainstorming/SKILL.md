@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "This skill should be used when the user asks to 'build a new feature', 'add a feature', 'implement anything non-trivial', or 'conduct brainstorming/discovery'. Trigger on: 'new feature', 'let's build a feature', 'I want to implement', 'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery', 'brainstorming', 'stakeholder probe', 'glossary definition'."
+description: "Structured discovery to prevent rework on new features or ambiguous requirements. This skill should be used when the user asks to 'build a new feature', 'add a feature', 'implement a feature involving design decisions', or 'conduct brainstorming/discovery'. Trigger on: 'new feature', 'brainstorming', 'requirements discovery', 'ambiguous design', 'unclear terminology', 'stakeholder probe', 'glossary definition'."
 ---
 
 # brainstorming
@@ -81,6 +81,7 @@ Skip this question entirely if the request already names a single unambiguous au
    > **Do NOT load** `design-proposer-prompt.md` or `structured-review-prompt.md` at this step.
    - Dispatch the subagent with the prompt (which runs the scan script `scripts/scan_context.py` and pipes it through `scripts/compress_report.py`).
    - **Compress:** Pipe the subagent's raw JSON through `python '<skill-dir>/scripts/compress_report.py'` — this becomes "the compressed scan report" used in Phase 4.
+   - **Script failure / timeout:** If the script fails or the subagent times out, do not fail the workflow — fall back to the shallow regex heuristics described at the bottom of `references/codebase-scanner-prompt.md`.
    - **Integration:** Extract "Interface Shapes," "Technical Constraints," "Analogous Features," and "Key Unknowns" from the result. Ground the Understanding Statement in these.
    - **Zero-Code Exit:** If the scan finds an existing feature or config that satisfies the request, present it and offer to exit.
 
