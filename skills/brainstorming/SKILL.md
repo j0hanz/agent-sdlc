@@ -131,7 +131,7 @@ Runs only if the Phase 5 flag is set (canonical condition: Phase 1's Adaptive Ro
 
 **Parallel Adversarial Loop:** Reviewers run concurrently for objectivity and lower latency.
 
-1. **Dispatch Parallel Stress-Test:** Read `references/structured-review-prompt.md` before dispatching. Spawn the Skeptic, Constraint Guardian, and User Advocate templates from that file as three parallel `Agent()` calls (contract shape: `../multi-agent-dispatch/references/subagent-contract.md`). Each sees only the design and context packet — none sees the others' objections or your internal reasoning.
+1. **Dispatch Parallel Stress-Test:** Read `references/structured-review-prompt.md` before dispatching. Spawn the Skeptic, Constraint Guardian, and User Advocate templates from that file as three parallel `Agent()` calls (contract shape: `../multi-agent-development/references/subagent-contract.md`). Each sees only the design and context packet — none sees the others' objections or your internal reasoning.
    - **Log:** Append each reviewer's objections to the session log as it returns, not batched after all three finish — this is what lets an interrupted dispatch resume without re-running reviewers that already answered.
 2. **Consolidate & Respond:**
    - Log every objection in a **Response Log** (Objection | Source | Severity | Designer Response | Resolution). Apply the Severity Calibration in `references/structured-review-prompt.md` — discard wording/style objections rather than logging them.

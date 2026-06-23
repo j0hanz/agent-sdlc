@@ -6,7 +6,7 @@ high blast radius, concrete attack surface) or the user asked for a review.
 **subagent_type:** `general-purpose` (Skeptic, Guardian, Advocate, Arbiter).
 
 Dispatch **Skeptic, Constraint Guardian, and User Advocate in parallel** as three `Agent()` calls,
-following the contract shape in `../multi-agent-dispatch/references/subagent-contract.md`.
+following the contract shape in `../../multi-agent-development/references/subagent-contract.md`.
 Each reviewer receives the design and the compressed codebase report — they do NOT see each other's objections.
 
 ## Severity Calibration (applies to all three reviewers and the Arbiter)

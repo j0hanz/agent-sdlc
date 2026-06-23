@@ -82,7 +82,7 @@ For any missing core field, confirm via `AskUserQuestion` — the tool supplies 
 
 Dispatch `general-purpose` agent to audit quality (vague goals, missing error cases, multi-outcome tasks).
 
-- **MANDATORY**: Read [`../multi-agent-dispatch/references/subagent-contract.md`](../multi-agent-dispatch/references/subagent-contract.md) and use its SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract for the dispatch prompt.
+- **MANDATORY**: Read [`../multi-agent-development/references/subagent-contract.md`](../multi-agent-development/references/subagent-contract.md) and use its SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract for the dispatch prompt.
 - **MANDATORY**: Pass `references/validation.md` and the output of `validate.py` to the Reviewer subagent.
 - Reviewer writes to `plan/NAME.review.md`.
 - **Handoff Blocked** until `ready_for_execution: true` is set in review file.

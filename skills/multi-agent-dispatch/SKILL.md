@@ -35,7 +35,7 @@ Answer BOTH before spawning:
 
 ## The Four-Step Loop
 
-**MANDATORY — before Step 2 (SELECT):** Read [`references/subagent-contract.md`](references/subagent-contract.md) in full. It defines the SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract and the Investigator/Writer/Researcher role vocabulary used below. Do not configure or launch any agent before reading it.
+**MANDATORY — before Step 2 (SELECT):** Read [`../multi-agent-development/references/subagent-contract.md`](../multi-agent-development/references/subagent-contract.md) in full. It defines the SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract and the Investigator/Writer/Researcher role vocabulary used below. Do not configure or launch any agent before reading it.
 
 1. **GROUP:** Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
    - ✅ **Recommended** — [Groups] based on [disjoint files/hypotheses].
