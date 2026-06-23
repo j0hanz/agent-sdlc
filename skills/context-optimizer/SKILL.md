@@ -21,6 +21,9 @@ Phase 1: Diagnose (Run scripts/diagnose_context_bloat.py and /context)
 
 1. Run the workspace sniffer to check for large files, lockfiles, and git workspace dirtiness:
    ```bash
+   # Fallback if $CLAUDE_PLUGIN_ROOT is not set:
+   python skills/context-optimizer/scripts/diagnose_context_bloat.py
+   # Or using plugin root:
    python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/diagnose_context_bloat.py"
    ```
 2. Run the Claude Code command `/context` to inspect current token consumption and identify if the history, tool outputs, or system prompt is bloating.
@@ -28,20 +31,38 @@ Phase 1: Diagnose (Run scripts/diagnose_context_bloat.py and /context)
 
 ## Step 2: Select and Apply Strategy
 
+### Optimization Mindset
+
+Before selecting a strategy, ask yourself:
+
+1. **Aesthetics & Readability**: Will flattening JSON into Markdown-KV lose critical hierarchy that my next task needs?
+2. **Auditability**: Can I diagnose failure reasons if I filter out passing test logs?
+3. **Risk of Memory Loss**: If I clear history, what specific variables or state parameters will be permanently lost?
+
 Choose and execute one of these optimization strategies based on the diagnostic results:
 
 - **Strategy A: KV Compaction**:
-  For structured data lists (configs, metadata, JSON files), pipe the JSON data through the pruning utility to convert it into a flat Key-Value format. See [references/context-pruning-guidelines.md](references/context-pruning-guidelines.md) for Markdown-KV formatting syntax.
+  For structured data lists (configs, metadata, JSON files), pipe the JSON data through the pruning utility to convert it into a flat Key-Value format.
+
+  **MANDATORY - READ ENTIRE FILE**: Before formatting, you MUST read [`context-pruning-guidelines.md`](references/context-pruning-guidelines.md) (~80 lines) completely from start to finish to ensure correct Markdown-KV syntax. **NEVER set any range limits when reading this file.**
+
   ```bash
-  python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --to-kv < data.json
+  python skills/context-optimizer/scripts/prune_context.py --to-kv < data.json
+  # Or: python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --to-kv < data.json
   ```
+
 - **Strategy B: Log & Exception Truncation**:
-  For long test failures, command stdout, or compiler stack traces, pipe them through the log filter to retain only failure headers and relevant exception frames. See [references/context-pruning-guidelines.md](references/context-pruning-guidelines.md) for log truncation details.
+  For long test failures, command stdout, or compiler stack traces, pipe them through the log filter to retain only failure headers and relevant exception frames.
+
+  **MANDATORY - READ ENTIRE FILE**: Before truncating, you MUST read [`context-pruning-guidelines.md`](references/context-pruning-guidelines.md) (~80 lines) completely from start to finish to ensure correct log truncation formatting. **NEVER set any range limits when reading this file.**
+
   ```bash
-  python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --logs < test_output.log
+  python skills/context-optimizer/scripts/prune_context.py --logs < test_output.log
+  # Or: python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --logs < test_output.log
   ```
+
 - **Strategy C: Line Slicing**:
-  Avoid reading large files in full. Run `grep_search` to find line numbers, then load only the required lines using the `StartLine` and `EndLine` parameters of `view_file`.
+  Avoid reading large files in full. Run `grep_search` to find line numbers, then load only the required lines using the `StartLine` and `EndLine` parameters of `view_file`. **Do NOT load** `context-pruning-guidelines.md` for this task.
 - **Strategy D: Subagent Isolation**:
   Delegate complex exploratory tasks or code reviews to a separate subagent so its execution history does not bloat the main conversation context.
 
@@ -49,10 +70,15 @@ Choose and execute one of these optimization strategies based on the diagnostic 
 
 For long sessions where conversation history is bloated:
 
-1. Write a flat Key-Value status of the current task using the summary flag. Details on formatting are located in [references/context-pruning-guidelines.md](references/context-pruning-guidelines.md).
+1. Write a flat Key-Value status of the current task using the summary flag.
+
+   **MANDATORY - READ ENTIRE FILE**: Before writing the summary, you MUST read [`context-pruning-guidelines.md`](references/context-pruning-guidelines.md) (~80 lines) completely from start to finish to verify the Rolling Summary structure. **NEVER set any range limits when reading this file.**
+
    ```bash
-   python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --summary --timestamp "$(date -Iseconds)" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"
+   python skills/context-optimizer/scripts/prune_context.py --summary --timestamp "$(date -Iseconds)" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"
+   # Or: python "$CLAUDE_PLUGIN_ROOT/skills/context-optimizer/scripts/prune_context.py" --summary --timestamp "$(date -Iseconds)" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"
    ```
+
 2. Inform the user you are clearing history and need them to type 'resume'.
 3. Run the Claude Code `/clear` command to reset the context window.
 4. Reload the rolling summary file (`.claude/rolling_summary.md`) to continue the task with a pruned context.
