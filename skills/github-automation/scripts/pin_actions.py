@@ -27,6 +27,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Iterator
 
 # Matches: optional leading whitespace, "uses:", spaces, the ref, optional comment.
 # Captures: prefix (everything up to and including "uses: "), ref (org/repo@thing
@@ -175,6 +176,8 @@ def process_line(
     line: str, cache: dict[tuple[str, str], str]
 ) -> tuple[str, str | None]:
     """Return (new_line, status). status is one of: 'pinned', 'skipped', 'already', 'failed'."""
+    if line.lstrip().startswith("#"):
+        return line, None
     m = USES_RE.match(line)
     if not m:
         return line, None
@@ -213,7 +216,7 @@ def process_line(
     if stripped.startswith("#"):
         # Already has a comment — append version tag if not already present.
         comment = stripped
-        if rev not in comment:
+        if not re.search(rf"(?<![\w.-]){re.escape(rev)}(?![\w.-])", comment):
             comment = f"{comment} {rev}"
     else:
         comment = f"# {rev}"
@@ -236,11 +239,13 @@ def process_file(
                 changed = True
         updated.append(new_line)
     if changed and not dry_run:
-        path.write_text("".join(updated), encoding="utf-8")
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text("".join(updated), encoding="utf-8")
+        tmp.replace(path)
     return counts
 
 
-def iter_workflow_files(target: Path):
+def iter_workflow_files(target: Path) -> Iterator[Path]:
     if target.is_file():
         yield target
         return

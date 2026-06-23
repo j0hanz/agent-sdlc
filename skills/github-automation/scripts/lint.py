@@ -76,7 +76,10 @@ def check_file(path: Path) -> list[str]:
     has_pr_target = "pull_request_target" in content
 
     for i, line in enumerate(lines):
-        if "permissions:" in line and not line.lstrip().startswith("#"):
+        if line.lstrip().startswith("#"):
+            continue
+
+        if "permissions:" in line:
             has_permissions = True
 
         uses_match = re.search(r"uses:\s+([^@\s]+)@([^\s#]+)", line)
@@ -142,15 +145,16 @@ def main():
         print(f"Error: No workflow files found in {target}", file=sys.stderr)
         sys.exit(2)
 
-    # External Linters
+    # External Linters (failure does not skip the built-in security checks below)
     external_ran = False
+    external_failed = False
     if shutil.which("actionlint"):
         print("Linter: actionlint")
         try:
             subprocess.run(["actionlint"] + [str(f) for f in files], check=True)
             external_ran = True
         except subprocess.CalledProcessError:
-            sys.exit(1)
+            external_failed = True
     elif shutil.which("yamllint"):
         print("Linter: yamllint (YAML structure only)")
         try:
@@ -162,9 +166,9 @@ def main():
             external_ran = True
             print()  # Spacer
         except subprocess.CalledProcessError:
-            sys.exit(1)
+            external_failed = True
 
-    if not external_ran:
+    if not external_ran and not external_failed:
         print("Linter: built-in Python check")
 
     # Built-in checks
@@ -177,7 +181,7 @@ def main():
                 print(f"  - {err}")
             total_errors += len(errors)
 
-    if total_errors == 0:
+    if total_errors == 0 and not external_failed:
         print(f"Lint OK ({len(files)} file(s))")
         sys.exit(0)
     else:

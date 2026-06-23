@@ -267,7 +267,7 @@ def fetch_check_log(
 
     if is_log_pending_message(log_error) and job_id:
         job_log, job_error = fetch_job_log(job_id, repo_root)
-        if job_log:
+        if not job_error:
             return job_log, "", "ok"
         if job_error and is_log_pending_message(job_error):
             return "", job_error, "pending"
@@ -449,15 +449,15 @@ def main() -> int:
     repo_root = find_git_root(Path(args.repo))
     if repo_root is None:
         print("Error: not inside a Git repository.", file=sys.stderr)
-        return 1
+        return 2
     if not ensure_gh_available(repo_root):
-        return 1
+        return 2
     pr_value = resolve_pr(args.pr, repo_root)
     if pr_value is None:
-        return 1
+        return 2
     checks = fetch_checks(pr_value, repo_root)
     if checks is None:
-        return 1
+        return 2
     failing = [c for c in checks if is_failing(c)]
     if not failing:
         print(f"PR #{pr_value}: no failing checks detected.")
