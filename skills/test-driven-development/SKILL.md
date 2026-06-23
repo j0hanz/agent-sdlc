@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: "Strict Red-Green-Refactor development for new feature work. Mandatory failing test before implementation. Not for writing a regression test for an already-diagnosed bug fix (see diagnose). Trigger on: 'TDD', 'red-green-refactor', 'test-first', 'write tests', 'write a unit test', 'implement feature', 'test-driven-development', 'scenario coverage'."
+description: 'This skill should be used when the user asks to write tests, implement a feature using TDD, perform red-green-refactor cycles, write a unit test, cover scenarios, or do test-first development. It enforces a strict test-first workflow for new features, excluding pre-diagnosed bug fixes.'
 disable-model-invocation: false
 ---
 
@@ -60,10 +60,11 @@ Propose and confirm the public surface via `AskUserQuestion` — the tool suppli
 3. **Error Cases:** Explicit exception types.
 4. **Usage:** 2-3 realistic scenarios.
 5. **Target:** Identify test file path.
+6. **Sanity Check:** Run the existing test suite to verify that the test runner and project configuration are active and healthy before writing the new failing test.
 
 ## Step 2: RED (Failing Test)
 
-**MANDATORY:** For JavaScript/TypeScript projects, read [js-ts-patterns.md](references/js-ts-patterns.md) before writing the first test.
+**MANDATORY:** For JavaScript/TypeScript projects, read [js-ts-patterns.md](references/js-ts-patterns.md) completely from start to finish. Do NOT set any range limits when reading this file. Do NOT load this file if the project is written in Python.
 
 **action:** Write simplest test for single core behavior.
 **action:** Write minimal stub to allow compilation (e.g., `pass`, `return null`).
@@ -83,7 +84,7 @@ Use this whenever a test's failure mode is non-obvious (e.g., async code, mocked
 
 ## Step 3: GREEN (Minimal Implementation)
 
-**If "absolute minimum" is unclear for this domain** (math, validation, parsing, class extraction), read [minimal-impl-examples.md](references/minimal-impl-examples.md) for the pattern table. Skip if the minimal implementation is obvious.
+**MANDATORY:** If the "absolute minimum" implementation is unclear for the domain (e.g., math, validation, parsing, class extraction), read [minimal-impl-examples.md](references/minimal-impl-examples.md) completely from start to finish. Do NOT set any range limits when reading this file. Skip if the minimal implementation is obvious.
 
 **action:** Commit/stash before editing.
 **action:** Write **absolute minimum** code to pass the test.
