@@ -1,6 +1,6 @@
 ---
 name: diagnose
-description: "Disciplined root-cause analysis for bugs and crashes. Systematic falsification workflow to identify true causes. Not for writing tests for new feature work (see test-driven-development) or non-bug structural cleanup (see refactor). Trigger on: 'debug', 'fix crash', 'why is this failing', 'unexpected output', 'diagnose bug', 'root cause analysis', 'feedback loop', 'instrumentation'."
+description: "Performs disciplined root-cause analysis for software bugs and crashes using a systematic hypothesis-falsification workflow. Accepts a symptom description or error trace, and produces a structured diagnosis report detailing the symptom, root cause, fix, and reproduction feedback loop. Trigger on: 'debug', 'fix crash', 'why is this failing', 'unexpected output', 'diagnose bug', 'root cause analysis', 'feedback loop', 'instrumentation'. Also triggers when troubleshooting test failures or diagnosing unexpected runtime exceptions. Always prefer this skill over test-driven-development or refactor when diagnosing a bug prior to implementing a fix."
 disable-model-invocation: false
 argument-hint: '[symptom description or error trace]'
 ---
