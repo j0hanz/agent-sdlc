@@ -1,6 +1,6 @@
 ---
 name: make-a-skill
-description: "Guides the creation, scaffolding, and structural auditing of Claude Code skills to ensure they follow best practices (500-line rule, progressive disclosure). Use this to generate skill skeletons or to validate that an existing skill's structure, placeholders, and references are correct. Not for general content editing. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill', 'audit skill', 'review skill'."
+description: "Guides the creation, scaffolding, and structural auditing of Claude Code skills to ensure they follow best practices (500-line rule, progressive disclosure). Use this to generate skill skeletons or to validate that an existing skill's structure, placeholders, and references are correct. Not for qualitative content review or critique. Trigger on: 'make a skill', 'build a skill', 'create a skill', 'scaffold a skill', 'new skill', 'make-a-skill', 'validate this skill', 'lint this skill', 'validate skill structure'."
 disable-model-invocation: false
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: false
 
 Scaffold a new skill from a template, draft its body, then validate it before calling it done.
 
-**Entry point:** this skill is reached directly from skill-authoring requests ("make a skill", "validate this skill"), not through `using-agent-dev-skills`'s Gate 0-4 flow — that router operates on the target repo's code, not on the plugin's own `skills/` directory. See `using-agent-dev-skills`'s Auxiliary Skills section.
+**Entry point:** this skill is reached directly from skill-authoring requests ("make a skill", "validate this skill"), not through `using-agent-dev-skills`'s Gate 0-4 flow — that router operates on the target repo's code, not on the plugin's own `skills/` directory. See `using-agent-dev-skills`'s NEVER list (it routes all skill authoring here).
 
 ## Process Flow
 
@@ -39,6 +39,8 @@ python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/validate_skill.py" <name
 ```
 
 Fix every `[X]` ERROR before continuing — these include leftover `{{FILL` placeholders, a `name`/directory mismatch, and dangling links to `references/`/`scripts/`/`evals/` files that don't exist. Review `[!]` WARNINGs (vague adjectives, passive voice, an unreferenced sibling file, a too-long body with no `references/` split) but they don't block progress on their own — use judgment.
+
+`<name>` resolves relative to the current working directory (it checks `.claude/skills/<name>` and `skills/<name>`), unlike the script invocations above which use the `$CLAUDE_PLUGIN_ROOT`-prefixed absolute path — run validation from the repo root the skill actually lives in.
 
 ## Step 4: Write the real description, then revalidate
 
