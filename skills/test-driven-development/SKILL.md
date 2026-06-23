@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: "Strict Red-Green-Refactor development for new feature work. Mandatory failing test before implementation. Not for writing a regression test for an already-diagnosed bug fix (see diagnose). Trigger on: 'TDD', 'test-first', 'write tests', 'implement feature', 'test-driven-development', 'scenario coverage'."
+description: "Strict Red-Green-Refactor development for new feature work. Mandatory failing test before implementation. Not for writing a regression test for an already-diagnosed bug fix (see diagnose). Trigger on: 'TDD', 'red-green-refactor', 'test-first', 'write tests', 'write a unit test', 'implement feature', 'test-driven-development', 'scenario coverage'."
 disable-model-invocation: false
 ---
 
@@ -22,7 +22,8 @@ These are escape hatches from the HARD GATE — never self-invoke one silently. 
 ## Process Flow
 
 ```
-Start: TDD Request -> 0. Confirm with user -> Pre-TDD: Interface (signatures, errors, examples) -> TDD Cycle:
+Start: TDD Request -> Carve-out applies (spike/trivial/CSS)? -- yes --> AskUserQuestion confirms skip -> exit (handle outside this skill)
+                                                              -- no  --> 0. Confirm with user -> Pre-TDD: Interface (signatures, errors, examples) -> TDD Cycle:
 
   1. RED (write failing test + minimal stub) -> run test, confirm failure
        -- failure confirmed --> 2. GREEN (write minimal implementation) -> run test
@@ -38,6 +39,7 @@ Start: TDD Request -> 0. Confirm with user -> Pre-TDD: Interface (signatures, er
 **trigger:** TDD, write tests, implement feature, build this.
 **constraint:** No implementation code WITHOUT a failing test.
 **constraint:** Execute exactly ONE scenario per cycle. No horizontal slicing.
+**example:** WRONG — write failing tests for `calculate_discount`, `apply_tax`, and `format_price` before implementing any of them. RIGHT — RED+GREEN+REFACTOR `calculate_discount` fully, then start the next scenario.
 
 ## Step 0: Confirm
 
@@ -81,7 +83,7 @@ Use this whenever a test's failure mode is non-obvious (e.g., async code, mocked
 
 ## Step 3: GREEN (Minimal Implementation)
 
-**MANDATORY:** Read [minimal-impl-examples.md](references/minimal-impl-examples.md) to understand the "absolute minimum" constraint.
+**If "absolute minimum" is unclear for this domain** (math, validation, parsing, class extraction), read [minimal-impl-examples.md](references/minimal-impl-examples.md) for the pattern table. Skip if the minimal implementation is obvious.
 
 **action:** Commit/stash before editing.
 **action:** Write **absolute minimum** code to pass the test.
@@ -91,11 +93,10 @@ Use this whenever a test's failure mode is non-obvious (e.g., async code, mocked
 
 ## Step 4: REFACTOR (Cleanup)
 
-**MANDATORY:** Refer to [full-cycle-example.md](references/full-cycle-example.md) for an example of proper REFACTOR timing.
-
 **gate:** Enter ONLY when tests are GREEN.
 **action:** Perform surgical improvements (Rename, Decompose, Flatten, DRY).
 **constraint:** Refactor and Implementation must be separate tool calls. Run tests between them.
+**example:** WRONG — spotting duplicate logic while still RED and cleaning it up alongside the fix. RIGHT — get GREEN first (duplication and all), run tests, then refactor as its own step, then run tests again.
 
 **next skills:**
 
@@ -109,6 +110,7 @@ Use this whenever a test's failure mode is non-obvious (e.g., async code, mocked
 **constraint:** Never bypass public interfaces for setup.
 **constraint:** Never write multiple tests before implementing the first one.
 **constraint:** Never skip "Run Test" between RED and GREEN.
+**constraint:** Never edit a test's assertions to force GREEN. Fix the implementation; if the test itself was wrong, revert to RED and state why before changing it.
 
 ## Transition
 
