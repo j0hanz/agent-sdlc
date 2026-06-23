@@ -9,7 +9,6 @@ import argparse
 import fnmatch
 import json
 import os
-import platform  # FIX S-1: platform-aware shlex.split
 import re
 import shlex
 import sys
@@ -405,7 +404,7 @@ def safe_print(text: str, file: IO[str] = sys.stdout) -> None:
         # FIX S-6/C-4: capture codec once to avoid a race between two separate
         # getattr() calls, which could diverge when stdout/stderr use different
         # encodings (e.g. cp1252 vs utf-8 on Windows).
-        codec = getattr(file, "encoding", None) or "utf-8"
+        codec = getattr(file, "encoding", None) or "ascii"
         print(text.encode(codec, "replace").decode(codec), file=file)
 
 
@@ -413,7 +412,7 @@ def load_gitignore(target_dir: Path) -> set[str]:
     """Load ignore patterns from .gitignore file."""
     patterns: set[str] = set()
     try:
-        content = (target_dir / ".gitignore").read_text(encoding="utf-8")
+        content = (target_dir / ".gitignore").read_text(encoding="utf-8-sig")
         for line in content.splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
@@ -440,14 +439,30 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
         # a caller passed a pattern with a trailing slash directly.
         pat_clean = (pattern[1:] if is_anchored else pattern).rstrip("/")
 
-        if not is_anchored and "/" not in pat_clean and path.name == pat_clean:
-            return True
+        # 1. Unanchored literal or wildcard matching on path name
+        if not is_anchored and "/" not in pat_clean:
+            if "*" in pat_clean or "?" in pat_clean:
+                if fnmatch.fnmatchcase(path.name, pat_clean):
+                    return True
+            elif path.name == pat_clean:
+                return True
+            continue
+
+        # 2. Anchored literal match relative to root
         if rel_str == pat_clean or rel_str.startswith(pat_clean + "/"):
             return True
-        if "*" in pat_clean:
-            if fnmatch.fnmatchcase(rel_str, pat_clean) or fnmatch.fnmatchcase(
-                rel_str, pat_clean + "/*"
-            ):
+
+        # 3. Anchored wildcard match relative to root
+        if "*" in pat_clean or "?" in pat_clean:
+            # Convert glob to regex where '*' matches anything except '/'
+            # and '**' matches anything including '/'
+            parts = pat_clean.split("**")
+            regex_parts = []
+            for part in parts:
+                escaped = re.escape(part).replace(r"\*", "[^/]*").replace(r"\?", "[^/]")
+                regex_parts.append(escaped)
+            regex_str = "^" + ".*".join(regex_parts) + "(?:/|$)"
+            if re.match(regex_str, rel_str):
                 return True
 
     return False
@@ -503,7 +518,7 @@ def get_tree_lines(
 
         try:
             entries = sorted(path.iterdir(), key=lambda x: (not x.is_dir(), x.name))
-        except (PermissionError, OSError):
+        except OSError:
             return
 
         non_ignored = [
@@ -530,7 +545,7 @@ def analyze_project_env(target_dir: Path) -> ProjectEnvironment:
     env = ProjectEnvironment()
     try:
         files = {entry.name for entry in target_dir.iterdir() if entry.is_file()}
-    except (PermissionError, OSError):
+    except OSError:
         return env
 
     for lockfile, pm in Config.PACKAGE_MANAGERS.items():
@@ -581,7 +596,7 @@ def analyze_project_env(target_dir: Path) -> ProjectEnvironment:
             try:
                 has_files = any(entry.is_file() for entry in github_workflows.iterdir())
                 env.ci_provider = "github-actions" if has_files else "local-only"
-            except (PermissionError, OSError):
+            except OSError:
                 env.ci_provider = "github-actions"
         else:
             env.ci_provider = "local-only"
@@ -595,7 +610,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
 
     try:
         dirs = [e for e in target_dir.iterdir() if e.is_dir()]
-    except (PermissionError, OSError):
+    except OSError:
         return found
 
     for entry in dirs:
@@ -615,7 +630,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                         f = next(iterator)
                     except StopIteration:
                         break
-                    except (PermissionError, OSError):
+                    except OSError:
                         truncated = True
                         continue
 
@@ -631,7 +646,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                                 size_mb = 0.0
                                 truncated = True
                                 break
-                    except (PermissionError, OSError):
+                    except OSError:
                         truncated = True
                         continue
 
@@ -645,7 +660,7 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                         size_truncated=truncated,
                     )
                 )
-            except (PermissionError, OSError):
+            except OSError:
                 found.append(
                     DependencyInfo(
                         name=entry.name,
@@ -681,7 +696,7 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
             for d in skills_dir.iterdir()
             if d.is_dir() and not should_ignore(d, patterns, skills_dir.parent)
         )
-    except (PermissionError, OSError) as e:
+    except OSError as e:
         return ValidationResult(
             success=False,
             issues=[
@@ -892,7 +907,7 @@ def _lint_agents_md_lines(lines: list[str], issues: list[ValidationIssue]) -> No
                 in_html_comment = False
             continue
         if line_strip.startswith("<!--"):
-            if not line_strip.endswith("-->"):
+            if "-->" not in line_strip:
                 in_html_comment = True
             continue
 
@@ -1050,7 +1065,7 @@ def _validate_hook_cmd(
     # syntax) so programming bugs in surrounding logic still
     # propagate normally.
     try:
-        is_windows = platform.system() == "Windows"
+        is_windows = sys.platform == "win32"
         parts = shlex.split(cmd, posix=not is_windows)
         if is_windows:
             parts = [p.strip("\"'") for p in parts]
@@ -1064,47 +1079,15 @@ def _validate_hook_cmd(
         return
 
     if "runner.mjs" in cmd:
-        domain_idx_match = next(
-            (i for i, p in enumerate(parts) if "runner.mjs" in p), None
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL,
+                message=f"Non-Bash hook handler detected: {cmd!r}. Project rules require Bash-only handlers.",
+            )
         )
-        if domain_idx_match is None or domain_idx_match + 1 >= len(parts):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.WARN,
-                    message=f"Could not determine handler for hook '{event}': {cmd!r}",
-                )
-            )
-            return
-        domain = parts[domain_idx_match + 1]
-        try:
-            handler_path = (
-                plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
-            ).resolve()
-            is_relative = handler_path.is_relative_to(plugin_root)
-        except (ValueError, OSError):
-            is_relative = False
+        return
 
-        if not is_relative:
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Handler for hook '{event}' resolves outside the plugin root: {domain}",
-                )
-            )
-            return
-
-        if not handler_path.exists():
-            # FIX S-4: report path relative to plugin_root rather
-            # than a full absolute path that leaks filesystem layout.
-            rel = handler_path.relative_to(plugin_root)
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Missing handler for hook '{event}': {rel}",
-                )
-            )
-
-    elif (
+    if (
         "scripts" in cmd
         or "hooks/handlers" in cmd
         or "${CLAUDE_PLUGIN_ROOT}" in cmd
@@ -1124,13 +1107,21 @@ def _validate_hook_cmd(
         script_path_str = script_part.replace(
             "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
         ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
-        if not Path(script_path_str).exists():
+        script_path = Path(script_path_str)
+        if not script_path.exists():
             # FIX S-4: report basename only to avoid leaking full
             # server-side filesystem paths in CI logs.
             issues.append(
                 ValidationIssue(
                     level=IssueLevel.FAIL,
-                    message=f"Missing script for hook '{event}': {Path(script_path_str).name}",
+                    message=f"Missing script for hook '{event}': {script_path.name}",
+                )
+            )
+        elif script_path.suffix in (".mjs", ".py"):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Non-Bash hook handler '{script_path.name}' detected. Project rules require Bash-only handlers.",
                 )
             )
 
@@ -1200,7 +1191,7 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
 
     issues: list[ValidationIssue] = []
     try:
-        hooks_data = json.loads(hooks_file.read_text(encoding="utf-8"))
+        hooks_data = json.loads(hooks_file.read_text(encoding="utf-8-sig"))
     except (json.JSONDecodeError, OSError) as e:
         return ValidationResult(
             success=False,
@@ -1263,7 +1254,7 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
 
     issues: list[ValidationIssue] = []
     try:
-        data = json.loads(manifest_file.read_text(encoding="utf-8"))
+        data = json.loads(manifest_file.read_text(encoding="utf-8-sig"))
         if not isinstance(data, dict):
             return ValidationResult(
                 success=False,
@@ -1342,16 +1333,17 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
             exit_code = 1
             continue
         try:
-            if resolved_target.is_dir():
-                raise IsADirectoryError(f"target is a directory: {resolved_target}")
-            if resolved_target.exists() or resolved_target.is_symlink():
-                resolved_target.unlink()
-            rel = os.path.relpath(source, resolved_target.parent).replace(os.sep, "/")
-            resolved_target.parent.mkdir(parents=True, exist_ok=True)
-            resolved_target.write_text(
+            target_abs = target.absolute()
+            if target_abs.is_dir() and not target_abs.is_symlink():
+                raise IsADirectoryError(f"target is a directory: {target_abs}")
+            if target_abs.exists() or target_abs.is_symlink():
+                target_abs.unlink()
+            rel = os.path.relpath(source, target_abs.parent).replace(os.sep, "/")
+            target_abs.parent.mkdir(parents=True, exist_ok=True)
+            target_abs.write_text(
                 f"# See [{source.name}]({rel})\n", encoding="utf-8", newline="\n"
             )
-            safe_print(f"Stubbed: {resolved_target.name} -> {rel}")
+            safe_print(f"Stubbed: {target_abs.name} -> {rel}")
         except (OSError, ValueError) as e:
             safe_print(f"FAIL: Could not wire {target}: {e}", file=sys.stderr)
             exit_code = 1
@@ -1575,11 +1567,38 @@ def _setup_parser() -> argparse.ArgumentParser:
         help="Directory to audit (default: current directory).",
     )
 
-    subparsers.add_parser(
+    check_hooks_parser = subparsers.add_parser(
         "check-hooks", help="Validate hook configuration and handlers."
     )
-    subparsers.add_parser("check-manifest", help="Validate plugin manifest.")
-    subparsers.add_parser("validate-skills", help="Check SKILL.md frontmatter.")
+    check_hooks_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to check (default: current directory).",
+    )
+
+    check_manifest_parser = subparsers.add_parser(
+        "check-manifest", help="Validate plugin manifest."
+    )
+    check_manifest_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to check (default: current directory).",
+    )
+
+    validate_skills_parser = subparsers.add_parser(
+        "validate-skills", help="Check SKILL.md frontmatter."
+    )
+    validate_skills_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to check (default: current directory).",
+    )
 
     lint_parser = subparsers.add_parser("lint-agents-md", help="Validate AGENTS.md.")
     lint_parser.add_argument(
@@ -1715,19 +1734,22 @@ def main() -> int:
             target = _resolve_target(args.target_dir, root)
             return run_full_audit(target)
         case "check-hooks":
-            result = validate_hooks_config(root / "hooks" / "hooks.json")
+            target = _resolve_target(args.target_dir, root)
+            result = validate_hooks_config(target / "hooks" / "hooks.json")
             print_validation_issues(result)
             if result.success:
                 safe_print("PASS: Hooks are valid.")
             return 0 if result.success else 1
         case "check-manifest":
-            result = validate_manifest_file(root / ".claude-plugin" / "plugin.json")
+            target = _resolve_target(args.target_dir, root)
+            result = validate_manifest_file(target / ".claude-plugin" / "plugin.json")
             print_validation_issues(result)
             if result.success:
                 safe_print("PASS: Manifest is valid.")
             return 0 if result.success else 1
         case "validate-skills":
-            result = validate_skill_files(root / "skills")
+            target = _resolve_target(args.target_dir, root)
+            result = validate_skill_files(target / "skills")
             print_validation_issues(result)
             if result.success:
                 safe_print("PASS: Skills are valid.")

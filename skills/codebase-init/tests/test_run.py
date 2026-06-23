@@ -390,6 +390,35 @@ def test_hooks_config_with_null_hooks(tmp_path: Path) -> None:
     )
 
 
+def test_hooks_config_non_bash_handler(tmp_path: Path) -> None:
+    hooks_file = tmp_path / "hooks" / "hooks.json"
+    hooks_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create the handler files so they exist
+    script_mjs = tmp_path / "hooks" / "handler.mjs"
+    script_mjs.write_text("console.log('hello')", encoding="utf-8")
+
+    # Command containing non-bash handler (.mjs)
+    hooks_content = """{
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "hooks": [
+                        {
+                            "command": "node \\"${CLAUDE_PLUGIN_ROOT}/hooks/handler.mjs\\""
+                        }
+                    ]
+                }
+            ]
+        }
+    }"""
+    hooks_file.write_text(hooks_content, encoding="utf-8")
+
+    result = validate_hooks_config(hooks_file)
+    assert result.success is False
+    assert any("Non-Bash hook handler" in str(issue) for issue in result.issues)
+
+
 def test_manifest_file_type_safety(tmp_path: Path) -> None:
     manifest_file = tmp_path / "plugin.json"
 
