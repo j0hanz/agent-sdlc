@@ -27,13 +27,16 @@ def parse_gitignore(root: Path) -> set[str]:
         for line in gitignore_path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                ignore_patterns.add(line)
+                # Strip leading and trailing slashes to handle dir patterns correctly
+                ignore_patterns.add(line.strip("/"))
     return ignore_patterns
 
 
-def scan_files(root: Path, ignores: set[str]):
-    large_files = []
-    unignored_heavy_dirs = []
+def scan_files(
+    root: Path, ignores: set[str]
+) -> tuple[list[tuple[Path, str, int]], list[str]]:
+    large_files: list[tuple[Path, str, int]] = []
+    unignored_heavy_dirs: list[str] = []
 
     # Check for unignored heavy directories
     for d in HEAVY_DIRS:
@@ -51,14 +54,13 @@ def scan_files(root: Path, ignores: set[str]):
         for f in filenames:
             file_path = Path(dirpath) / f
             try:
+                stat_result = file_path.stat()
                 # Exclude lockfiles from LOC check, but flag them
                 if f in LOCKFILES:
-                    large_files.append(
-                        (file_path, "Lockfile", file_path.stat().st_size)
-                    )
+                    large_files.append((file_path, "Lockfile", stat_result.st_size))
                     continue
 
-                size = file_path.stat().st_size
+                size = stat_result.st_size
                 size_kb = size / 1024
 
                 if size_kb > BLOAT_SIZE_LIMIT_KB:
@@ -79,11 +81,11 @@ def scan_files(root: Path, ignores: set[str]):
                     ".h",
                     ".cs",
                 }:
-                    lines = file_path.read_text(
-                        encoding="utf-8", errors="ignore"
-                    ).splitlines()
-                    if len(lines) > BLOAT_LINE_LIMIT:
-                        large_files.append((file_path, f"{len(lines)} lines", size))
+                    # Read line by line using a generator to avoid loading large files fully into memory
+                    with file_path.open(encoding="utf-8", errors="ignore") as fp:
+                        lines_count = sum(1 for _ in fp)
+                    if lines_count > BLOAT_LINE_LIMIT:
+                        large_files.append((file_path, f"{lines_count} lines", size))
             except OSError:
                 continue
 
@@ -97,15 +99,15 @@ def check_instruction_stubs(root: Path) -> list[str]:
         path = root / stub
         if path.exists():
             content = path.read_text(encoding="utf-8").strip()
-            # If the stub contains more than a redirect line, raise a warning
-            if len(content.splitlines()) > 5 or "AGENTS.md" not in content:
+            # If the stub contains more than a redirect line AND does not contain AGENTS.md, raise warning
+            if len(content.splitlines()) > 5 and "AGENTS.md" not in content:
                 warnings.append(
                     f"`{stub}` does not appear to be a single-line stub referencing `AGENTS.md` (length={len(content.splitlines())} lines)."
                 )
     return warnings
 
 
-def main():
+def main() -> None:
     root = Path(os.getcwd())
     ignores = parse_gitignore(root)
     large_files, unignored_dirs = scan_files(root, ignores)
