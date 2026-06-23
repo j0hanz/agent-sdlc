@@ -144,7 +144,12 @@ def test_scaffold_skeleton_rejects_unknown_language() -> None:
 
 def test_scaffold_skeleton_passes_validation(tmp_path: Path) -> None:
     content = render_agents_md_skeleton(
-        "python", "test repo", "strict", "production", "not-enforced", ci="github-actions"
+        "python",
+        "test repo",
+        "strict",
+        "production",
+        "not-enforced",
+        ci="github-actions",
     )
     path = _write_agents_md(tmp_path, content)
     result = validate_agents_md_file(path)
@@ -165,16 +170,20 @@ def test_hard_rules_marker_missing_ci_warns(tmp_path: Path) -> None:
     path = _write_agents_md(tmp_path, body)
     result = validate_agents_md_file(path)
     assert result.success is True  # Warning, not a failure
-    assert any("missing the 'ci' parameter" in str(issue).lower() for issue in result.issues)
+    assert any(
+        "missing the 'ci' parameter" in str(issue).lower() for issue in result.issues
+    )
 
     # Adding 'ci' should resolve the warning
     body_with_ci = body.replace(
-        "testing=always -->",
-        "testing=always ci=github-actions -->"
+        "testing=always -->", "testing=always ci=github-actions -->"
     )
     path_with_ci = _write_agents_md(tmp_path, body_with_ci)
     result_with_ci = validate_agents_md_file(path_with_ci)
-    assert not any("missing the 'ci' parameter" in str(issue).lower() for issue in result_with_ci.issues)
+    assert not any(
+        "missing the 'ci' parameter" in str(issue).lower()
+        for issue in result_with_ci.issues
+    )
 
 
 def test_todo_detection_in_comments_and_code_blocks(tmp_path: Path) -> None:
@@ -235,12 +244,15 @@ def test_scaffold_skeleton_generates_conventions_and_ci() -> None:
     )
     # Check that CI rule is generated
     assert "ci: automated CI running on GitHub Actions" in content
-    assert "<!-- codebase-init:hard-rules v1 commit=relaxed maturity=development testing=always ci=github-actions -->" in content
-    
+    assert (
+        "<!-- codebase-init:hard-rules v1 commit=relaxed maturity=development testing=always ci=github-actions -->"
+        in content
+    )
+
     # Check language conventions are present
     assert "## Key Conventions" in content
     assert "imports: ESM import/export syntax only — no CommonJS require()" in content
-    
+
     # Check that there is no TODO checklist
     assert "- [ ]" not in content
     assert "TODO" not in content
@@ -250,8 +262,14 @@ def test_scaffold_skeleton_generates_conventions_and_ci() -> None:
         "python", "test repo", "strict", "production", "touched-files", ci="gitlab-ci"
     )
     assert "ci: automated CI running on GitLab CI" in python_content
-    assert "<!-- codebase-init:hard-rules v1 commit=strict maturity=production testing=touched-files ci=gitlab-ci -->" in python_content
-    assert "typing: use Type Annotations (PEP 484) on all public function definitions" in python_content
+    assert (
+        "<!-- codebase-init:hard-rules v1 commit=strict maturity=production testing=touched-files ci=gitlab-ci -->"
+        in python_content
+    )
+    assert (
+        "typing: use Type Annotations (PEP 484) on all public function definitions"
+        in python_content
+    )
 
 
 def test_automated_ci_detection(tmp_path: Path) -> None:

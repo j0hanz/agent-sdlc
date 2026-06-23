@@ -64,13 +64,13 @@ class Config:
         ".DS_Store",
     }
 
-    SKILL_REQUIRED_KEYS: tuple[str, ...] = (
+    SKILL_REQUIRED_KEYS: ClassVar[tuple[str, ...]] = (
         "name",
         "description",
     )
-    MAX_DIR_SCAN_COUNT = 10000
-    MAX_SKILL_LINES = 150
-    MAX_AGENTS_MD_LINES = 100
+    MAX_DIR_SCAN_COUNT: ClassVar[int] = 10000
+    MAX_SKILL_LINES: ClassVar[int] = 150
+    MAX_AGENTS_MD_LINES: ClassVar[int] = 100
 
     # Per-language scaffold defaults for `scaffold-agents-md`. Each entry supplies a
     # *starting point* only — the LLM must override any value Phase 1 discovered to
@@ -91,8 +91,14 @@ class Config:
             ],
             "conventions": [
                 ("imports", "ESM import/export syntax only — no CommonJS require()"),
-                ("types", "strict TypeScript types for all function signatures — no implicit or explicit any"),
-                ("async-errors", "use async/await with try-catch blocks for asynchronous operations — avoid raw promises"),
+                (
+                    "types",
+                    "strict TypeScript types for all function signatures — no implicit or explicit any",
+                ),
+                (
+                    "async-errors",
+                    "use async/await with try-catch blocks for asynchronous operations — avoid raw promises",
+                ),
             ],
         },
         "python": {
@@ -112,9 +118,18 @@ class Config:
                 ("Test", "uv run pytest path/to/test_file.py::test_name"),
             ],
             "conventions": [
-                ("typing", "use Type Annotations (PEP 484) on all public function definitions"),
-                ("style", "follow PEP 8 styling with black formatter — ruff check is the source of truth"),
-                ("dependencies", "manage dependencies strictly in pyproject.toml — never run pip directly"),
+                (
+                    "typing",
+                    "use Type Annotations (PEP 484) on all public function definitions",
+                ),
+                (
+                    "style",
+                    "follow PEP 8 styling with black formatter — ruff check is the source of truth",
+                ),
+                (
+                    "dependencies",
+                    "manage dependencies strictly in pyproject.toml — never run pip directly",
+                ),
             ],
         },
         "go": {
@@ -133,9 +148,18 @@ class Config:
                 ("Test", "go test -run TestName path/to/package"),
             ],
             "conventions": [
-                ("error-handling", "explicitly handle every returned error immediately — do not ignore with _"),
-                ("struct-tags", "use camelCase for JSON tags on public structs (e.g. json:\"camelCase\")"),
-                ("context", "pass context.Context as the first argument to all network and database functions"),
+                (
+                    "error-handling",
+                    "explicitly handle every returned error immediately — do not ignore with _",
+                ),
+                (
+                    "struct-tags",
+                    'use camelCase for JSON tags on public structs (e.g. json:"camelCase")',
+                ),
+                (
+                    "context",
+                    "pass context.Context as the first argument to all network and database functions",
+                ),
             ],
         },
         "rust": {
@@ -151,9 +175,18 @@ class Config:
                 ("Test", "cargo test --package <pkg_name> test_name"),
             ],
             "conventions": [
-                ("error-handling", "use Result<T, E> and the ? operator for propagation — avoid unwrap() and expect()"),
-                ("lifetimes", "prefer owned types (String, Vec) in structs to avoid complex lifetime annotations unless performance-critical"),
-                ("clippy", "ensure code compiles cleanly with cargo clippy warnings treated as errors"),
+                (
+                    "error-handling",
+                    "use Result<T, E> and the ? operator for propagation — avoid unwrap() and expect()",
+                ),
+                (
+                    "lifetimes",
+                    "prefer owned types (String, Vec) in structs to avoid complex lifetime annotations unless performance-critical",
+                ),
+                (
+                    "clippy",
+                    "ensure code compiles cleanly with cargo clippy warnings treated as errors",
+                ),
             ],
         },
         "java": {
@@ -176,9 +209,18 @@ class Config:
                 ("Test", "mvn test -Dtest=TestClass#testMethod -pl :<module>"),
             ],
             "conventions": [
-                ("null-safety", "use Optional<T> for return types that can be empty — never return null"),
-                ("dependency-injection", "use constructor injection only — avoid field injection with @Autowired or @Inject"),
-                ("naming", "follow standard camelCase for variables/methods and PascalCase for classes"),
+                (
+                    "null-safety",
+                    "use Optional<T> for return types that can be empty — never return null",
+                ),
+                (
+                    "dependency-injection",
+                    "use constructor injection only — avoid field injection with @Autowired or @Inject",
+                ),
+                (
+                    "naming",
+                    "follow standard camelCase for variables/methods and PascalCase for classes",
+                ),
             ],
         },
         "dotnet": {
@@ -197,9 +239,18 @@ class Config:
                 ("Test", "dotnet test --filter FullyQualifiedName~TestClassName"),
             ],
             "conventions": [
-                ("async-await", "append the Async suffix to all asynchronous method names and await them"),
-                ("null-safety", "enable nullable reference types (<Nullable>enable</Nullable>) and resolve all compiler warnings"),
-                ("naming", "use PascalCase for public properties/methods and camelCase for private fields with _ prefix"),
+                (
+                    "async-await",
+                    "append the Async suffix to all asynchronous method names and await them",
+                ),
+                (
+                    "null-safety",
+                    "enable nullable reference types (<Nullable>enable</Nullable>) and resolve all compiler warnings",
+                ),
+                (
+                    "naming",
+                    "use PascalCase for public properties/methods and camelCase for private fields with _ prefix",
+                ),
             ],
         },
         "bun": {
@@ -215,9 +266,18 @@ class Config:
                 ("Run", "bun path/to/file.ts"),
             ],
             "conventions": [
-                ("imports", "ESM import/export syntax for files and packages — no CommonJS require()"),
-                ("jsx", "use .tsx or .jsx file extensions for components; never put JSX in .ts or .js files"),
-                ("apis", "prefer native Bun APIs (e.g. Bun.serve, Bun.file) over Node.js compat equivalents"),
+                (
+                    "imports",
+                    "ESM import/export syntax for files and packages — no CommonJS require()",
+                ),
+                (
+                    "jsx",
+                    "use .tsx or .jsx file extensions for components; never put JSX in .ts or .js files",
+                ),
+                (
+                    "apis",
+                    "prefer native Bun APIs (e.g. Bun.serve, Bun.file) over Node.js compat equivalents",
+                ),
             ],
         },
     }
@@ -245,7 +305,6 @@ class Config:
             "local-only": "no automated CI, local-only test execution and deployment",
         },
     }
-
 
 
 class IssueLevel(Enum):
@@ -625,7 +684,9 @@ _HARD_RULES_MARKER_RE = re.compile(
 _TODO_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
 
 
-def render_hard_rules_marker(commit: str, maturity: str, testing: str, ci: str | None = None) -> str:
+def render_hard_rules_marker(
+    commit: str, maturity: str, testing: str, ci: str | None = None
+) -> str:
     """Render the trailing hard-rules marker comment encoding the 3 or 4 survey answers."""
     if ci is not None:
         return f"<!-- codebase-init:hard-rules v1 commit={commit} maturity={maturity} testing={testing} ci={ci} -->"
@@ -1228,7 +1289,9 @@ def _setup_parser() -> argparse.ArgumentParser:
     )
     scaffold_parser.add_argument(
         "--ci",
-        choices=sorted(Config.HARD_RULES_TEXT["ci"]) if "ci" in Config.HARD_RULES_TEXT else ["github-actions", "gitlab-ci", "local-only"],
+        choices=sorted(Config.HARD_RULES_TEXT["ci"])
+        if "ci" in Config.HARD_RULES_TEXT
+        else ["github-actions", "gitlab-ci", "local-only"],
         default=None,
         help="CI/CD Automation provider (default: auto-detected).",
     )
@@ -1351,7 +1414,10 @@ def main() -> int:
             if ci is None:
                 env = analyze_project_env(root)
                 ci = env.ci_provider
-                if "ci" in Config.HARD_RULES_TEXT and ci not in Config.HARD_RULES_TEXT["ci"]:
+                if (
+                    "ci" in Config.HARD_RULES_TEXT
+                    and ci not in Config.HARD_RULES_TEXT["ci"]
+                ):
                     ci = "local-only"
 
             try:
