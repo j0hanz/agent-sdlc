@@ -13,71 +13,41 @@ If a skill has any potential relevance (greater than 0%) to your task, you MUST 
 
 ## When to Use
 
-```dot
-digraph using_agent_dev_skills {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
+```
+Start: New Task
+  -> Gate 0: Repo Onboarded?
+       -- no AGENTS.md (recommendation) --> codebase-init --> Gate 1
+       -- onboarded ------------------------------------------> Gate 1
 
-  Start [label="Start: New Task", shape=diamond];
+Gate 1: Fully Defined?
+  -- vague/no spec ------> brainstorming
+  -- idea only -----------> planning
+  -- spec+plan exist -----> Gate 2
 
-  Gate0 [label="Gate 0: Repo Onboarded?", shape=diamond];
-  Init [label="codebase-init"];
+Gate 2: Systemic Issue?
+  -- boundary/God class/2+ files ----------------------> architecting
+  -- messy function, single file, no boundary crossed -> refactor
+  -- crash/bug --------------------------------------> diagnose
+  -- new feature -------------------------------------> Gate 3
 
-  Gate1 [label="Gate 1: Fully Defined?", shape=diamond];
-  Brainstorm [label="brainstorming"];
-  Planning [label="planning"];
+Gate 3: Execution Strategy
+  -- trivial (<~20 lines) OR standard/focused --> test-driven-development
+  -- independent --------------------------------> multi-agent-dispatch
+  -- sequential/complex -------------------------> multi-agent-development
+  test-driven-development -- stuck after 3 attempts --> diagnose
+  test-driven-development -- spec ambiguous ----------> planning
+  [dispatch | development | TDD] --> Gate 4
 
-  Gate2 [label="Gate 2: Systemic Issue?", shape=diamond];
-  Arch [label="architecting"];
-  Refactor [label="refactor"];
-  Diagnose [label="diagnose"];
+Gate 4: Quality & Delivery
+  -> verification-before-completion -> request-code-review
+       -- PASS (recommendation) --> github-automation
+       -- FAIL ----------------------> receive-code-review
+                                          -- blocking issue ------> diagnose
+                                          -- hygiene issue -------> refactor
+                                          -- re-review (cap 2) ---> back to request-code-review
 
-  Gate3 [label="Gate 3: Execution Strategy", shape=diamond];
-  Dispatch [label="multi-agent-dispatch"];
-  Dev [label="multi-agent-development"];
-  TDD [label="test-driven-development"];
-
-  Gate4 [label="Gate 4: Quality & Delivery", shape=diamond];
-  Verify [label="verification-before-completion"];
-  RCR [label="request-code-review"];
-  GH [label="github-automation"];
-  Receive [label="receive-code-review"];
-
-  Start -> Gate0;
-  Gate0 -> Init [label="no AGENTS.md\n(recommendation)", style=dashed];
-  Gate0 -> Gate1 [label="onboarded"];
-  Init -> Gate1;
-
-  Gate1 -> Brainstorm [label="vague/no spec"];
-  Gate1 -> Planning [label="idea only"];
-  Gate1 -> Gate2 [label="spec+plan exist"];
-
-  Gate2 -> Arch [label="boundary/God class/2+ files"];
-  Gate2 -> Refactor [label="messy function,\nsingle file, no boundary crossed"];
-  Gate2 -> Diagnose [label="crash/bug"];
-  Gate2 -> Gate3 [label="new feature"];
-
-  Gate3 -> TDD [label="trivial (<~20 lines) OR\nstandard/focused"];
-  Gate3 -> Dispatch [label="independent"];
-  Gate3 -> Dev [label="sequential/complex"];
-  TDD -> Diagnose [label="stuck after 3 attempts"];
-  TDD -> Planning [label="spec ambiguous"];
-
-  Dispatch -> Gate4;
-  Dev -> Gate4;
-  TDD -> Gate4;
-
-  Gate4 -> Verify -> RCR;
-  RCR -> GH [label="PASS\n(recommendation)", style=dashed];
-  RCR -> Receive [label="FAIL"];
-  Receive -> Diagnose [label="blocking issue"];
-  Receive -> Refactor [label="hygiene issue"];
-  Receive -> RCR [label="re-review, capped at 2"];
-
-  Diagnose -> Gate3 [label="bug resolved,\nresume feature"];
-  Diagnose -> Gate4 [label="bug resolved,\nmerge-ready"];
-}
+diagnose -- bug resolved, resume feature --> Gate 3
+diagnose -- bug resolved, merge-ready ----> Gate 4
 ```
 
 ## Rules

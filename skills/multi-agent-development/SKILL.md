@@ -16,32 +16,19 @@ Orchestrate sequential task execution with zero context pollution and high quali
 
 ## Process Flow
 
-```dot
-digraph multi_agent_dev {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
+```
+Start Loop (Per Task) -> Phase 1: Implement (general-purpose subagent) -> Phase 2: Spec Compliance (read-only reviewer)
+  -- SPEC_PASS ------------------> Phase 3: Code Quality (read-only auditor)
+  -- SPEC_FAIL (retry) -----------> back to Phase 1
+  -- SPEC_FAIL (after 2 attempts) -> BLOCKED (escalate to user)
 
-  Start [label="Start Loop (Per Task)"];
-  Phase1 [label="Phase 1: Implement\n(General-purpose subagent)"];
-  Phase2 [label="Phase 2: Spec Compliance\n(Read-only reviewer)"];
-  Phase3 [label="Phase 3: Code Quality\n(Read-only auditor)"];
-  Next [label="Next Task?", shape=diamond];
-  Final [label="Final Validation\n(Test & Verify)"];
+Phase 3: Code Quality
+  -- QUALITY_PASS -------------> Next Task?
+  -- CRITICAL / IMPORTANT (retry) -> back to Phase 1
 
-  Blocked [label="BLOCKED\n(Escalate to User)", shape=box, style="rounded,dashed"];
-
-  Start -> Phase1 -> Phase2;
-  Phase2 -> Phase3 [label="SPEC_PASS"];
-  Phase2 -> Phase1 [label="SPEC_FAIL", style=dashed];
-  Phase2 -> Blocked [label="SPEC_FAIL\n(after 2 attempts)", style=dashed];
-
-  Phase3 -> Next [label="QUALITY_PASS"];
-  Phase3 -> Phase1 [label="CRITICAL / IMPORTANT", style=dashed];
-
-  Next -> Start [label="yes"];
-  Next -> Final [label="no"];
-}
+Next Task?
+  -- yes --> loop to Start
+  -- no  --> Final Validation (test & verify)
 ```
 
 ## NEVER Do This

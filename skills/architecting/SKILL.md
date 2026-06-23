@@ -7,36 +7,20 @@ allowed-tools: Bash(node *), Bash(python *), AskUserQuestion
 
 # architecting
 
-```dot
-digraph architecting {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Trigger [label="Trigger: Review/Design Request", shape=diamond];
-  ModeA [label="Mode A: DIAGNOSE\n(Existing Code)"];
-  ModeB [label="Mode B: DESIGN\n(New Feature)"];
-
-  // Mode A Flow
-  ExploreA [label="1. Explore\n(Scripts/Manual)"];
-  PresentA [label="2. Present\nOpportunities"];
-  AlignA   [label="3. Align\n(Interview/Seam)"];
-  ADRA     [label="4. Record ADR"];
-  HandoffA [label="Handoff:\nrefactor/planning"];
-
-  // Mode B Flow
-  IdentifyB [label="1. Identify\nDomain vs Mechanism"];
-  SelectB   [label="2. Select Pattern"];
-  StressB   [label="3. Stress Test\n(Swap Test)"];
-  ADRB      [label="4. Record ADR"];
-  ScaffoldB [label="5. Scaffold\n(Brief/Scripts)"];
-
-  Trigger -> ModeA [label="existing code"];
-  Trigger -> ModeB [label="new module"];
-
-  ModeA -> ExploreA -> PresentA -> AlignA -> ADRA -> HandoffA;
-  ModeB -> IdentifyB -> SelectB -> StressB -> ADRB -> ScaffoldB;
-}
+```
+Trigger: Review/Design Request
+  -- existing code --> Mode A: DIAGNOSE
+                          -> 1. Explore (scripts/manual)
+                          -> 2. Present opportunities
+                          -> 3. Align (interview/seam)
+                          -> 4. Record ADR
+                          -> Handoff: refactor/planning
+  -- new module ----> Mode B: DESIGN
+                          -> 1. Identify domain vs mechanism
+                          -> 2. Select pattern
+                          -> 3. Stress test (swap test)
+                          -> 4. Record ADR
+                          -> 5. Scaffold (brief/scripts)
 ```
 
 **trigger:** Architecture review, design request, or structural issues (God modules, circular deps).

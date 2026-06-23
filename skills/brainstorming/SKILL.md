@@ -24,36 +24,29 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 
 ## Process Flow
 
-```dot
-digraph brainstorming {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
+```
+0. Resume Check
+  -- no match -------> 1. Discovery
+  -- resume at 2 -----> 2. Domain Clarity
+  -- resume at 3 -----> 3. Expert Clarification
+  -- resume at 4 -----> 4. Design Proposal
+  -- resume at 5 -----> 5. Structured Review
 
-  ResumeCheck      [label="0. Resume Check", shape=diamond];
-  Discovery        [label="1. Discovery"];
-  DomainClarity    [label="2. Domain Clarity"];
-  ExpertClarify    [label="3. Expert Clarification"];
-  DesignProposal   [label="4. Design Proposal"];
-  StructuredReview [label="5. Structured Review"];
-  DesignBrief      [label="6. Design Brief"];
+1. Discovery
+  -- ambiguous terms -------> 2. Domain Clarity
+  -- needs clarification ---> 3. Expert Clarification
+  -- scope S, no unknowns ---> 4. Design Proposal
 
-  ResumeCheck -> Discovery        [label="no match"];
-  ResumeCheck -> DomainClarity    [label="resume at 2"];
-  ResumeCheck -> ExpertClarify    [label="resume at 3"];
-  ResumeCheck -> DesignProposal   [label="resume at 4"];
-  ResumeCheck -> StructuredReview [label="resume at 5"];
-  Discovery -> DomainClarity    [label="ambiguous terms"];
-  Discovery -> ExpertClarify    [label="needs clarification"];
-  Discovery -> DesignProposal   [label="scope S, no unknowns"];
-  DomainClarity -> ExpertClarify;
-  ExpertClarify -> DesignProposal;
-  DesignProposal -> StructuredReview [label="flagged: scope L/XL,\nhigh risk, or attack surface"];
-  DesignProposal -> DesignBrief      [label="not flagged"];
-  StructuredReview -> DesignBrief    [label="approved"];
-  StructuredReview -> DesignProposal [label="rejected", style=dashed];
-  StructuredReview -> StructuredReview [label="revise", style=dotted];
-}
+2. Domain Clarity -> 3. Expert Clarification -> 4. Design Proposal
+
+4. Design Proposal
+  -- flagged: scope L/XL, high risk, or attack surface --> 5. Structured Review
+  -- not flagged -----------------------------------------> 6. Design Brief
+
+5. Structured Review
+  -- approved -----> 6. Design Brief
+  -- rejected -----> back to 4. Design Proposal
+  -- revise (loop) -> back to 5. Structured Review
 ```
 
 ## Phase 0: Resume Check

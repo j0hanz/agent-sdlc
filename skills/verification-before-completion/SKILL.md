@@ -10,27 +10,14 @@ Guarantee operational correctness through execution evidence. **NEVER** confirm 
 
 ## Process Flow
 
-```dot
-digraph verification_before_completion {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Start [label="Start: Ready to Complete", shape=diamond];
-
-  Checklist [label="1. Mandatory Checklist\n(Tests, Manual, Sweep, Diff)"];
-  Evidence [label="2. Gather Evidence\n(Runner output / Exercise log)"];
-
-  Logic [label="3. Decision Logic", shape=diamond];
-  Diagnose [label="Handoff:\ndiagnose"];
-  Blocked [label="State: Blocked/Incomplete"];
-  Review [label="Handoff:\nrequest-code-review"];
-
-  Start -> Checklist -> Evidence -> Logic;
-  Logic -> Diagnose [label="regression found"];
-  Logic -> Blocked [label="no test suite /\nCI-only"];
-  Logic -> Review [label="verified clean"];
-}
+```
+Start: Ready to Complete
+  -> 1. Mandatory Checklist (tests, manual, sweep, diff)
+  -> 2. Gather Evidence (runner output / exercise log)
+  -> 3. Decision Logic
+       -- regression found -------> diagnose (handoff)
+       -- no test suite / CI-only -> Blocked/Incomplete
+       -- verified clean ---------> request-code-review (handoff)
 ```
 
 **trigger:** user says "ready", "mark as done", "looks good", or task is complete.

@@ -51,7 +51,7 @@ rather than folded into an existing one.}}}}
 
 ## Process Flow
 
-{{{{FILL: Either a numbered step list, or a ```dot``` digraph (see \
+{{{{FILL: Either a numbered step list, or ASCII arrows showing branches (see \
 $CLAUDE_PLUGIN_ROOT/skills/refactor/SKILL.md for a short example). Delete this \
 section if the skill is a single linear procedure with no branches.}}}}
 

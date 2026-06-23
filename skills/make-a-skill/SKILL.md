@@ -12,24 +12,12 @@ Scaffold a new skill from a template, draft its body, then validate it before ca
 
 ## Process Flow
 
-```dot
-digraph make_a_skill {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Scaffold [label="1. Scaffold\n(scaffold_skill.py)"];
-  Draft [label="2. Draft Body\n(fill placeholders,\nleave description)"];
-  Validate1 [label="3. Validate\n(validate_skill.py)"];
-  ErrCheck [label="Errors?", shape=diamond];
-  Describe [label="4. Write Real Description\n+ revalidate"];
-  Done [label="Done"];
-
-  Scaffold -> Draft -> Validate1 -> ErrCheck;
-  ErrCheck -> Draft [label="yes"];
-  ErrCheck -> Describe [label="no"];
-  Describe -> Done;
-}
+```
+1. Scaffold (scaffold_skill.py)
+  -> 2. Draft Body (fill placeholders, leave description)
+  -> 3. Validate (validate_skill.py)
+       -- errors? yes --> back to 2. Draft Body
+       -- errors? no  --> 4. Write Real Description + revalidate -> Done
 ```
 
 ## Step 1: Scaffold

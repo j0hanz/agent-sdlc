@@ -21,45 +21,18 @@ These are escape hatches from the HARD GATE — never self-invoke one silently. 
 
 ## Process Flow
 
-```dot
-digraph test_driven_development {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
+```
+Start: TDD Request -> 0. Confirm with user -> Pre-TDD: Interface (signatures, errors, examples) -> TDD Cycle:
 
-  Start [label="Start: TDD Request", shape=diamond];
-  Confirm [label="0. Confirm with User\n(Wait for prompt)"];
-  PreTDD [label="Pre-TDD: Interface\n(Signatures, Errors, Examples)"];
-
-  Loop [label="TDD Cycle", shape=ellipse];
-
-  Red [label="1. RED\n(Write failing test + minimal stub)"];
-  RunRed [label="Run Test: Confirm Failure", shape=diamond];
-
-  Green [label="2. GREEN\n(Write MINIMAL implementation)"];
-  RunGreen [label="Run Test: Confirm Pass", shape=diamond];
-
-  Refactor [label="3. REFACTOR\n(Surgical cleanup)"];
-  RunRefactor [label="Run Test: Stay passing", shape=diamond];
-
-  Stuck [label="Stuck? (3+ attempts)", shape=diamond];
-  Diagnose [label="Handoff:\ndiagnose/planning"];
-
-  CheckDone [label="All scenarios covered?", shape=diamond];
-  Done [label="Handoff:\nverification-before-completion"];
-
-  Start -> Confirm -> PreTDD -> Loop;
-  Loop -> Red -> RunRed;
-  RunRed -> Green [label="failure confirmed"];
-  Green -> RunGreen;
-  RunGreen -> Stuck [label="fail"];
-  RunGreen -> Refactor [label="pass"];
-  Stuck -> Diagnose [label="yes"];
-  Stuck -> Green [label="no, retry"];
-  Refactor -> RunRefactor -> CheckDone;
-  CheckDone -> Loop [label="no"];
-  CheckDone -> Done [label="yes"];
-}
+  1. RED (write failing test + minimal stub) -> run test, confirm failure
+       -- failure confirmed --> 2. GREEN (write minimal implementation) -> run test
+                                   -- fail --> Stuck? (3+ attempts)
+                                                  -- yes --> diagnose/planning (handoff)
+                                                  -- no  --> retry GREEN
+                                   -- pass --> 3. REFACTOR (surgical cleanup) -> run test, stay passing
+                                                  -> All scenarios covered?
+                                                       -- no  --> back to TDD Cycle
+                                                       -- yes --> verification-before-completion (handoff)
 ```
 
 **trigger:** TDD, write tests, implement feature, build this.

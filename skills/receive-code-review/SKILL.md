@@ -10,38 +10,18 @@ Code review feedback requires technical evaluation, not emotional performance or
 
 ## Process Flow
 
-```dot
-digraph receive_code_review {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Start [label="Start: Feedback Received", shape=diamond];
-  Identify [label="1. Identify Source\n(Subagent, Human, Bot)"];
-  Read [label="2. Read & Clarify\n(Stop if ambiguous)"];
-
-  Verify [label="3. Verify Finding\n(MANDATORY)"];
-  CheckMatch [label="Match Codebase?\nNo Regressions?\nNo Conflicts?", shape=diamond];
-
-  Respond [label="4. Respond\n(Technical/Fact-based)"];
-  Implement [label="5. Implement\n(Severity Order)"];
-  Test [label="6. Test Individual Fix"];
-  Loop [label="Repeat for each item", shape=ellipse];
-
-  Done [label="Handoff:\nverification-before-completion"];
-
-  DiagnoseH [label="Handoff:\ndiagnose", style=dashed];
-  RefactorH [label="Handoff:\nrefactor", style=dashed];
-
-  Start -> Identify -> Read -> Verify;
-  Verify -> CheckMatch;
-  CheckMatch -> Respond [label="Verified or\nPushback"];
-  Respond -> Implement -> Test;
-  Implement -> DiagnoseH [label="Tier 1/2\nblocking", style=dashed];
-  Implement -> RefactorH [label="Tier 4\nhygiene", style=dashed];
-  Test -> Loop -> Verify [label="Next item"];
-  Loop -> Done [label="All items fixed"];
-}
+```
+Start: Feedback Received
+  -> 1. Identify Source (subagent, human, bot)
+  -> 2. Read & Clarify (stop if ambiguous)
+  -> 3. Verify Finding (mandatory) -- match codebase? no regressions? no conflicts?
+  -> 4. Respond (verified or pushback)
+  -> 5. Implement (severity order)
+       -- Tier 1/2 blocking --> diagnose (handoff)
+       -- Tier 4 hygiene -----> refactor (handoff)
+  -> 6. Test individual fix
+  -> next item --> back to 3. Verify Finding
+  -- all items fixed --> verification-before-completion (handoff)
 ```
 
 ## NEVER Do This

@@ -11,39 +11,19 @@ Secure, high-performance GitHub automation.
 
 ## Process Flow
 
-```dot
-digraph github_automation {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Trigger [label="Trigger: Workflow/CLI Request", shape=diamond];
-  PathA [label="Path A: ACTIONS\n(YAML Workflows)"];
-  PathB [label="Path B: CLI\n(gh scripts/API)"];
-
-  // Path A Flow
-  ClassifyA [label="1. Classify Intent"];
-  AuthorA   [label="2. Author & Harden\n(SHA-Pinning/OIDC)"];
-  ValidateA [label="3. Validate & Audit\n(Lint/Security Review)"];
-
-  // Path B Flow
-  ModeB     [label="1. Mode Selection\n(Inline vs Script)"];
-  StandardsB [label="2. Headless Standards\n(Auth/Paginate)"];
-  SafetyB    [label="3. Safety & Idempotency\n(Snapshot/Check existence)"];
-
-  Trigger -> PathA [label="yml / CI"];
-  Trigger -> PathB [label="gh / API"];
-
-  Diagnose [label="Handoff:\ndiagnose", style=dashed];
-  Refactor [label="Handoff:\nrefactor", style=dashed];
-
-  PathA -> ClassifyA -> AuthorA -> ValidateA;
-  PathB -> ModeB -> StandardsB -> SafetyB;
-
-  ValidateA -> Diagnose [label="runtime fail", style=dashed];
-  ValidateA -> Refactor [label="hygiene issue", style=dashed];
-  SafetyB   -> Diagnose [label="script fail", style=dashed];
-}
+```
+Trigger: Workflow/CLI Request
+  -- yml / CI --> Path A: ACTIONS
+                    -> 1. Classify Intent
+                    -> 2. Author & Harden (SHA-pinning/OIDC)
+                    -> 3. Validate & Audit (lint/security review)
+                         -- runtime fail ---> diagnose (handoff)
+                         -- hygiene issue --> refactor (handoff)
+  -- gh / API --> Path B: CLI
+                    -> 1. Mode Selection (inline vs script)
+                    -> 2. Headless Standards (auth/paginate)
+                    -> 3. Safety & Idempotency (snapshot/check existence)
+                         -- script fail --> diagnose (handoff)
 ```
 
 ## NEVER Do This

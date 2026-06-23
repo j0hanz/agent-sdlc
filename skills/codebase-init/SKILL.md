@@ -15,53 +15,30 @@ allowed-tools: Bash(python *) Bash(python3 *) AskUserQuestion Skill
 
 ## Process Flow
 
-```dot
-digraph codebase_init {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
+```
+Trigger: Init/Audit Request
+  -- audit only --> Audit Mode -> Lint AGENTS.md -> Report Issues
+  -- full init ----> Init Mode -> Phase 0: Mode Selection (if AGENTS.md exists)
+                                     -- AGENTS.md absent --------------> Phase 0: Policy Survey
+                                     -- generate fresh new skeleton ----> Phase 0: Overwrite Confirmation
+                                     -- update existing instructions ---> Phase 0: Marker Detection
 
-  Trigger [label="Trigger: Init/Audit Request", shape=diamond];
-  AuditMode [label="Audit Mode"];
-  InitMode [label="Init Mode"];
+Phase 0: Overwrite Confirmation
+  -- cancel -------------> Halt (no partial file)
+  -- confirm overwrite ---> Phase 0: Policy Survey
 
-  // Audit Flow
-  LintAudit [label="Lint AGENTS.md"];
-  ReportAudit [label="Report Issues"];
+Phase 0: Marker Detection
+  -- marker present --> Phase 1: Environment Discovery
+  -- marker absent ---> Phase 0: Policy Survey
 
-  // Init Flow
-  Phase0_Mode [label="Phase 0: Mode Selection\n(If AGENTS.md exists)"];
-  Phase0_Confirm [label="Phase 0: Overwrite Confirmation"];
-  Phase0_Marker [label="Phase 0: Marker Detection"];
-  Phase0_Survey [label="Phase 0: Policy Survey\n(Ask 3 Questions)"];
-  Phase1 [label="Phase 1: Environment Discovery\n(Analyze Toolchain / Structure)"];
-  Phase1_5 [label="Phase 1.5: Architecting Mapping\n(Detect Patterns)"];
-  Phase2 [label="Phase 2: Draft\n(Scaffold AGENTS.md)"];
-  Phase3 [label="Phase 3: Write, Wire, Validate\n(Wire variants, Lint)"];
+Phase 0: Policy Survey (ask 3 questions)
+  -- survey complete --> Phase 1: Environment Discovery
+  -- cancelled --------> Halt (no partial file)
 
-  Trigger -> AuditMode [label="audit only"];
-  Trigger -> InitMode [label="full init"];
-
-  AuditMode -> LintAudit -> ReportAudit;
-
-  Halt [label="Halt:\nNo Partial File", shape=box, style="rounded,dashed"];
-
-  InitMode -> Phase0_Mode;
-  Phase0_Mode -> Phase0_Survey [label="AGENTS.md absent"];
-  Phase0_Mode -> Phase0_Confirm [label="Generate fresh new skeleton"];
-  Phase0_Mode -> Phase0_Marker [label="Update existing instructions"];
-
-  Phase0_Confirm -> Halt [label="cancel", style=dashed];
-  Phase0_Confirm -> Phase0_Survey [label="confirm overwrite"];
-
-  Phase0_Marker -> Phase1 [label="marker present"];
-  Phase0_Marker -> Phase0_Survey [label="marker absent"];
-
-  Phase0_Survey -> Phase1 [label="survey complete"];
-  Phase0_Survey -> Halt [label="cancelled", style=dashed];
-
-  Phase1 -> Phase1_5 -> Phase2 -> Phase3;
-}
+Phase 1: Environment Discovery (analyze toolchain/structure)
+  -> Phase 1.5: Architecting Mapping (detect patterns)
+  -> Phase 2: Draft (scaffold AGENTS.md)
+  -> Phase 3: Write, Wire, Validate (wire variants, lint)
 ```
 
 ## Phase 0: Mode Selection & Hard Rule Survey

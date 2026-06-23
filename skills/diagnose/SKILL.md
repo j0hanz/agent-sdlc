@@ -11,23 +11,14 @@ Identify true root cause through systematic falsification. **DO NOT GUESS.**
 
 ## Process Flow
 
-```dot
-digraph diagnose {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Phase1 [label="Phase 1: Build Feedback Loop\n(Pass/Fail Signal)"];
-  Phase2 [label="Phase 2: Reproduce\n(Confirm Bug)"];
-  Phase3 [label="Phase 3: Hypothesize & Falsify\n(3-5 Hypotheses)"];
-  Phase4 [label="Phase 4: Instrumentation\n(Targeted Probes)"];
-  Phase5 [label="Phase 5: Red-Green Fix\n(Regression Test)"];
-  Phase6 [label="Phase 6: Finalization\n(De-instrument / Verify)"];
-
-  Phase1 -> Phase2 -> Phase3 -> Phase4 -> Phase5 -> Phase6;
-
-  Phase3 -> Phase3 [label="falsified", style=dashed];
-}
+```
+Phase 1: Build Feedback Loop (pass/fail signal)
+  -> Phase 2: Reproduce (confirm bug)
+  -> Phase 3: Hypothesize & Falsify (3-5 hypotheses)
+       -- falsified --> retry Phase 3 with new hypotheses
+  -> Phase 4: Instrumentation (targeted probes)
+  -> Phase 5: Red-Green Fix (regression test)
+  -> Phase 6: Finalization (de-instrument / verify)
 ```
 
 **trigger:** debug, fix crash, unexpected behavior.
