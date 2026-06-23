@@ -26,7 +26,7 @@ Phase 1: Diagnose (Run scripts/diagnose_context_bloat.py and /context)
 
 ## Step 2: Apply Strategy
 
-**MANDATORY PREREQUISITE:** Before executing Strategy A, B, or Step 3, you **MUST** read `references/context-pruning-guidelines.md` completely from start to finish. **NEVER** set range limits when reading this file.
+**MANDATORY PREREQUISITE:** Before executing Strategy A, B, or Step 3, read `references/context-pruning-guidelines.md` completely from start to finish (it is under 100 lines, so the global 300-line range-limit rule below does not apply to it).
 
 Select ONE strategy based on diagnostics:
 
