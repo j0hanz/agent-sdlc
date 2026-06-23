@@ -622,6 +622,7 @@ _FILE_SCOPED_COMMANDS_RE = re.compile(r"##\s+file-scoped commands", re.IGNORECAS
 _HARD_RULES_MARKER_RE = re.compile(
     r"<!--\s*codebase-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+(?:\s+ci=\S+)?\s*-->"
 )
+_TODO_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
 
 
 def render_hard_rules_marker(commit: str, maturity: str, testing: str, ci: str | None = None) -> str:
@@ -774,6 +775,21 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 continue
             if in_code_block:
                 continue
+
+            # Skip the marker comment itself
+            if _HARD_RULES_MARKER_RE.search(line):
+                continue
+
+            # Check for unresolved TODO
+            if _TODO_RE.search(line):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f'Unresolved TODO detected: "{line.strip()}"',
+                        line_number=line_num,
+                    )
+                )
+
             if line.strip().startswith("<!--") and line.strip().endswith("-->"):
                 continue
             if _FILLER_RE.search(line):
@@ -828,14 +844,25 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                     message='Missing mandatory "## Hard Rules" section.',
                 )
             )
-        elif has_hard_rules_section and not has_hard_rules_marker(content):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.WARN,
-                    message='"## Hard Rules" section present but missing/malformed '
-                    "codebase-init:hard-rules v1 marker comment.",
+        elif has_hard_rules_section:
+            if not has_hard_rules_marker(content):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.WARN,
+                        message='"## Hard Rules" section present but missing/malformed '
+                        "codebase-init:hard-rules v1 marker comment.",
+                    )
                 )
-            )
+            else:
+                marker_match = _HARD_RULES_MARKER_RE.search(content)
+                if marker_match:
+                    if "ci=" not in marker_match.group(0):
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.WARN,
+                                message="Hard-rules marker comment is missing the 'ci' parameter.",
+                            )
+                        )
     except (OSError, UnicodeDecodeError) as e:
         issues.append(
             ValidationIssue(
