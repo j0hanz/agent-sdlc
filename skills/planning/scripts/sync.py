@@ -69,8 +69,12 @@ def _next_task_number(existing_tasks: list[PlanTask]) -> int:
     return best + 1
 
 
-def sync(spec_path: Path, plan_path: Path) -> int:
-    """Merge spec IDs into plan. Returns count of new stubs added."""
+def sync(spec_path: Path, plan_path: Path) -> tuple[int, list[str]]:
+    """Merge spec IDs into plan.
+
+    Returns (count of new stubs added, coverage-gap warnings).
+    """
+    warnings: list[str] = []
     try:
         spec = parse_spec(spec_path)
     except OSError as e:
@@ -92,7 +96,7 @@ def sync(spec_path: Path, plan_path: Path) -> int:
 
     if not missing_impl and ac_covered:
         print(f"sync: nothing to add — all {len(impl_ids)} IDs already covered.")
-        return 0
+        return 0, warnings
 
     # Determine last task id for depends-on chain
     next_num = _next_task_number(plan.tasks) if plan else 1
@@ -128,11 +132,12 @@ def sync(spec_path: Path, plan_path: Path) -> int:
             ac_stub = _acceptance_stub(tid, ac_ids, prev_depends)
         else:
             missing_acs = sorted(set(ac_ids) - covered)
-            print(
-                f"sync: WARNING — acceptance task {existing_ac.id} exists but does "
-                f"not cover all ACs: missing {missing_acs}. Update it manually.",
-                file=sys.stderr,
+            warning = (
+                f"sync: acceptance task {existing_ac.id} exists but does not cover "
+                f"all ACs: missing {missing_acs}. Update it manually."
             )
+            warnings.append(warning)
+            print(f"WARNING — {warning}", file=sys.stderr)
 
     if plan_exists:
         original = plan_path.read_text(encoding="utf-8")
@@ -181,4 +186,4 @@ def sync(spec_path: Path, plan_path: Path) -> int:
 
     added = len(missing_impl) + (1 if ac_stub else 0)
     print(f"sync: added {added} stub(s) to {plan_path}")
-    return added
+    return added, warnings

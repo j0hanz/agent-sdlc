@@ -23,8 +23,9 @@ __all__ = [
 
 
 def feature_name(spec_path: str | Path) -> str:
-    """Derive the feature stem from a <name>.specs.md path (strips '.specs')."""
-    return Path(spec_path).stem.replace(".specs", "")
+    """Derive the feature stem from a <name>.specs.md path (strips trailing '.specs')."""
+    stem = Path(spec_path).stem
+    return stem[: -len(".specs")] if stem.endswith(".specs") else stem
 
 
 # Prefixes that require implementation tasks (not CON/AC/VAL — those don't need impl tasks)

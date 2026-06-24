@@ -49,4 +49,4 @@ Good phases have one measurable goal and 3–8 tasks:
 
 ## By depth
 
-For task counts and effort by depth, see the **Depth Dial** table in `SKILL.md`.
+For task counts and effort by depth, see **Depth Profiles** in `SKILL.md`.

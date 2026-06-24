@@ -3,7 +3,7 @@ name: planning
 description: 'Generates specs.md and plan.md files from a feature description. Use when the user requests "write a spec", "create implementation plan", "spec and plan this", "production rollout plan", or "task decomposition". Action: produces ordered checklists and architectural guidelines.'
 disable-model-invocation: false
 user-invocable: true
-allowed-tools: Bash(python *) Bash(python3 *)
+allowed-tools: Bash(python *), Bash(python3 *)
 argument-hint: '[--depth sketch|contract|blueprint] [--spec-only] [--from-spec <file>] [--domain api|cli] <feature description>'
 ---
 

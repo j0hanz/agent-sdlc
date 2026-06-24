@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from spec_parser import parse_spec, parse_plan  # noqa: E402
+from spec_parser import parse_spec, parse_plan, feature_name  # noqa: E402
 from scaffold import scaffold  # noqa: E402
 from sync import sync  # noqa: E402
 from validate import validate_spec, validate_plan, validate_cross, validate_review  # noqa: E402
@@ -121,6 +121,18 @@ def test_parse_spec_populates_reqs_and_acs(spec_file: Path) -> None:
     assert "CON-001" in doc.cons
 
 
+def test_feature_name_strips_trailing_specs_suffix_only() -> None:
+    assert feature_name(Path("plan/auth-jwt.specs.md")) == "auth-jwt"
+
+
+def test_feature_name_preserves_specs_substring_in_stem() -> None:
+    # "specs" appearing mid-name must not be deleted — only the trailing
+    # ".specs" suffix denotes the spec-file marker.
+    assert (
+        feature_name(Path("plan/db.specs.migration.specs.md")) == "db.specs.migration"
+    )
+
+
 def test_parse_plan_extracts_satisfies(plan_file: Path) -> None:
     doc = parse_plan(plan_file)
     assert len(doc.tasks) == 1
@@ -167,8 +179,9 @@ def test_scaffold_all_depths(tmp_path: Path) -> None:
 
 def test_sync_adds_satisfies_stubs(spec_file: Path, tmp_path: Path) -> None:
     plan_path = tmp_path / "test-feature.plan.md"
-    added = sync(spec_file, plan_path)
+    added, warnings = sync(spec_file, plan_path)
     assert added > 0
+    assert warnings == []
     text = plan_path.read_text(encoding="utf-8")
     assert "Satisfies:" in text
 
@@ -177,9 +190,10 @@ def test_sync_is_idempotent(spec_file: Path, tmp_path: Path) -> None:
     plan_path = tmp_path / "test-feature.plan.md"
     sync(spec_file, plan_path)
     first_text = plan_path.read_text(encoding="utf-8")
-    added_second = sync(spec_file, plan_path)
+    added_second, warnings_second = sync(spec_file, plan_path)
     second_text = plan_path.read_text(encoding="utf-8")
     assert added_second == 0, "second sync should add nothing"
+    assert warnings_second == []
     assert first_text == second_text, "plan should be unchanged after second sync"
 
 
@@ -639,3 +653,50 @@ def test_pipeline_fails_cleanly_when_plan_missing(
 
     assert result.returncode == 1
     assert "not found" in result.stdout.lower()
+
+
+def test_pipeline_fails_when_acceptance_task_misses_acs(
+    spec_file: Path, tmp_path: Path
+) -> None:
+    """An acceptance task that exists but doesn't cover all spec ACs is a
+    coverage gap — the pipeline must fail loudly, not print "completed
+    successfully" over a stderr-only warning."""
+    plan_dir = tmp_path / "plan"
+    plan_dir.mkdir()
+    shutil.copy(spec_file, plan_dir / spec_file.name)
+    plan_text = """\
+# test-feature
+
+Spec: [test-feature.specs.md](test-feature.specs.md)
+
+## PHASE-001: Implementation
+
+### TASK-001: Implement REQ-001
+
+Depends on: none
+Files: [src/auth.ts](src/auth.ts)
+Symbols: [issueJwt](src/auth.ts#L10)
+Satisfies: REQ-001, REQ-002, SEC-001
+Action: Add JWT issuance logic.
+Validate: `npm test -- auth.test.ts`
+Expected result: All tests pass.
+
+## PHASE-END: Acceptance
+
+### TASK-002: Final acceptance verification
+
+Depends on: TASK-001
+Files: none
+Symbols: none
+Satisfies: none
+Action: Verify acceptance criteria.
+Validate: `npm test -- auth.test.ts`
+Expected result: Tests pass.
+"""
+    (plan_dir / "test-feature.plan.md").write_text(plan_text, encoding="utf-8")
+
+    result = _run_pipeline("test-feature", cwd=tmp_path)
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "Pipeline completed successfully" not in result.stdout
+    assert "does not cover all ACs" in result.stdout

@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import re
+
 # Windows reserved device names (case-insensitive, with or without extension)
 _WINDOWS_RESERVED = frozenset(
     {"CON", "PRN", "AUX", "NUL"}
     | {f"COM{i}" for i in range(1, 10)}
     | {f"LPT{i}" for i in range(1, 10)}
 )
-_ILLEGAL_NAME_CHARS = '<>:"/\\|?*\x00'
+_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
 # ---------------------------------------------------------------------------
@@ -268,14 +270,13 @@ def scaffold(
 ) -> tuple[Path, Path]:
     """Write paired spec + plan files. Returns (spec_path, plan_path)."""
     if (
-        not name
-        or name.startswith(".")
-        or any(c in name for c in _ILLEGAL_NAME_CHARS)
+        not _NAME_RE.fullmatch(name or "")
         or name.split(".")[0].upper() in _WINDOWS_RESERVED
     ):
         raise ValueError(
-            f"Invalid name {name!r}: must be a non-empty plain filename stem with "
-            "no path separators, illegal characters, or Windows-reserved device names"
+            f"Invalid name {name!r}: must be a non-empty filename stem matching "
+            "[A-Za-z0-9][A-Za-z0-9._-]* with no path separators, whitespace, or "
+            "Windows-reserved device names"
         )
     if depth not in _SPEC_TEMPLATES:
         raise ValueError(

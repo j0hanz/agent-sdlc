@@ -19,23 +19,11 @@ Spec: [<name>.specs.md](<name>.specs.md)
 
 [Relevant files, existing behavior, constraints from the spec]
 
-## PHASE-000: Setup & Discovery
-
-### TASK-000: Verify environment and discover files
-
-Depends on: none
-Files: none
-Symbols: none
-Satisfies: none
-Action: Use Glob/Grep to identify relevant files under `src/**/*`.
-Validate: `[manual: Glob pattern "src/**/*" returns a non-empty file list]`
-Expected result: Non-empty list of verified files.
-
-## PHASE-001: Core Implementation
+## PHASE-001: Implementation
 
 ### TASK-001: [Action title]
 
-Depends on: [TASK-000](#task-000-verify-environment-and-discover-files)
+Depends on: none
 Files: [src/auth/jwt.ts](src/auth/jwt.ts)
 Symbols: [signToken](src/auth/jwt.ts#L24)
 Satisfies: REQ-001
@@ -79,7 +67,7 @@ Expected result: Observable success signal.
 
 ## Depth profiles
 
-For depth definitions (task counts, effort, format), see the **Depth Dial** table in `SKILL.md`.
+For depth definitions (task counts, effort, format), see **Depth Profiles** in `SKILL.md`.
 
 ## Decomposition guidance
 

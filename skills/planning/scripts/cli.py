@@ -22,6 +22,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from scaffold import _NAME_RE
 from scaffold import scaffold
 from sync import sync
 from validate import (
@@ -34,15 +35,9 @@ from validate import (
     validate_spec,
 )
 
-_INVALID_PIPELINE_NAME_CHARS = ("/", "\\", "\x00")
-
 
 def _validate_pipeline_name(name: str) -> None:
-    if (
-        not name
-        or name.startswith(".")
-        or any(c in name for c in _INVALID_PIPELINE_NAME_CHARS)
-    ):
+    if not _NAME_RE.fullmatch(name or ""):
         raise ValueError(f"Invalid --name {name!r}: must be a plain filename stem")
 
 
@@ -112,7 +107,9 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         else spec_path.parent / (feature_name(spec_path) + ".plan.md")
     )
 
-    sync(spec_path, plan_path)
+    _added, sync_warnings = sync(spec_path, plan_path)
+    for w in sync_warnings:
+        print(f"  [!] {w}", file=sys.stderr)
     return 0
 
 
@@ -145,7 +142,10 @@ def _cmd_pipeline(args: argparse.Namespace) -> int:
         return 1
 
     print("[*] Syncing...")
-    sync(spec_path, plan_path)
+    _added, sync_warnings = sync(spec_path, plan_path)
+    _print_step("Syncing", sync_warnings, [])
+    if sync_warnings:
+        return 1
 
     errs, warns = validate_plan(plan_path)
     _print_step("Validating Plan", errs, warns)
@@ -220,5 +220,8 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as e:
+        import traceback
+
+        traceback.print_exc()
         print(f"cli.py: {e}", file=sys.stderr)
         sys.exit(1)

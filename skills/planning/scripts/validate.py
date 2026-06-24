@@ -249,14 +249,18 @@ def _check_skill_references(
         real_skill_dirs = {p.name for p in skills_root.iterdir() if p.is_dir()}
 
     found: set[str] = set()
+    read_errors: list[str] = []
     for path_obj in (spec_path, plan_path):
         try:
             text = path_obj.read_text(encoding="utf-8")
-        except OSError:
+        except OSError as e:
+            read_errors.append(
+                f"[CROSS] Could not read {path_obj} for skill-reference check: {e}"
+            )
             continue
         found |= set(_SKILL_REF_RE.findall(text))
 
-    return [
+    return read_errors + [
         f"[CROSS] Backtick token `{token}` looks like a skill reference but no "
         f"matching directory exists under {skills_root}. Verify it is a real "
         "skill name, not a hallucinated/cross-plugin reference."
