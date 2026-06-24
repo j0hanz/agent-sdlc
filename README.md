@@ -118,10 +118,6 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 
 `shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
 
-### MCP Server
-
-[context7](https://context7.com) is bundled and available to any dispatched subagent for live library documentation lookups.
-
 ### Configuration
 
 You can configure project-local behaviors for the `claude-agent-dev` plugin by creating a settings file at `.claude/claude-agent-dev.local.md` in the root of your project:
