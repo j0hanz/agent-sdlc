@@ -16,7 +16,7 @@
     "test:python": "python -m pytest -q",
     "test": "npm run validate && npm run test:node && npm run test:python",
     "test:integration": "node tests/integration/test-hooks-fire.mjs && node tests/integration/test-skills-load.mjs",
-    "test:eval": "bash tests/skill-triggering/run-test.sh diagnose tests/skill-triggering/prompts/diagnose.txt && bash tests/skill-triggering/run-test.sh refactor tests/skill-triggering/prompts/refactor.txt && bash tests/skill-triggering/run-test.sh verification-before-completion tests/skill-triggering/prompts/verification-before-completion.txt"
+    "test:eval": "bash tests/skill-triggering/run-all.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1456,6 +1456,24 @@ def _resolve_target(raw: Path | None, fallback: Path) -> Path:
     return (raw or fallback).resolve()
 
 
+def _print_env(env: ProjectEnvironment) -> None:
+    safe_print(f"Package Manager: {env.package_manager}")
+    safe_print(f"Test Runner:     {env.test_runner}")
+    safe_print(f"Linter:          {env.linter}")
+    safe_print(f"Monorepo:        {env.is_monorepo}")
+    safe_print(f"CI/CD Automation: {env.ci_provider}")
+
+
+def _print_dependencies(deps: list[DependencyInfo]) -> None:
+    if not deps:
+        safe_print("None found.")
+        return
+    for dep in deps:
+        prefix = ">" if dep.size_truncated else ""
+        size_str = f"{prefix}{dep.size_mb} MB"
+        safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
+
+
 # ── Subcommand handlers ────────────────────────────────────────────────────
 # FIX C-3: non-trivial subcommand bodies extracted into named handler
 # functions so they can be unit-tested without constructing a full CLI
@@ -1525,29 +1543,27 @@ def _cmd_analyze_all(args: argparse.Namespace, root: Path) -> int:
     """Handler for the ``analyze-all`` subcommand."""
     target = _resolve_target(args.target_dir, root)
     safe_print("### Environment")
-    env = analyze_project_env(target)
-    safe_print(f"Package Manager: {env.package_manager}")
-    safe_print(f"Test Runner:     {env.test_runner}")
-    safe_print(f"Linter:          {env.linter}")
-    safe_print(f"Monorepo:        {env.is_monorepo}")
-    safe_print(f"CI/CD Automation: {env.ci_provider}")
+    _print_env(analyze_project_env(target))
     safe_print("")
     safe_print("### Dependencies")
-    deps = get_dependencies(target)
-    if deps:
-        for dep in deps:
-            prefix = ">" if dep.size_truncated else ""
-            size_str = f"{prefix}{dep.size_mb} MB"
-            safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
-    else:
-        safe_print("None found.")
+    _print_dependencies(get_dependencies(target))
     safe_print("")
     safe_print("### Structure")
     patterns = load_gitignore(target) | Config.DEFAULT_IGNORE_PATTERNS
-    lines = get_tree_lines(target, patterns, args.max_depth)
-    for line in lines:
+    for line in get_tree_lines(target, patterns, args.max_depth):
         safe_print(line)
     return 0
+
+
+def _add_target_dir_arg(parser: argparse.ArgumentParser, verb: str) -> None:
+    """Add the optional positional ``target_dir`` argument shared by most subcommands."""
+    parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help=f"Directory to {verb} (default: current directory).",
+    )
 
 
 def _setup_parser() -> argparse.ArgumentParser:
@@ -1559,46 +1575,22 @@ def _setup_parser() -> argparse.ArgumentParser:
     # FIX C-7: add optional target_dir to check-all so callers need not `cd`
     # into the project before running the full audit.
     check_all_parser = subparsers.add_parser("check-all", help="Run all health checks.")
-    check_all_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to audit (default: current directory).",
-    )
+    _add_target_dir_arg(check_all_parser, "audit")
 
     check_hooks_parser = subparsers.add_parser(
         "check-hooks", help="Validate hook configuration and handlers."
     )
-    check_hooks_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to check (default: current directory).",
-    )
+    _add_target_dir_arg(check_hooks_parser, "check")
 
     check_manifest_parser = subparsers.add_parser(
         "check-manifest", help="Validate plugin manifest."
     )
-    check_manifest_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to check (default: current directory).",
-    )
+    _add_target_dir_arg(check_manifest_parser, "check")
 
     validate_skills_parser = subparsers.add_parser(
         "validate-skills", help="Check SKILL.md frontmatter."
     )
-    validate_skills_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to check (default: current directory).",
-    )
+    _add_target_dir_arg(validate_skills_parser, "check")
 
     lint_parser = subparsers.add_parser("lint-agents-md", help="Validate AGENTS.md.")
     lint_parser.add_argument(
@@ -1608,35 +1600,17 @@ def _setup_parser() -> argparse.ArgumentParser:
     analyze_env_parser = subparsers.add_parser(
         "analyze-env", help="Detect project environment."
     )
-    analyze_env_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to analyze (default: current directory).",
-    )
+    _add_target_dir_arg(analyze_env_parser, "analyze")
 
     find_deps_parser = subparsers.add_parser(
         "find-dependencies", help="Locate installed dependency directories."
     )
-    find_deps_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to search (default: current directory).",
-    )
+    _add_target_dir_arg(find_deps_parser, "search")
 
     scan_parser = subparsers.add_parser(
         "scan-structure", help="Show directory structure."
     )
-    scan_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to scan (default: current directory).",
-    )
+    _add_target_dir_arg(scan_parser, "scan")
     scan_parser.add_argument(
         "--max-depth",
         type=int,
@@ -1648,13 +1622,7 @@ def _setup_parser() -> argparse.ArgumentParser:
         "analyze-all",
         help="Run analyze-env, find-dependencies, and scan-structure sequentially.",
     )
-    analyze_all_parser.add_argument(
-        "target_dir",
-        type=Path,
-        nargs="?",
-        default=None,
-        help="Directory to analyze (default: current directory).",
-    )
+    _add_target_dir_arg(analyze_all_parser, "analyze")
     analyze_all_parser.add_argument(
         "--max-depth",
         type=int,
@@ -1762,23 +1730,11 @@ def main() -> int:
             return 0 if result.success else 1
         case "analyze-env":
             target = _resolve_target(args.target_dir, root)
-            env = analyze_project_env(target)
-            safe_print(f"Package Manager: {env.package_manager}")
-            safe_print(f"Test Runner:     {env.test_runner}")
-            safe_print(f"Linter:          {env.linter}")
-            safe_print(f"Monorepo:        {env.is_monorepo}")
-            safe_print(f"CI/CD Automation: {env.ci_provider}")
+            _print_env(analyze_project_env(target))
             return 0
         case "find-dependencies":
             target = _resolve_target(args.target_dir, root)
-            deps = get_dependencies(target)
-            if deps:
-                for dep in deps:
-                    prefix = ">" if dep.size_truncated else ""
-                    size_str = f"{prefix}{dep.size_mb} MB"
-                    safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
-            else:
-                safe_print("No dependency directories found.")
+            _print_dependencies(get_dependencies(target))
             return 0
         case "scan-structure":
             target = _resolve_target(args.target_dir, root)
