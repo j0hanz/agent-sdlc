@@ -18,11 +18,11 @@ Validate: `npm test -- auth/jwt.test.ts`
 Expected result: All 6 tests pass, 0 skipped.
 ```
 
-`sync.py` sets `Satisfies:` automatically when generating stubs — never type it by hand.
+`cli.py sync` sets `Satisfies:` automatically when generating stubs — never type it by hand.
 
-## The coverage matrix (`validate.py --cross`)
+## The coverage matrix (`cli.py validate --cross`)
 
-`validate.py --cross` loads both paired files and checks three things:
+`cli.py validate --cross` loads both paired files and checks four things: the three below, plus a warning-only scan for backtick-quoted skill names that don't exist under `skills/` (catches hallucinated handoff/skill references).
 
 | Check                         | Rule                                                                                             | Error type                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
@@ -33,7 +33,7 @@ Expected result: All 6 tests pass, 0 skipped.
 ## Running the coverage check
 
 ```bash
-python <skill-dir>/scripts/validate.py <name> --cross
+python <skill-dir>/scripts/cli.py validate <name> --cross
 ```
 
 Output includes a summary table:
@@ -53,13 +53,13 @@ A requirement is covered if any task in the plan has that ID in its `Satisfies:`
 
 ## When spec changes after sync
 
-If requirements are added or renamed after running `sync.py`:
+If requirements are added or renamed after running `cli.py sync`:
 
 1. Edit the spec.
-2. Re-run `python sync.py <name>.specs.md` — it will add stubs for new IDs only; existing tasks are untouched.
-3. Re-run `validate.py --cross` to confirm coverage is clean.
+2. Re-run `python cli.py sync <name>.specs.md` — it will add stubs for new IDs only; existing tasks are untouched.
+3. Re-run `cli.py validate --cross` to confirm coverage is clean.
 
-Never manually edit the `Satisfies:` field of an existing task. Always let `sync.py` manage it.
+Never manually edit the `Satisfies:` field of an existing task. Always let `cli.py sync` manage it.
 
 ## Why this matters
 

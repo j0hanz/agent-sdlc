@@ -1,30 +1,20 @@
 #!/usr/bin/env python3
 """validate.py — Unified validator for planning artifacts.
 
-Modes (default: --spec --plan --cross):
+Invoked via `cli.py validate`. Modes (default: --spec --plan --cross):
   --spec   Validate <name>.specs.md structural integrity and traceability
   --plan   Validate <name>.plan.md task structure and markdown links
   --cross  Validate spec↔plan traceability coverage matrix
   --review Validate <name>.review.md exists with ready_for_execution: true
 
-Usage:
-    python validate.py <name>              # runs --spec --plan --cross
-    python validate.py <name> --spec       # spec only
-    python validate.py <name> --plan       # plan only
-    python validate.py <name> --cross      # cross-check only
-    python validate.py <name> --review     # review gate only
-
 <name> can be:
-  - a bare stem: validate.py auth-jwt  (looks for plan/auth-jwt.specs.md etc.)
-  - a full path to either artifact: validate.py plan/auth-jwt.specs.md
+  - a bare stem: 'auth-jwt' (looks for plan/auth-jwt.specs.md etc.)
+  - a full path to either artifact: 'plan/auth-jwt.specs.md'
     (strips suffix and dir to find both files)
-
-Exit code: 0 = all selected checks pass, 1 = errors found.
 """
 
 from __future__ import annotations
 
-import argparse
 import re
 import sys
 from pathlib import Path
@@ -86,6 +76,7 @@ _PASSIVE_VOICE_RE = re.compile(
     r"(?!(?:red|bed|fed|led|shed)\b)\w+ed\b",
     re.IGNORECASE,
 )
+_SKILL_REF_RE = re.compile(r"`([a-z][a-z0-9]*-[a-z0-9-]+)`")
 
 
 class CoverageMatrix(TypedDict):
@@ -249,8 +240,35 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
 # ---------------------------------------------------------------------------
 
 
+def _check_skill_references(
+    spec_path: Path, plan_path: Path, skills_root: Path
+) -> list[str]:
+    """Warn on backtick-quoted skill-name-shaped tokens with no matching skills/ dir."""
+    real_skill_dirs: set[str] = set()
+    if skills_root.is_dir():
+        real_skill_dirs = {p.name for p in skills_root.iterdir() if p.is_dir()}
+
+    found: set[str] = set()
+    for path_obj in (spec_path, plan_path):
+        try:
+            text = path_obj.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        found |= set(_SKILL_REF_RE.findall(text))
+
+    return [
+        f"[CROSS] Backtick token `{token}` looks like a skill reference but no "
+        f"matching directory exists under {skills_root}. Verify it is a real "
+        "skill name, not a hallucinated/cross-plugin reference."
+        for token in sorted(found - real_skill_dirs)
+    ]
+
+
 def validate_cross(
-    spec_path: Path, plan_path: Path, level: str = "contract"
+    spec_path: Path,
+    plan_path: Path,
+    level: str = "contract",
+    skills_root: Path | None = None,
 ) -> tuple[list[str], list[str], CoverageMatrix]:
     """Check spec↔plan traceability: every requirement covered, no orphan tasks."""
     errors: list[str] = []
@@ -309,6 +327,9 @@ def validate_cross(
         "ac_covered": sorted(ac_ids & all_satisfied),
         "ac_uncovered": sorted(uncovered_acs),
     }
+
+    resolved_skills_root = skills_root or Path(__file__).resolve().parent.parent.parent
+    warnings.extend(_check_skill_references(spec_path, plan_path, resolved_skills_root))
 
     return errors, warnings, matrix
 
@@ -403,78 +424,3 @@ def _resolve_paths(name_or_path: str) -> tuple[Path, Path]:
             break
     base = p.parent
     return base / f"{stem}.specs.md", base / f"{stem}.plan.md"
-
-
-def main() -> None:
-    """Parse arguments and perform validation check pipelines on specification and plan files."""
-    parser = argparse.ArgumentParser(
-        description="Validate planning artifacts (spec, plan, cross-check, or review gate)."
-    )
-    parser.add_argument(
-        "name",
-        help="Stem name or path to either artifact (e.g. 'plan/auth-jwt' or 'plan/auth-jwt.specs.md')",
-    )
-    parser.add_argument("--spec", action="store_true", help="Run spec validation only")
-    parser.add_argument("--plan", action="store_true", help="Run plan validation only")
-    parser.add_argument(
-        "--cross", action="store_true", help="Run cross-coverage check only"
-    )
-    parser.add_argument(
-        "--review", action="store_true", help="Run review gate check only"
-    )
-    parser.add_argument(
-        "--level",
-        choices=["sketch", "contract", "blueprint"],
-        default="contract",
-        help="Spec maturity level for --spec and --cross (default: contract)",
-    )
-    args = parser.parse_args()
-
-    spec_path, plan_path = _resolve_paths(args.name)
-
-    run_all = not (args.spec or args.plan or args.cross or args.review)
-    run_spec = args.spec or run_all
-    run_plan = args.plan or run_all
-    run_cross = args.cross or run_all
-    run_review = args.review
-
-    all_errors: list[str] = []
-
-    if run_spec:
-        print(f"\n--- Spec: {spec_path} [level={args.level}] ---")
-        errs, warns = validate_spec(spec_path, args.level)
-        _print_results("Spec", errs, warns)
-        all_errors.extend(errs)
-
-    if run_plan:
-        print(f"\n--- Plan: {plan_path} ---")
-        errs, warns = validate_plan(plan_path)
-        _print_results("Plan", errs, warns)
-        all_errors.extend(errs)
-
-    if run_cross:
-        print(f"\n--- Cross: {spec_path.name} <-> {plan_path.name} ---")
-        errs, warns, matrix = validate_cross(spec_path, plan_path, args.level)
-        _print_results("Cross", errs, warns, matrix)
-        all_errors.extend(errs)
-
-    if run_review:
-        print(f"\n--- Review: {feature_name(spec_path)}.review.md ---")
-        errs, warns = validate_review(spec_path)
-        _print_results("Review", errs, warns)
-        all_errors.extend(errs)
-
-    if all_errors:
-        print(f"\nTotal errors: {len(all_errors)} - INVALID")
-        sys.exit(1)
-    else:
-        print("\nAll checks passed - VALID")
-        sys.exit(0)
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"validate.py: {e}", file=sys.stderr)
-        sys.exit(1)

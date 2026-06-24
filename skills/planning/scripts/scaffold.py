@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
 """scaffold.py — Emit paired <name>.specs.md + <name>.plan.md templates.
 
-Usage:
-    python scaffold.py <name> [--depth sketch|contract|blueprint]
-                              [--dir plan] [--domain api|cli]
-                              [--goal TEXT]
-
-Both files are written to <dir>/. If <dir> doesn't exist it is created.
-The plan file contains a cross-link back to the spec file so the pairing
-is visible from either artifact.
+Invoked via `cli.py scaffold`. Both files are written to <dir>/. If <dir>
+doesn't exist it is created. The plan file contains a cross-link back to the
+spec file so the pairing is visible from either artifact.
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from pathlib import Path
 
 # Windows reserved device names (case-insensitive, with or without extension)
@@ -311,48 +304,3 @@ def scaffold(
     plan_path.write_text(plan_text, encoding="utf-8")
 
     return spec_path, plan_path
-
-
-def main() -> None:
-    """Parse CLI arguments and run the spec/plan scaffolding process."""
-    parser = argparse.ArgumentParser(
-        description="Scaffold paired <name>.specs.md + <name>.plan.md files."
-    )
-    parser.add_argument("name", help="Stem name (e.g. 'auth-jwt')")
-    parser.add_argument(
-        "--depth",
-        choices=["sketch", "contract", "blueprint"],
-        default="contract",
-        help="Spec maturity level (default: contract)",
-    )
-    parser.add_argument(
-        "--dir",
-        default="plan",
-        metavar="DIR",
-        help="Output directory (default: plan/)",
-    )
-    parser.add_argument(
-        "--domain",
-        choices=["api", "cli"],
-        help="Inject domain-specific snippets",
-    )
-    parser.add_argument("--goal", default=None, help="One-sentence goal to pre-fill")
-    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
-
-    args = parser.parse_args()
-    goal = args.goal or "One sentence: what capability or outcome?"
-    spec_path, plan_path = scaffold(
-        args.name, args.depth, args.dir, args.domain, goal, force=args.force
-    )
-    print(f"Created: {spec_path}")
-    print(f"Created: {plan_path}")
-    print(f"\nNext: fill in {spec_path.name}, then run:")
-    print(f"  python sync.py {spec_path}")
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"scaffold.py: {e}", file=sys.stderr)
-        sys.exit(1)

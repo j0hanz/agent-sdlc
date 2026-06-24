@@ -1,8 +1,50 @@
 # Domain-Specific Examples
 
+## Sketch Quick-Start
+
+Minimal sketch-depth examples — 1 requirement + interface only, no Context/Examples/Notes sections.
+
+**REST API (sketch):**
+
+```markdown
+## 2. Requirements
+
+- `REQ-001`: The API MUST return the current user's profile as JSON on GET /me.
+
+## 4. Interfaces
+
+- GET /me — auth token in, `{ id, email }` out
+```
+
+**CLI tool (sketch):**
+
+```markdown
+## 2. Requirements
+
+- `REQ-001`: The tool MUST print version info on `--version`.
+
+## 4. Interfaces
+
+- `mytool --version` — no input, prints `mytool vX.Y.Z` to stdout, exit 0
+```
+
+**DB schema (sketch):**
+
+```markdown
+## 2. Requirements
+
+- `REQ-001`: The schema MUST add a `status` column to the `orders` table.
+
+## 4. Interfaces
+
+- `orders.status` — VARCHAR(20), NOT NULL, default `'pending'`
+```
+
+---
+
 ## REST API
 
-Use `scaffold.py --domain api` to inject standard API snippets automatically.
+Use `cli.py scaffold --domain api` to inject standard API snippets automatically.
 
 **Requirements pattern:**
 
@@ -38,7 +80,7 @@ Use `scaffold.py --domain api` to inject standard API snippets automatically.
 
 ## CLI Tool
 
-Use `scaffold.py --domain cli` to inject CLI snippets automatically.
+Use `cli.py scaffold --domain cli` to inject CLI snippets automatically.
 
 **Requirements pattern:**
 

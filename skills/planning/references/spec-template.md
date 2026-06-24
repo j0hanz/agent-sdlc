@@ -31,11 +31,11 @@
 | `RISK-NNN` | Risk with mitigation or "accepted"                    | Blueprint |
 | `NOTE-NNN` | Rollout, migration, or rollback note                  | Blueprint |
 
-`scaffold.py` places these IDs — never type them by hand.
+`cli.py scaffold` places these IDs — never type them by hand.
 
 ## Self-check before handoff
 
-Run `validate.py --spec` first, then use this checklist for what the validator cannot catch:
+Run `cli.py validate <name> --spec` first, then use this checklist for what the validator cannot catch:
 
 ### Goal
 
@@ -64,7 +64,7 @@ Run `validate.py --spec` first, then use this checklist for what the validator c
 
 ### Ready signal
 
-If all checks pass and `validate.py --spec` returns 0 errors: ready for `sync.py`.
+If all checks pass and `cli.py validate <name> --spec` returns 0 errors: ready for `cli.py sync`.
 
 ## Spec Interview (for vague requests)
 

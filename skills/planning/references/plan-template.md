@@ -27,8 +27,8 @@ Depends on: none
 Files: none
 Symbols: none
 Satisfies: none
-Action: Run `python <skill-dir>/scripts/discover.py --files "src/**/*"` to identify relevant files.
-Validate: `python <skill-dir>/scripts/discover.py --files "src/**/*"`
+Action: Use Glob/Grep to identify relevant files under `src/**/*`.
+Validate: `[manual: Glob pattern "src/**/*" returns a non-empty file list]`
 Expected result: Non-empty list of verified files.
 
 ## PHASE-001: Core Implementation
@@ -75,7 +75,7 @@ Expected result: Observable success signal.
 - `Files` and `Symbols` must be markdown links (never bare paths)
 - `Validate` must be a backtick-wrapped runnable command
 - `Action` must describe exactly one outcome (no "and")
-- `Satisfies` is set by `sync.py` — do not type it by hand
+- `Satisfies` is set by `cli.py sync` — do not type it by hand
 
 ## Depth profiles
 

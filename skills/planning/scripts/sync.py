@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """sync.py — Sync spec requirements into plan task stubs (idempotent).
 
-Reads <name>.specs.md, generates one TASK stub per REQ/SEC/PERF requirement
-with Satisfies: pre-filled, and merges into the paired <name>.plan.md.
+Invoked via `cli.py sync`. Reads <name>.specs.md, generates one TASK stub per
+REQ/SEC/PERF requirement with Satisfies: pre-filled, and merges into the
+paired <name>.plan.md.
 
 Idempotency: tasks whose Satisfies field already covers an ID are left
 untouched. Only IDs with no existing coverage get new stubs appended.
 A PHASE-END acceptance task is also created/updated from spec ACs.
-
-Usage:
-    python sync.py <name>.specs.md [--plan <name>.plan.md]
 """
 
 from __future__ import annotations
 
-import argparse
 import re
 import sys
 from pathlib import Path
@@ -185,39 +182,3 @@ def sync(spec_path: Path, plan_path: Path) -> int:
     added = len(missing_impl) + (1 if ac_stub else 0)
     print(f"sync: added {added} stub(s) to {plan_path}")
     return added
-
-
-def main() -> None:
-    """Parse CLI arguments and run specification-to-plan synchronization."""
-    parser = argparse.ArgumentParser(
-        description="Sync spec requirements into plan task stubs (idempotent)."
-    )
-    parser.add_argument("spec", help="Path to <name>.specs.md")
-    parser.add_argument(
-        "--plan",
-        default=None,
-        metavar="FILE",
-        help="Path to <name>.plan.md (default: same dir/stem as spec)",
-    )
-    args = parser.parse_args()
-
-    spec_path = Path(args.spec)
-    if not spec_path.exists():
-        print(f"sync.py: spec file not found: {spec_path}", file=sys.stderr)
-        sys.exit(1)
-
-    plan_path = (
-        Path(args.plan)
-        if args.plan
-        else spec_path.parent / (feature_name(spec_path) + ".plan.md")
-    )
-
-    sync(spec_path, plan_path)
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"sync.py: {e}", file=sys.stderr)
-        sys.exit(1)

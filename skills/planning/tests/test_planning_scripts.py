@@ -280,6 +280,51 @@ Expected result: exit 0.
     assert any("Uncovered" in e for e in errors)
 
 
+def test_validate_cross_flags_hallucinated_skill_reference(
+    spec_file: Path, plan_file: Path, tmp_path: Path
+) -> None:
+    fake_skills_root = tmp_path / "fake-skills-root"
+    fake_skills_root.mkdir()
+    (fake_skills_root / "test-driven-development").mkdir()
+
+    plan_file.write_text(
+        plan_file.read_text(encoding="utf-8")
+        + "\nSee `not-a-real-skill` for the follow-up review step.\n",
+        encoding="utf-8",
+    )
+
+    errors, warnings, matrix = validate_cross(
+        spec_file, plan_file, skills_root=fake_skills_root
+    )
+    assert any("not-a-real-skill" in w for w in warnings), (
+        f"expected hallucinated skill-ref warning, got: {warnings}"
+    )
+    assert not any("not-a-real-skill" in e for e in errors), (
+        "skill-ref check must warn, never error"
+    )
+
+
+def test_validate_cross_allows_real_skill_reference(
+    spec_file: Path, plan_file: Path, tmp_path: Path
+) -> None:
+    fake_skills_root = tmp_path / "fake-skills-root"
+    fake_skills_root.mkdir()
+    (fake_skills_root / "test-driven-development").mkdir()
+
+    plan_file.write_text(
+        plan_file.read_text(encoding="utf-8")
+        + "\nHand off to `test-driven-development` next.\n",
+        encoding="utf-8",
+    )
+
+    errors, warnings, matrix = validate_cross(
+        spec_file, plan_file, skills_root=fake_skills_root
+    )
+    assert not any("test-driven-development" in w for w in warnings), (
+        f"real skill name should not be flagged, got: {warnings}"
+    )
+
+
 def test_validate_spec_ignores_code_ticks_and_false_positives(tmp_path: Path) -> None:
     # Test that code ticks block "and" / vague adjectives warnings,
     # and "be red" doesn't trigger passive voice warning
@@ -560,9 +605,9 @@ def test_validate_plan_missing_file(tmp_path: Path) -> None:
 
 
 def _run_pipeline(name: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    script = Path(__file__).parent.parent / "scripts" / "execute_plan_pipeline.py"
+    script = Path(__file__).parent.parent / "scripts" / "cli.py"
     return subprocess.run(
-        [sys.executable, str(script), "--name", name],
+        [sys.executable, str(script), "pipeline", "--name", name],
         cwd=cwd,
         capture_output=True,
         text=True,
