@@ -20,9 +20,9 @@ Expected result: All 6 tests pass, 0 skipped.
 
 `cli.py sync` sets `Satisfies:` automatically when generating stubs — never type it by hand.
 
-## The coverage matrix (`cli.py validate --cross`)
+## The coverage matrix (`cli.py pipeline`)
 
-`cli.py validate --cross` loads both paired files and checks four things: the three below, plus a warning-only scan for backtick-quoted skill names that don't exist under `skills/` (catches hallucinated handoff/skill references).
+The cross-check step of `cli.py pipeline` loads both paired files and checks four things: the three below, plus a warning-only scan for backtick-quoted skill names that don't exist under `skills/` (catches hallucinated handoff/skill references).
 
 | Check                         | Rule                                                                                             | Error type                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
@@ -33,7 +33,7 @@ Expected result: All 6 tests pass, 0 skipped.
 ## Running the coverage check
 
 ```bash
-python <skill-dir>/scripts/cli.py validate <name> --cross
+python <skill-dir>/scripts/cli.py pipeline --name <name>
 ```
 
 Output includes a summary table:
@@ -57,7 +57,7 @@ If requirements are added or renamed after running `cli.py sync`:
 
 1. Edit the spec.
 2. Re-run `python cli.py sync <name>.specs.md` — it will add stubs for new IDs only; existing tasks are untouched.
-3. Re-run `cli.py validate --cross` to confirm coverage is clean.
+3. Re-run `cli.py pipeline --name <name>` to confirm coverage is clean.
 
 Never manually edit the `Satisfies:` field of an existing task. Always let `cli.py sync` manage it.
 

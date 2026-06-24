@@ -44,7 +44,7 @@ Minimal sketch-depth examples — 1 requirement + interface only, no Context/Exa
 
 ## REST API
 
-Use `cli.py scaffold --domain api` to inject standard API snippets automatically.
+Copy the patterns below directly into the spec's Requirements/Interfaces sections.
 
 **Requirements pattern:**
 
@@ -80,7 +80,7 @@ Use `cli.py scaffold --domain api` to inject standard API snippets automatically
 
 ## CLI Tool
 
-Use `cli.py scaffold --domain cli` to inject CLI snippets automatically.
+Copy the patterns below directly into the spec's Requirements/Interfaces sections.
 
 **Requirements pattern:**
 

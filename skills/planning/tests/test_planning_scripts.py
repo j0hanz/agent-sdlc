@@ -340,8 +340,7 @@ def test_validate_cross_allows_real_skill_reference(
 
 
 def test_validate_spec_ignores_code_ticks_and_false_positives(tmp_path: Path) -> None:
-    # Test that code ticks block "and" / vague adjectives warnings,
-    # and "be red" doesn't trigger passive voice warning
+    # Test that code ticks block "and" / vague adjectives warnings
     spec_content = """\
 # test-feature
 
@@ -354,15 +353,10 @@ def test_validate_spec_ignores_code_ticks_and_false_positives(tmp_path: Path) ->
 
 - `REQ-001`: The system MUST use `simple` and `robust` libraries.
 - `REQ-002`: The indicator light MUST be red.
-- `REQ-003`: The system MUST be configured.
 """
     p = tmp_path / "test-spec-ticks.specs.md"
     p.write_text(spec_content, encoding="utf-8")
     errors, warnings = validate_spec(p, "sketch")
-
-    passive_voice_warnings = [w for w in warnings if "passive voice" in w]
-    assert len(passive_voice_warnings) == 1
-    assert "REQ-003" in passive_voice_warnings[0]
 
     vague_warnings = [w for w in warnings if "vague adjective" in w]
     assert len(vague_warnings) == 0
@@ -490,16 +484,6 @@ Expected result: Done.
     p.write_text(plan_text, encoding="utf-8")
     errs, _ = validate_plan(p)
     assert any("bare path" in e and "src/other.ts" in e for e in errs)
-
-
-def test_scaffold_domain_injection_sketch(tmp_path: Path) -> None:
-    # Test that domain injection works in sketch depth
-    spec_path, plan_path = scaffold(
-        "feat-sketch", depth="sketch", out_dir=tmp_path, domain="api"
-    )
-    spec_text = spec_path.read_text(encoding="utf-8")
-    assert "Standard error cases" in spec_text
-    assert "SEC-101" in spec_text
 
 
 def test_validate_resolve_paths_bare_stem(

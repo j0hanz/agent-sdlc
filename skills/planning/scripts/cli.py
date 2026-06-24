@@ -3,17 +3,21 @@
 
 Subcommands:
     scaffold  Write paired <name>.specs.md + <name>.plan.md files
-    validate  Validate spec/plan/cross/review
+    validate  Validate a spec, or check the review gate (--review)
     sync      Sync spec requirements into plan task stubs
     pipeline  Run validate(spec) -> sync -> validate(plan) -> validate(cross)
 
 Usage:
     python cli.py scaffold <name> [--depth sketch|contract|blueprint] [--dir DIR]
-                                   [--domain api|cli] [--goal GOAL] [--force]
-    python cli.py validate <name> [--spec] [--plan] [--cross] [--review]
-                                   [--level sketch|contract|blueprint]
+                                   [--goal GOAL] [--force]
+    python cli.py validate <name> [--spec] [--review] [--level sketch|contract|blueprint]
     python cli.py sync <spec> [--plan FILE]
     python cli.py pipeline --name <name> [--dir DIR] [--depth sketch|contract|blueprint]
+
+Note: `validate --spec` (the default) checks the spec only — used for sketch
+depth. For contract/blueprint, use `pipeline` instead, which runs
+spec -> sync -> plan -> cross in one gated sequence. `validate --review`
+checks the review gate before handoff.
 """
 
 from __future__ import annotations
@@ -37,6 +41,8 @@ from validate import (
 
 
 def _validate_pipeline_name(name: str) -> None:
+    # pipeline builds paths from `name` directly (no scaffold() call), so this
+    # is the only guard against path traversal via --name on this code path.
     if not _NAME_RE.fullmatch(name or ""):
         raise ValueError(f"Invalid --name {name!r}: must be a plain filename stem")
 
@@ -44,7 +50,7 @@ def _validate_pipeline_name(name: str) -> None:
 def _cmd_scaffold(args: argparse.Namespace) -> int:
     goal = args.goal or "One sentence: what capability or outcome?"
     spec_path, plan_path = scaffold(
-        args.name, args.depth, args.dir, args.domain, goal, force=args.force
+        args.name, args.depth, args.dir, goal, force=args.force
     )
     print(f"Created: {spec_path}")
     print(f"Created: {plan_path}")
@@ -54,38 +60,19 @@ def _cmd_scaffold(args: argparse.Namespace) -> int:
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
-    spec_path, plan_path = _resolve_paths(args.name)
-
-    run_all = not (args.spec or args.plan or args.cross or args.review)
-    run_spec = args.spec or run_all
-    run_plan = args.plan or run_all
-    run_cross = args.cross or run_all
-    run_review = args.review
+    spec_path, _plan_path = _resolve_paths(args.name)
 
     all_errors: list[str] = []
 
-    if run_spec:
-        print(f"\n--- Spec: {spec_path} [level={args.level}] ---")
-        errs, warns = validate_spec(spec_path, args.level)
-        _print_results("Spec", errs, warns)
-        all_errors.extend(errs)
-
-    if run_plan:
-        print(f"\n--- Plan: {plan_path} ---")
-        errs, warns = validate_plan(plan_path)
-        _print_results("Plan", errs, warns)
-        all_errors.extend(errs)
-
-    if run_cross:
-        print(f"\n--- Cross: {spec_path.name} <-> {plan_path.name} ---")
-        errs, warns, matrix = validate_cross(spec_path, plan_path, args.level)
-        _print_results("Cross", errs, warns, matrix)
-        all_errors.extend(errs)
-
-    if run_review:
+    if args.review:
         print(f"\n--- Review: {feature_name(spec_path)}.review.md ---")
         errs, warns = validate_review(spec_path)
         _print_results("Review", errs, warns)
+        all_errors.extend(errs)
+    else:
+        print(f"\n--- Spec: {spec_path} [level={args.level}] ---")
+        errs, warns = validate_spec(spec_path, args.level)
+        _print_results("Spec", errs, warns)
         all_errors.extend(errs)
 
     if all_errors:
@@ -175,19 +162,15 @@ def main() -> int:
         "--depth", choices=["sketch", "contract", "blueprint"], default="contract"
     )
     p_scaffold.add_argument("--dir", default="plan", metavar="DIR")
-    p_scaffold.add_argument("--domain", choices=["api", "cli"])
     p_scaffold.add_argument("--goal", default=None)
     p_scaffold.add_argument("--force", action="store_true")
     p_scaffold.set_defaults(handler=_cmd_scaffold)
 
     p_validate = sub.add_parser(
         "validate",
-        help="Validate planning artifacts (spec, plan, cross-check, or review gate).",
+        help="Validate a spec (default) or the review gate (--review).",
     )
     p_validate.add_argument("name", help="Stem name or path to either artifact")
-    p_validate.add_argument("--spec", action="store_true")
-    p_validate.add_argument("--plan", action="store_true")
-    p_validate.add_argument("--cross", action="store_true")
     p_validate.add_argument("--review", action="store_true")
     p_validate.add_argument(
         "--level", choices=["sketch", "contract", "blueprint"], default="contract"

@@ -174,34 +174,6 @@ Output: [example]
 }
 
 # ---------------------------------------------------------------------------
-# Domain snippets injected into spec
-# ---------------------------------------------------------------------------
-
-_DOMAIN_SNIPPETS: dict[str, dict[str, str]] = {
-    "api": {
-        "requirements": (
-            "\n- `SEC-101`: All requests MUST include a valid Bearer token"
-            " in the Authorization header.\n"
-            "- `REQ-101`: The API MUST return JSON for all responses.\n"
-        ),
-        "interfaces": (
-            "\n**Standard error cases (include in every endpoint):**\n"
-            "- `400 Bad Request`: Invalid schema or missing required fields.\n"
-            "- `401 Unauthorized`: Missing or invalid auth token.\n"
-            "- `503 Service Unavailable`: Downstream dependency failure.\n"
-        ),
-    },
-    "cli": {
-        "requirements": (
-            "\n- `REQ-201`: The tool MUST support `--json` for machine-readable output.\n"
-            "- `REQ-202`: The tool MUST exit with a non-zero code on failure.\n"
-            "- `COMP-201`: The tool MUST be compatible with POSIX-compliant shells.\n"
-        ),
-        "interfaces": "",
-    },
-}
-
-# ---------------------------------------------------------------------------
 # Plan template
 # ---------------------------------------------------------------------------
 
@@ -225,37 +197,6 @@ Spec: [{name}.specs.md]({name}.specs.md)
 
 
 # ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _inject_domain(template: str, domain: str) -> str:
-    """Inject domain-specific snippets (api or cli) into the spec template."""
-    snippets = _DOMAIN_SNIPPETS.get(domain, {})
-    req_snip = snippets.get("requirements", "")
-    iface_snip = snippets.get("interfaces", "")
-    if req_snip and "## 2. Requirements" in template:
-        template = template.replace(
-            "## 2. Requirements", f"## 2. Requirements{req_snip}", 1
-        )
-    if iface_snip and "## 4. Interfaces" in template:
-        if "The system exposes the following interfaces:" in template:
-            template = template.replace(
-                "The system exposes the following interfaces:",
-                f"The system exposes the following interfaces:{iface_snip}",
-                1,
-            )
-        else:
-            # Fallback for sketch template
-            template = template.replace(
-                "## 4. Interfaces",
-                f"## 4. Interfaces\n{iface_snip}",
-                1,
-            )
-    return template
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -264,7 +205,6 @@ def scaffold(
     name: str,
     depth: str = "contract",
     out_dir: str | Path = "plan",
-    domain: str | None = None,
     goal: str = "One sentence: what capability or outcome?",
     force: bool = False,
 ) -> tuple[Path, Path]:
@@ -287,9 +227,6 @@ def scaffold(
     out.mkdir(parents=True, exist_ok=True)
 
     spec_text = _SPEC_TEMPLATES[depth].format(name=name, goal=goal)
-    if domain:
-        spec_text = _inject_domain(spec_text, domain)
-
     plan_text = _PLAN_TEMPLATE.format(name=name)
 
     spec_path = out / f"{name}.specs.md"

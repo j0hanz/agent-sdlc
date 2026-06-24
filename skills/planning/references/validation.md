@@ -3,32 +3,30 @@
 Run `cli.py validate` after authoring each artifact and after every `cli.py sync` run.
 
 ```bash
-python <skill-dir>/scripts/cli.py validate <name>              # all three checks
-python <skill-dir>/scripts/cli.py validate <name> --spec       # spec only
-python <skill-dir>/scripts/cli.py validate <name> --plan       # plan only
-python <skill-dir>/scripts/cli.py validate <name> --cross      # coverage matrix only
+python <skill-dir>/scripts/cli.py validate <name>                       # spec only (sketch depth)
+python <skill-dir>/scripts/cli.py validate <name> --review              # review gate check
+python <skill-dir>/scripts/cli.py pipeline --name <name> --depth contract  # spec+plan+cross (contract/blueprint)
 ```
 
 `<name>` can be a bare stem (`auth-jwt`) or a full path to either artifact.
 
 ## What each mode checks
 
-### `--spec`
+### `validate` (spec)
 
 - All mandatory sections present for the chosen depth (sketch/contract/blueprint)
 - Requirements are atomic (no "and" joining two obligations)
-- Requirements use active voice
 - No vague adjectives (fast, robust, lightweight…) without numeric threshold
 - REQs have corresponding ACs; ACs have corresponding VALs
 
-### `--plan`
+### `pipeline` — plan check
 
 - Every task has all six mandatory fields: `Depends on`, `Files`, `Symbols`, `Action`, `Validate`, `Expected result`
 - `Files` and `Symbols` are markdown links `[name](path#L42)`, not bare paths
 - `Validate` field contains a backtick-wrapped command
 - Warning when `Satisfies:` is missing (traceability spine not set)
 
-### `--cross`
+### `pipeline` — cross check
 
 See [traceability.md](traceability.md) for full details. In brief:
 
@@ -61,8 +59,7 @@ See [traceability.md](traceability.md) for full details. In brief:
 
 Before marking a plan ready for execution:
 
-- [ ] `cli.py validate --spec` — 0 errors
-- [ ] `cli.py validate --plan` — 0 errors, 0 bare-path warnings
-- [ ] `cli.py validate --cross` — 0 errors, coverage matrix complete
+- [ ] `cli.py validate <name>` (spec) — 0 errors
+- [ ] `cli.py pipeline --name <name>` — 0 errors, 0 bare-path warnings, coverage matrix complete
 - [ ] All `UNVERIFIED` markers resolved or documented
 - [ ] Reviewer agent returns `ready_for_execution: true`

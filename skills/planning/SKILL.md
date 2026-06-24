@@ -4,7 +4,7 @@ description: 'Generates specs.md and plan.md files from a feature description. U
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *), Bash(python3 *)
-argument-hint: '[--depth sketch|contract|blueprint] [--spec-only] [--from-spec <file>] [--domain api|cli] <feature description>'
+argument-hint: '[--depth sketch|contract|blueprint] [--spec-only] [--from-spec <file>] <feature description>'
 ---
 
 # planning

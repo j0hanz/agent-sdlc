@@ -71,11 +71,6 @@ SECTIONS_BY_LEVEL: dict[str, list[str]] = {
 }
 
 _REQ_STMT_RE = re.compile(r"^[ ]{0,2}-\s+`?(REQ|SEC|PERF|COMP)-\d+`?[\s:]*")
-_PASSIVE_VOICE_RE = re.compile(
-    r"\b(?:be|is|was|are|were|been|being)\s+"
-    r"(?!(?:red|bed|fed|led|shed)\b)\w+ed\b",
-    re.IGNORECASE,
-)
 _SKILL_REF_RE = re.compile(r"`([a-z][a-z0-9]*-[a-z0-9-]+)`")
 
 
@@ -130,8 +125,6 @@ def validate_spec(
             warnings.append(
                 f"[SPEC] Requirement may not be atomic (contains 'and'): {line.strip()}"
             )
-        if _PASSIVE_VOICE_RE.search(clean_line):
-            warnings.append(f"[SPEC] Requirement may be passive voice: {line.strip()}")
         for adj in VAGUE_ADJECTIVES:
             if re.search(rf"\b{re.escape(adj)}\b", clean_line.lower()):
                 warnings.append(f"[SPEC] Vague adjective '{adj}' in: {line.strip()}")
