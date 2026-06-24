@@ -35,23 +35,24 @@ Trigger: Workflow/CLI Request
 
 - **Path A (Actions):** For `.yml` workflows, CI, or releases.
 - **Path B (CLI):** For `gh` scripts and API tasks.
+- **Conceptual question** (not authoring/hardening): Read `references/topic-map.md` and follow its links to docs.github.com.
 - _Rule:_ Run scripts from this skill folder. Example: `python3 "<skill_dir>/scripts/script.py path/to/file"`.
 
 ## PATH A: ACTIONS (YAML)
 
-1. **Confirm Plan:** Ask the user to pick between: (1) Recommended plan, or (2) Alternative plan.
-2. **Read Required Files:** You MUST read `references/workflow-recipes.md`. If deploying to cloud, also read `references/oidc-cloud.md`.
+1. **Confirm Plan:** For multi-file or architecture-level requests (new pipeline, multi-cloud OIDC), ask the user to pick (1) recommended plan or (2) alternative plan. For a single-file or single-action fix, skip this and proceed directly.
+2. **Read Required Files:** Read `references/workflow-recipes.md`. If deploying to cloud, also read `references/oidc-cloud.md`.
 3. **Write Code:**
    - Pin all actions to exact SHA using `python3 scripts/pin_actions.py <path>`.
    - Set default permissions to `contents: read`.
    - Use OIDC (`id-token: write`).
 4. **Validate:** Read `references/security-hardening.md`. Run `python3 scripts/lint.py <path>`.
-5. **Audit:** Send `references/schemas.md` to the `general-purpose` agent to review security.
+5. **Audit:** Dispatch a `general-purpose` subagent with the full workflow YAML plus `references/security-hardening.md`, instructing it to return findings in the JSON shape defined in `references/schemas.md`. If `clean` is false, fix each finding and re-run step 4.
 
 ## PATH B: CLI (gh)
 
-1. **Confirm Plan:** Ask the user to pick between: (1) Recommended plan, or (2) Alternative plan.
-2. **Read Required Files:** You MUST read `references/headless-auth-patterns.md` and `references/api-pagination-and-limits.md`.
+1. **Confirm Plan:** For multi-script or multi-repo requests, ask the user to pick (1) recommended plan or (2) alternative plan. For a single small script, skip this and proceed directly.
+2. **Read Required Files:** Read `references/headless-auth-patterns.md` and `references/api-pagination-and-limits.md`.
 3. **Write Script:**
    - Set `GH_PROMPT_DISABLED=1`.
    - Check login first: `gh auth status`.
@@ -70,6 +71,7 @@ Trigger: Workflow/CLI Request
 ## NEXT STEPS & ERRORS
 
 - **If anything fails:** Read `references/troubleshooting.md`.
+- **Inspecting a failing PR check:** Run `python3 scripts/inspect_pr_checks.py --pr <n>` to fetch failing check logs and a failure snippet before deciding how to fix the workflow.
 - **`diagnose`:** Call this if a script fails while running.
 - **`refactor`:** Call this if the linter or security audit finds bad code.
 - **`verification-before-completion`:** Call this to double-check work before saving.
