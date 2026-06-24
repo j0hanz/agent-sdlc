@@ -10,7 +10,7 @@ Agent Dev Plugin extends Claude Code with 17 skills and 3 lifecycle hooks coveri
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
-| **Status**          | Stable — v1.1.0              |
+| **Status**          | Stable — v1.1.2              |
 | **Language**        | JavaScript (ESM) · Python    |
 | **Runtime**         | Node.js ≥ 22 · Python ≥ 3.10 |
 | **Package manager** | npm                          |
@@ -62,12 +62,12 @@ claude --plugin-dir ./claude-agent-dev-plugin
 
 ## Prerequisites
 
-| Requirement     | Version / Notes             |
-| :-------------- | :-------------------------- |
-| Node.js         | ≥ 22                        |
-| Python          | ≥ 3.10                      |
-| Claude Code     | latest                      |
-| Python packages | `pip install pytest pyyaml` |
+| Requirement     | Version / Notes           |
+| :-------------- | :------------------------ |
+| Node.js         | ≥ 22                      |
+| Python          | ≥ 3.10                    |
+| Claude Code     | latest                    |
+| Python packages | `pip install -e ".[dev]"` |
 
 ## What's Included
 
