@@ -6,6 +6,28 @@
 
 readonly AGENT_DEV_TELEMETRY_MAX_LINES=500
 
+# Load project-local settings
+AGENT_DEV_SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/claude-agent-dev.local.md"
+if [[ -f "$AGENT_DEV_SETTINGS_FILE" ]]; then
+  FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_DEV_SETTINGS_FILE" 2>/dev/null || true)
+  if [[ -n "$FRONTMATTER" ]]; then
+    NUDGE_VAL=$(echo "$FRONTMATTER" | grep '^skill_nudge:' | sed 's/skill_nudge: *//' 2>/dev/null || true)
+    if [[ "$NUDGE_VAL" == "false" ]]; then
+      export AGENT_DEV_SKILL_NUDGE=0
+    elif [[ "$NUDGE_VAL" == "true" ]]; then
+      export AGENT_DEV_SKILL_NUDGE=1
+    fi
+
+    TELEMETRY_VAL=$(echo "$FRONTMATTER" | grep '^telemetry:' | sed 's/telemetry: *//' 2>/dev/null || true)
+    if [[ "$TELEMETRY_VAL" == "false" ]]; then
+      export AGENT_DEV_TELEMETRY=0
+    elif [[ "$TELEMETRY_VAL" == "true" ]]; then
+      export AGENT_DEV_TELEMETRY=1
+    fi
+  fi
+fi
+
+
 agent_dev_json_escape() {
   # Escapes $1 for embedding as a JSON string value (no surrounding quotes).
   local input="$1"

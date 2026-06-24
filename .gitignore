@@ -20,6 +20,7 @@ skills/*/eval-workspace/
 .claude/explorer-breadcrumbs.log
 .continue
 .claude/skill-nudge-state
+.claude/*.local.md
 
 # IDE
 .vscode/

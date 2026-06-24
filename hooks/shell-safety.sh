@@ -16,6 +16,18 @@ if [ "${!OVERRIDE_VAR:-0}" = "1" ]; then
   exit 0
 fi
 
+# Load local settings override if exists
+AGENT_DEV_SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/claude-agent-dev.local.md"
+if [ -f "$AGENT_DEV_SETTINGS_FILE" ]; then
+  FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_DEV_SETTINGS_FILE" 2>/dev/null || true)
+  if [ -n "$FRONTMATTER" ]; then
+    SKIP_SAFETY=$(echo "$FRONTMATTER" | grep '^skip_shell_safety:' | sed 's/skip_shell_safety: *//' 2>/dev/null || true)
+    if [ "$SKIP_SAFETY" = "true" ]; then
+      exit 0
+    fi
+  fi
+fi
+
 input=$(cat)
 
 extract_command() {

@@ -122,6 +122,30 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 
 [context7](https://context7.com) is bundled and available to any dispatched subagent for live library documentation lookups.
 
+### Configuration
+
+You can configure project-local behaviors for the `claude-agent-dev` plugin by creating a settings file at `.claude/claude-agent-dev.local.md` in the root of your project:
+
+```markdown
+---
+# Set to true to disable the shell safety check (use with caution)
+skip_shell_safety: false
+
+# Set to false to disable the periodic skill nudge on session start
+skill_nudge: true
+
+# Set to false to disable telemetry log capturing (.claude/telemetry.log)
+telemetry: true
+---
+
+# claude-agent-dev Configuration
+
+This file configures local settings for the `claude-agent-dev` plugin.
+```
+
+> [!IMPORTANT]
+> Since hooks are loaded at session startup, any changes to this file will take effect on the next Claude Code session (requires restart). Remember to add `.claude/*.local.md` to your `.gitignore`.
+
 ## Project Structure
 
 ```text

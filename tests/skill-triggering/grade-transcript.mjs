@@ -19,7 +19,7 @@ export function parseTranscript(filePath) {
               if (block.type === 'text') return block.text;
               if (block.type === 'tool_use') {
                 const input = JSON.stringify(block.input) || '';
-                return `[tool_use: ${block.name} (${input.length > 100 ? input.slice(0, 100) + '...' : input})]`;
+                return `[tool_use: ${block.name} (${input.length > 100 ? `${input.slice(0, 100)}...` : input})]`;
               }
               return '';
             })
@@ -28,7 +28,7 @@ export function parseTranscript(filePath) {
         if (obj.type === 'tool_call' || (obj.type === 'system' && obj.subtype === 'tool_call')) {
           const name = obj.name || obj.tool_name || '';
           const input = JSON.stringify(obj.input || obj.tool_input || '') || '';
-          return `[tool_use: ${name} (${input.length > 100 ? input.slice(0, 100) + '...' : input})]`;
+          return `[tool_use: ${name} (${input.length > 100 ? `${input.slice(0, 100)}...` : input})]`;
         }
       } catch (e) {
         // Skip malformed lines
