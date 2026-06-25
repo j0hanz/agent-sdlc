@@ -108,10 +108,10 @@ There are no custom agent definitions in this plugin. Every dispatch uses the bu
 
 Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` is the only blocking hook — everything else is additive (warns or injects context, never blocks).
 
-| Event                 | Handler             | What it does                                                                                                                                                          | Blocking? |
-| :-------------------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
-| `PreToolUse` (`Bash`) | `shell-safety`      | Rejects a small, explicit denylist of catastrophic commands (`rm -rf /`, force-push to main/master, `git clean -fdx`). Override with `AGENT_DEV_SKIP_SHELL_SAFETY=1`. | Yes       |
-| `SessionStart` (`*`)  | `skill-nudge`       | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_DEV_SKILL_NUDGE=0`.                                                             | No        |
+| Event                 | Handler        | What it does                                                                                                                                                          | Blocking? |
+| :-------------------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
+| `PreToolUse` (`Bash`) | `shell-safety` | Rejects a small, explicit denylist of catastrophic commands (`rm -rf /`, force-push to main/master, `git clean -fdx`). Override with `AGENT_DEV_SKIP_SHELL_SAFETY=1`. | Yes       |
+| `SessionStart` (`*`)  | `skill-nudge`  | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_DEV_SKILL_NUDGE=0`.                                                             | No        |
 
 `shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
 

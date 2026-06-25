@@ -77,10 +77,10 @@ Return exactly this structure, nothing else:
 
 ### What Was Checked
 
-- Tier 1 (Security): [concise summary]
-- Tier 2 (Correctness): [concise summary]
-- Tier 3 (Performance): [concise summary]
-- Tier 4 (Reuse/API): [concise summary]
+- Tier 1 (Security): [one line, max ~12 words]
+- Tier 2 (Correctness): [one line, max ~12 words]
+- Tier 3 (Performance): [one line, max ~12 words]
+- Tier 4 (Reuse/API): [one line, max ~12 words]
 ```
 
 ## Rules

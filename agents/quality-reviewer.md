@@ -49,7 +49,7 @@ Always reply using exactly this schema — never freeform prose:
 VERDICT: [QUALITY_PASS | CRITICAL | IMPORTANT | MINOR]
 
 STRENGTHS:
-[file:line — what is well-implemented]
+[file:line — what is well-implemented, one line each, max 2 entries]
 
 CRITICAL_ISSUES:
 [file:line — issue and why it blocks]
