@@ -24,7 +24,6 @@ telemetry.log
 
 # IDE
 .vscode/
-package-lock.json
 
 # Worktrees and simulation
 .simulate/
