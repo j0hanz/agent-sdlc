@@ -2,6 +2,8 @@
 
 Canonical contract for any skill that dispatches a `general-purpose` subagent — shared by `multi-agent-development` and `multi-agent-dispatch`. Subagents start cold — they have no memory of the parent conversation. Every dispatch prompt MUST contain all five fields below.
 
+`multi-agent-development`'s own three fixed roles now have named agents (`implementer`/`spec-reviewer`/`quality-reviewer` in the project's `agents/` directory) and no longer need the generic fallback below.
+
 - **SCOPE:** Validated paths (In/Out of bounds). For writer roles, list the exact files the agent may touch.
 - **OBJECTIVE:** One concrete, verifiable/falsifiable outcome. Not "improve X" — state the exact done-condition.
 - **CONTEXT:** Error text, versions, baseline commit, conventions — everything needed to start cold. Never assume the agent can infer project context.
