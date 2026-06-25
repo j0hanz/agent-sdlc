@@ -23,6 +23,5 @@
     "debugging",
     "testing",
     "development"
-  ],
-  "hooks": "./hooks/hooks.json"
+  ]
 }
