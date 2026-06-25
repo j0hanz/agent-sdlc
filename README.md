@@ -77,7 +77,7 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 
 | Skill                            | Trigger                                                    | Purpose                                                        |
 | :------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------- |
-| `brainstorming`                  | "let's build", "add a feature", "I want to implement"      | Requirements discovery before implementation — prevents rework |
+| `parallel-brainstorming`         | "brainstorm", "add a feature", "explore approaches"        | Parallel multi-agent ideation + critique before implementation |
 | `planning`                       | "plan", "design", "how should we approach"                 | Implementation planning and design decisions                   |
 | `diagnose`                       | "debug", "fix crash", "not working", "why is this failing" | Root-cause debugging before any fix                            |
 | `request-code-review`            | "review", "check this", "is this correct"                  | Dispatches a fresh-context subagent to review the diff         |

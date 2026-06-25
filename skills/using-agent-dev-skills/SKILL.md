@@ -21,7 +21,7 @@ Start: New Task
        -- onboarded ------------------------------------------> Gate 1
 
 Gate 1: Fully Defined?
-  -- vague/no spec ------> brainstorming
+  -- vague/no spec ------> parallel-brainstorming
   -- idea only -----------> planning
   -- spec+plan exist -----> Gate 2
 
@@ -70,7 +70,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 ### Gate 1: Task Definition
 
-- **Vague concept:** Route to `brainstorming`.
+- **Vague concept:** Route to `parallel-brainstorming`.
 - **Needs concrete plan:** Route to `planning`.
 - **Spec and plan exist:** Proceed to Gate 2.
 

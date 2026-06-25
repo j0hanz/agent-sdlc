@@ -1,4 +1,4 @@
-"""Tests for brainstorming scan_context.py.
+"""Tests for parallel-brainstorming scan_context.py.
 
 Covers pure-function logic (no git/filesystem I/O) plus scan() integration
 using a temporary directory fixture.

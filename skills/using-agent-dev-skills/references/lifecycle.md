@@ -8,7 +8,7 @@ graph TD
     G0 -- No AGENTS.md --> INIT[codebase-init]
     G0 -- Onboarded --> G1{Gate 1: Defined?}
     INIT --> G1
-    G1 -- No/Vague --> B[brainstorming]
+    G1 -- No/Vague --> B[parallel-brainstorming]
     G1 -- Needs Plan --> P[planning]
     G1 -- Yes --> G2{Gate 2: Scope?}
 

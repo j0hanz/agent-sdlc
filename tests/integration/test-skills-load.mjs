@@ -25,24 +25,28 @@ try {
 
 const slowTest = claudeAvailable ? test : test.skip;
 
-slowTest('brainstorming skill triggers on "build X" prompt', { timeout: 90_000 }, async () => {
-  const dir = createTmpProject({ 'README.md': '# Test project\n' });
-  try {
-    const stdout = execSync(
-      `claude --plugin-dir "${pluginRoot}" --tools "Read,Glob" -p "Build a feature to export logs as CSV" --output-format text`,
-      { cwd: dir, timeout: 90_000, encoding: 'utf-8' },
-    );
-    // Brainstorming skill instructs Claude to ask clarifying questions or explore options
-    // before jumping to implementation. It should NOT just produce code immediately.
-    assertNotContains(
-      stdout,
-      '```',
-      'brainstorming skill: should not produce code immediately without design discussion',
-    );
-  } finally {
-    cleanupProject(dir);
-  }
-});
+slowTest(
+  'parallel-brainstorming skill triggers on "build X" prompt',
+  { timeout: 90_000 },
+  async () => {
+    const dir = createTmpProject({ 'README.md': '# Test project\n' });
+    try {
+      const stdout = execSync(
+        `claude --plugin-dir "${pluginRoot}" --tools "Read,Glob" -p "Build a feature to export logs as CSV" --output-format text`,
+        { cwd: dir, timeout: 90_000, encoding: 'utf-8' },
+      );
+      // parallel-brainstorming skill instructs Claude to ask clarifying questions or explore options
+      // before jumping to implementation. It should NOT just produce code immediately.
+      assertNotContains(
+        stdout,
+        '```',
+        'parallel-brainstorming skill: should not produce code immediately without design discussion',
+      );
+    } finally {
+      cleanupProject(dir);
+    }
+  },
+);
 
 slowTest(
   'read-only dispatch stays read-only when asked to write',

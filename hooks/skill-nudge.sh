@@ -44,7 +44,7 @@ else
   exit 0
 fi
 
-candidates=("brainstorming" "test-driven-development" "diagnose" "refactor")
+candidates=("parallel-brainstorming" "test-driven-development" "diagnose" "refactor")
 available=()
 for name in "${candidates[@]}"; do
   if agent_dev_skill_exists "$name"; then

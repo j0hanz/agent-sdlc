@@ -1,4 +1,4 @@
-"""Tests for brainstorming compress_report."""
+"""Tests for parallel-brainstorming compress_report."""
 
 import sys
 from pathlib import Path
