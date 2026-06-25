@@ -96,9 +96,8 @@ _LANG_TYPE_PATTERNS: dict[str, str] = {
 def _sanitize_noun(raw: str) -> str:
     """Strip to alphanumeric/hyphen only; reject empty or flag-like results.
 
-    Backstop for the dispatching subagent's own sanitization instructions
-    (references/codebase-scanner-prompt.md) — the script must not trust argv
-    unconditionally before it reaches git grep / rg as a regex pattern.
+    The script must not trust argv unconditionally before it reaches git
+    grep / rg as a regex pattern, regardless of what the caller passed.
     """
     cleaned = re.sub(r"[^A-Za-z0-9-]", "", raw)
     if not cleaned or cleaned.startswith("-"):
