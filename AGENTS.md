@@ -9,7 +9,7 @@ maturity: breaking changes are fine — never add fallback/legacy-compat shims, 
 testing: test/typecheck files you changed; don't require full-suite runs
 ci: no automated CI, local-only test execution and deployment
 
-<!-- codebase-init:hard-rules v1 commit=minimal maturity=development testing=touched-files ci=local-only -->
+<!-- project-init:hard-rules v1 commit=minimal maturity=development testing=touched-files ci=local-only -->
 
 ## Package Manager
 

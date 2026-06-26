@@ -17,7 +17,7 @@ If a skill has strong relevance to your task, route to it. Routing decisions fol
 Start: New Task
   -> [Any Gate] Context Bloated / Token Limit Near? --> context-optimizer --> resume same gate
   -> Gate 0: Repo Onboarded?
-       -- no AGENTS.md (recommendation) --> codebase-init --> Gate 1
+       -- no AGENTS.md (recommendation) --> project-init --> Gate 1
        -- onboarded ------------------------------------------> Gate 1
 
 Gate 1: Fully Defined?
@@ -67,7 +67,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 ### Gate 0: Repository Onboarding
 
-- **Missing `AGENTS.md`/`CLAUDE.md`:** Recommend `codebase-init` (User invocation required).
+- **Missing `AGENTS.md`/`CLAUDE.md`:** Recommend `project-init` (User invocation required).
 - **Onboarded:** Proceed to Gate 1.
 
 ### Gate 1: Task Definition
@@ -120,7 +120,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **NEVER** skip `diagnose` when a bug interrupts feature work.
 - **NEVER** allow infinite TDD retries (strictly capped at 3).
 - **NEVER** skip `request-code-review` after multi-agent development.
-- **NEVER** auto-invoke `codebase-init` or `gh-actions`; `pr-workflow` is recommended at Gate 4 but never pushes without an explicit go-ahead.
+- **NEVER** auto-invoke `project-init` or `gh-actions`; `pr-workflow` is recommended at Gate 4 but never pushes without an explicit go-ahead.
 - **NEVER** dispatch subagents (Gate 3) for trivial inline edits.
 
 ---

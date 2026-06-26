@@ -5,7 +5,7 @@
 ```mermaid
 graph TD
     Start((Start)) --> G0{Gate 0: Onboarded?}
-    G0 -- No AGENTS.md --> INIT[codebase-init]
+    G0 -- No AGENTS.md --> INIT[project-init]
     G0 -- Onboarded --> G1{Gate 1: Defined?}
     INIT --> G1
     G1 -- No/Vague --> B[parallel-brainstorming]

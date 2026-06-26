@@ -90,7 +90,7 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `context-optimizer`              | "optimize context", "compress context", "reduce tokens"    | Prunes conversation bloat before hitting context limits        |
 | `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
 | `using-agent-sdlc-skills`        | (meta-routing)                                             | Routes to the right skill based on context                     |
-| `codebase-init`                  | "generate AGENTS.md", "init agents.md"                     | Generating/refreshing AGENTS.md and CLAUDE.md files            |
+| `project-init`                   | "init project", "generate AGENTS.md", "onboard repo"       | Parallel discovery fan-out → lean AGENTS.md + stubs            |
 
 ### Subagent Dispatch
 

@@ -111,7 +111,7 @@ Phase 0: Triage (serial vs. tournament)
 **multi-agent-development:** resume current task/phase
 **multi-agent-dispatch:** resume INTEGRATE step
 **receive-code-review:** resume Step 4 Implement
-**codebase-init:** resume Failure Recovery step
+**project-init:** resume Failure Recovery step
 **pr-workflow:** resume failed commit/push/PR step
 **gh-actions:** resume failed CI/workflow/script step
 
