@@ -12,29 +12,28 @@ design work — it still needs Phase 1 Discovery first. Does not apply to bug fi
 config changes with no design space.
 </HARD-GATE>
 
-**"This is trivial to need discovery"** is the rationalization that defeats this skill most often:
-a request that looks trivial can still hide unstated stakeholders, terminology conflicts, or existing
-analogous code that Phase 1 would have surfaced. If a request truly has zero ambiguity and one obvious
-implementation, say so explicitly and name which step (Stakeholder Probe, Codebase Scan, Understanding
-Statement) is skipped and why — never skip silently.
+**1. NEVER SKIP DISCOVERY SILENTLY**
+Do not skip discovery just because a task looks easy. If a task needs zero discovery, you MUST name the exact step skipped (Stakeholder Probe, Codebase Scan, or Understanding Statement) and explain why.
 
-**Operating principle:** _Creativity is distributed, then converged; critique is distributed, then
-arbitrated._ The front half fans ideation out across independent agents so no single line of thinking
-dominates (more diverse options); the back half fans critique out across scoped reviewers so no single
-reviewer's bias decides. Convergence and arbitration gates exist to prevent **idea-swarm chaos** (N
-agents, no synthesis) and **hallucinated consensus** (agents agreeing because they anchored on each
-other, not because the design is sound).
+**2. WORKFLOW RULES**
 
-**Agent roster.** Ideators (Phase 3, distributed creativity) · Synthesizer (Phase 4, convergence) ·
-Skeptic / Constraint Guardian / User Advocate (Phase 5, distributed critique) · Arbiter (Phase 5,
-resolution). Every dispatched agent is **read-only and scope-limited** — it may not exceed its mandate
-(an Ideator does not critique; a reviewer does not redesign; the Arbiter does not invent objections).
+- **Brainstorming:** Many agents create ideas independently.
+- **Critique:** Many agents review ideas independently.
+- **Synthesis & Arbitration:** Specific agents combine ideas and make final decisions to prevent chaos and fake agreement.
 
-Default subagent type for every dispatch below: `general-purpose`. Type is only called out where it
-differs — for Researcher-role dispatches (codebase scans), prefer a more specific specialized agent
-already in the user's roster per `../multi-agent-development/references/subagent-contract.md`'s Role
-Vocabulary, falling back to `general-purpose` when none matches. Parallel fan-outs (Phases 3 and 5) run
-through the sibling `multi-agent-dispatch` skill.
+**3. STRICT AGENT ROLES**
+Agents are read-only. They must strictly stick to their job:
+
+- **Phase 3 Ideators:** Brainstorm ideas. (Do not critique).
+- **Phase 4 Synthesizer:** Combine ideas.
+- **Phase 5 Reviewers (Skeptic, Guardian, Advocate):** Find flaws. (Do not redesign).
+- **Phase 5 Arbiter:** Resolve debates. (Do not invent new problems).
+
+**4. DISPATCH SETTINGS**
+
+- **Default Agent:** `general-purpose`
+- **Code Scans:** Use a specialized Researcher agent from `../multi-agent-development/references/subagent-contract.md`. If none match, use `general-purpose`.
+- **Parallel Work:** Use the `multi-agent-dispatch` skill for Phases 3 and 5.
 
 ## Process Flow
 
