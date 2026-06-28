@@ -12,12 +12,9 @@
 #
 # A denylisted command can also be hidden inside $(...) / `...` / <(...) /
 # >(...) of an otherwise-harmless outer command (e.g. `echo $(rm -rf ~)`),
-# which the ;/&/|/&&/|| segment splitter alone never looks inside. Unlike
-# git-guard.sh's allowlist (where rejecting any use of substitution outright
-# is an acceptable trade-off for a narrow, read-only-reviewer use case), this
-# guard runs on every Bash call in every session, where $(...) is extremely
-# common for harmless purposes — so
-# instead of rejecting substitution outright, this guard extracts the
+# which the ;/&/|/&&/|| segment splitter alone never looks inside. Because
+# $(...) is extremely common for harmless purposes this guard does not reject
+# substitution outright — instead it extracts the
 # *contents* of each substitution and scans them with the exact same
 # denylist checks as top-level segments, recursively closing the gap without
 # blocking ordinary `VAR=$(date)`-style usage.

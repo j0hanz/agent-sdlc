@@ -13,9 +13,9 @@ test('renders state table as clean Markdown', () => {
         title: 'Auth Check',
         status: 'COMPLETED',
         verdict: 'DONE',
-        reviews: { spec: { verdict: 'SPEC_PASS' }, quality: { verdict: 'QUALITY_PASS' } }
-      }
-    ]
+        reviews: { spec: { verdict: 'SPEC_PASS' }, quality: { verdict: 'QUALITY_PASS' } },
+      },
+    ],
   };
 
   const output = renderStatusTable(state);
@@ -76,9 +76,13 @@ test('step command fails when --update payload is malformed JSON', () => {
     }
     fs.writeFileSync(statePath, JSON.stringify({ lanes: [] }), 'utf-8');
 
-    const result = spawnSync('node', ['bin/multi-agent-runner.mjs', 'step', '--update', '{invalid-json'], {
-      encoding: 'utf-8',
-    });
+    const result = spawnSync(
+      'node',
+      ['bin/multi-agent-runner.mjs', 'step', '--update', '{invalid-json'],
+      {
+        encoding: 'utf-8',
+      },
+    );
     assert.strictEqual(result.status, 1);
     assert.ok(result.stderr.includes('Error: Malformed JSON payload for --update.'));
   } finally {

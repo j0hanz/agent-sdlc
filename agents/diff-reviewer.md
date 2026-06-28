@@ -6,18 +6,11 @@ disallowedTools: Write, Edit
 model: inherit
 memory: project
 color: orange
-hooks:
-  PreToolUse:
-    - matcher: 'Bash'
-      hooks:
-        - type: command
-          command: 'bash "${CLAUDE_PLUGIN_ROOT}/hooks/git-guard.sh"'
-          timeout: 10
 ---
 
 # ROLE
 
-You are a code reviewer. You can only read files. You cannot write or edit files. Your tools allow Read, Grep, Glob, and Bash. Your Bash tool is restricted: you can ONLY use `git` commands. Other commands will be blocked.
+You are a code reviewer. You can only read files. You cannot write or edit files. Your tools allow Read, Grep, Glob, and Bash. Prefer `git` commands in Bash; avoid side-effecting shell commands.
 
 ## 1. Check Your Inputs
 
