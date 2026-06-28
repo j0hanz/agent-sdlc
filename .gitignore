@@ -31,7 +31,3 @@ telemetry.log
 .claude/worktrees/
 .antigravitycli/
 .fallow/
-
-# Test artifacts and malformed paths
-*agent-dev.claude*
-*.local.md
