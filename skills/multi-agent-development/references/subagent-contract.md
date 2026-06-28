@@ -36,6 +36,22 @@ A prompt that violates the five-field contract wastes a whole agent run. Most fa
 
 Use these role labels when configuring subagents so isolation and tool-restriction decisions are explicit, not implied by prose. This plugin's own `agents/` directory covers six fixed roles by name — `implementer` (Writer), `researcher` (read-only Researcher/Investigator), `conflict-resolver` (Git merge conflict solver), `spec-reviewer` and `quality-reviewer` (the two Reviewer gates below), and `diff-reviewer` (used by `request-code-review`) — so those roles are named directly rather than left generic. The categories in the table below (architecture review, language-specific quality, error-handling auditing, root-cause debugging, docs sync) have no matching named agent in this plugin, so for those, fall back to scanning the user's installed roster, then `general-purpose` if nothing matches.
 
+## Model Tiering
+
+Choose a model tier based on scope complexity and file count:
+
+| Scope | Files & Signals | Model |
+| :--- | :--- | :--- |
+| Single domain, fully concrete spec | 1–2 files, clear boundaries | **Fast/cheap tier** (e.g., Claude 3 Haiku) |
+| Multi-file or cross-module work, standard clarity | 3+ files OR ambiguous scope | **Standard tier** (`model: inherit`) |
+| Architecture-defining or final-review gate | Critical decision or N-lane review | **Most-capable tier** (e.g., Claude 3 Opus) |
+
+**Rationale:** Turn count beats token price — a cheap model retried 3× on ambiguous work costs more than one standard-model pass that gets it right.
+
+**Safety-biased default:** Ambiguous or unmeasured-complexity cases MUST default to the orchestrator's own current model (via `model: inherit`), never silently to the cheapest tier. Cheapness is an option when scope is genuinely bounded; when in doubt, defer to the orchestrator's judgment.
+
+**Advisory caveat:** Model tier is a dispatch-prompt hint and applies to the agent prompt context only — it is not enforced by the harness unless a model-pinning parameter is exposed. `model:` overrides in the dispatch call site take precedence over `model: inherit` defaults in agent frontmatter.
+
 - **Investigator (Read-only):** Trace root cause, propose a fix as a code block. No edits. Dispatch the named `researcher` agent (`agents/researcher.md`) for this role.
 - **Writer (Isolation: worktree):** Implement a spec, write tests, report changes. Dispatch the named `implementer` agent (`agents/implementer.md`) for this role — it already requires `isolation: worktree` and returns its own schema (`VERDICT: [DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]` + SUMMARY/FILES_CHANGED/COMMIT/CONCERNS/BLOCKER/QUESTION), not the generic schema below. Both `multi-agent-development` (Phase 1) and `multi-agent-dispatch` (Step 3 Writer lanes) dispatch it this way.
 - **Researcher (Read-only):** Explore code/docs, report file paths and usages. Dispatch the named `researcher` agent (`agents/researcher.md`) for this role.
