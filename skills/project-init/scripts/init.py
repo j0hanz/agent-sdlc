@@ -306,7 +306,8 @@ def verify_claim(raw: dict[str, Any], root: Path) -> tuple[Claim | None, str]:
         confidence = float(raw.get("confidence", 0.5))
     except (TypeError, ValueError):
         confidence = 0.5
-    return Claim(key, value, evidence_tier(ev_path), confidence, Evidence(path=ev_path, match=match)), ""
+    relative_path = resolved.relative_to(root).as_posix()
+    return Claim(key, value, evidence_tier(ev_path), confidence, Evidence(path=relative_path, match=match)), ""
 
 
 def merge_claims(
@@ -358,8 +359,9 @@ def render_agents_md(
         else "<one sentence — what this repo does>"
     )
 
-    if package:
-        pkg_normalized = package.strip().replace("\\", "/").rstrip("/")
+    pkg_normalized = package.strip().replace("\\", "/").rstrip("/") if package else None
+
+    if pkg_normalized:
         lines = [
             f"# Agent Instructions: {pkg_normalized}",
             "",
@@ -371,8 +373,7 @@ def render_agents_md(
     if "stack" in winners:
         lines.append(f"stack: {winners['stack'].value}")
 
-    if package:
-        pkg_normalized = package.strip().replace("\\", "/").rstrip("/")
+    if pkg_normalized:
         lines += [
             "",
             f"<!-- project-init:package-scoped {pkg_normalized} -->",
@@ -463,7 +464,7 @@ def lint_agents_md(content: str) -> list[str]:
     if not lines or not lines[0].startswith("# "):
         fails.append("must start with an H1 header")
 
-    is_package_scoped = "project-init:package-scoped" in content
+    is_package_scoped = bool(re.search(r"<!--\s*project-init:package-scoped", content))
 
     if is_package_scoped:
         if not _PKG_MARKER_RE.search(content):
@@ -585,6 +586,12 @@ def _cmd_prescan(args: argparse.Namespace) -> int:
 
 def _cmd_generate(args: argparse.Namespace) -> int:
     root = Path.cwd().resolve()
+    if args.package:
+        pkg_path = (root / args.package).resolve()
+        if not pkg_path.is_relative_to(root) or not pkg_path.is_dir():
+            safe_print(f"FAIL: --package path does not exist or escapes repo root: {args.package}", file=sys.stderr)
+            return 1
+
     try:
         raws = json.loads(args.claims.read_text(encoding="utf-8"))
         if not isinstance(raws, list):

@@ -307,3 +307,104 @@ def test_render_package_scoped_agents_md(tmp_path: Path):
     assert "project-init:hard-rules" not in out
     assert "project-init:package-scoped packages/api" in out
 
+
+def test_verify_claim_path_handling(tmp_path: Path):
+    """Verify that verify_claim returns relative, POSIX-style paths relative to root."""
+    (tmp_path / "packages").mkdir()
+    (tmp_path / "packages" / "api").mkdir()
+    (tmp_path / "packages" / "api" / "package.json").write_text('{"name": "api"}\n')
+
+    # Test with backslashes on Windows / normal relative path
+    claim, reason = init.verify_claim(
+        _claim("pm", "npm", "packages\\api\\package.json", match="api"), tmp_path
+    )
+    assert claim is not None
+    assert claim.evidence.path == "packages/api/package.json"
+
+    # Test with absolute path (that stays within repo root)
+    abs_path = (tmp_path / "packages" / "api" / "package.json").resolve()
+    claim, reason = init.verify_claim(
+        _claim("pm", "npm", str(abs_path), match="api"), tmp_path
+    )
+    assert claim is not None
+    assert claim.evidence.path == "packages/api/package.json"
+
+
+def test_cli_package_validation(tmp_path: Path, monkeypatch, capsys):
+    """CLI option --package must exist and stay within the repo root."""
+    claims_file = tmp_path / "claims.json"
+    claims_file.write_text("[]\n")
+    monkeypatch.chdir(tmp_path)
+
+    # 1. Non-existent directory
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--package",
+            "nonexistent-dir",
+        ]
+    )
+    assert init._cmd_generate(args) == 1
+    captured = capsys.readouterr()
+    assert "FAIL: --package path does not exist or escapes repo root" in captured.err
+
+    # 2. Path escaping repo root (using '..')
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--package",
+            "../escaped",
+        ]
+    )
+    assert init._cmd_generate(args) == 1
+    captured = capsys.readouterr()
+    assert "FAIL: --package path does not exist or escapes repo root" in captured.err
+
+    # 3. Valid directory inside repo
+    (tmp_path / "valid-pkg").mkdir()
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--package",
+            "valid-pkg",
+        ]
+    )
+    assert init._cmd_generate(args) == 0
+
+
