@@ -20,6 +20,7 @@ skills/*/eval-workspace/
 .continue
 .claude/skill-nudge-state
 .claude/*.local.md
+.claude/rolling_summary.md
 telemetry.log
 
 # IDE
