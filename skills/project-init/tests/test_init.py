@@ -128,6 +128,18 @@ def test_lint_catches_missing_marker_and_todo():
     assert any("TODO" in f for f in fails)
 
 
+def test_linter_passes_package_scoped_agents_md():
+    """Linter passes a valid package-scoped AGENTS.md and fails if the marker is missing."""
+    valid_pkg = "# Agent Instructions: packages/api\n\npurpose: api subproject\n\n<!-- project-init:package-scoped packages/api -->\n"
+    fails = init.lint_agents_md(valid_pkg)
+    assert not fails
+
+    missing_marker = "# Agent Instructions: packages/api\n\npurpose: api subproject\n"
+    fails = init.lint_agents_md(missing_marker)
+    assert any("marker" in f for f in fails)
+
+
+
 def test_cmd_alias_normalizes_to_canonical_key(tmp_path: Path):
     """`cmd.tests` and `cmd.test` collapse to one canonical key, not two."""
     assert init.normalize_key("cmd.tests") == "cmd.test"

@@ -449,21 +449,24 @@ _FILLER_RE = re.compile(
     r"(welcome to|this document explains|you should|be sure to|make sure)",
     re.IGNORECASE,
 )
+_PKG_MARKER_RE = re.compile(
+    r"<!--\s*project-init:package-scoped\s+(\S+)\s*-->"
+)
 
 
 def lint_agents_md(content: str) -> list[str]:
     """Return a list of FAIL messages; empty list == valid."""
     fails: list[str] = []
-    lines = content.lstrip("﻿").splitlines()
+    lines = content.lstrip("\ufeff").splitlines()
     if len(lines) > MAX_LINES:
         fails.append(f"{len(lines)} lines exceeds the {MAX_LINES}-line budget")
     if not lines or not lines[0].startswith("# "):
         fails.append("must start with an H1 header")
 
-    is_package = "project-init:package-scoped" in content
+    is_package_scoped = bool(_PKG_MARKER_RE.search(content))
 
-    if is_package:
-        if not re.search(r"<!--\s*project-init:package-scoped\s+\S+\s*-->", content):
+    if is_package_scoped:
+        if not _PKG_MARKER_RE.search(content):
             fails.append("missing/malformed project-init:package-scoped marker")
     else:
         if "## Hard Rules" not in content:
@@ -472,10 +475,11 @@ def lint_agents_md(content: str) -> list[str]:
             fails.append("missing/malformed project-init:hard-rules v1 marker")
         if "Co-Authored-By:" not in content:
             fails.append('missing "Co-Authored-By:" attribution')
-        if "<Model Name>" in content:
-            fails.append('unresolved "<Model Name>" placeholder')
         if "## Commit Attribution" not in content:
             fails.append('missing "## Commit Attribution" section')
+
+    if "<Model Name>" in content:
+        fails.append('unresolved "<Model Name>" placeholder')
 
     in_code = False
     for i, line in enumerate(lines, 1):
