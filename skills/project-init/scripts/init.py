@@ -463,7 +463,7 @@ def lint_agents_md(content: str) -> list[str]:
     if not lines or not lines[0].startswith("# "):
         fails.append("must start with an H1 header")
 
-    is_package_scoped = bool(_PKG_MARKER_RE.search(content))
+    is_package_scoped = "project-init:package-scoped" in content
 
     if is_package_scoped:
         if not _PKG_MARKER_RE.search(content):
