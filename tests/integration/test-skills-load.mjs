@@ -52,10 +52,9 @@ slowTest(
   'read-only dispatch stays read-only when asked to write',
   { timeout: 90_000 },
   async () => {
-    // There is no dedicated "explorer" agent anymore — read-only dispatch is a prompt constraint
-    // enforced by the calling skill (multi-agent-dispatch), not a tool-level guarantee on the agent
-    // itself. This test verifies the underlying CLI tool restriction still holds for a general-purpose
-    // run scoped the same way multi-agent-dispatch scopes a read-only investigator.
+    // This test verifies the underlying CLI tool-restriction behavior still holds for a general-purpose
+    // run when restricted to read-only tools. While the plugin now utilizes the dedicated `researcher`
+    // agent to enforce hard tool restrictions, this test ensures the harness-level containment remains secure.
     const dir = createTmpProject({ 'notes.md': '# Notes\n- item 1\n' });
     try {
       execSync(

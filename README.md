@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands and surface relevant skills. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands and surface relevant skills. Multi-step or parallel work is delegated to specialized, safe-by-default subagents (`implementer`, `researcher`, `conflict-resolver`, etc.) orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -21,7 +21,7 @@ Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks cover
 | Feature                  | Description                                                                                                                                    |
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
-| Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
+| Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive subagent dispatches using specialized, safe-by-default agents (`implementer`, `researcher`, etc.) |
 | 2 lifecycle hooks        | Bash-only handlers: a shell-safety guard and a skill nudge                                                                                     |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
 
@@ -94,16 +94,16 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 
 ### Subagent Dispatch
 
-There are no custom agent definitions in this plugin. Every dispatch uses the built-in `general-purpose` agent, configured per task through the prompt — read-only investigator, worktree-isolated implementer, doc writer, etc. Three skills own this:
+This plugin defines custom agents in the `agents/` directory covering specialized roles: `implementer` (code writer), `researcher` (read-only investigator/explorer), `conflict-resolver` (merge conflict resolution), `spec-reviewer`, `quality-reviewer`, and `diff-reviewer`. Three skills orchestrate these:
 
 | Skill                     | Pattern                                                                                            |
 | :------------------------ | :------------------------------------------------------------------------------------------------- |
-| `multi-agent-dispatch`    | Parallel fan-out — one `general-purpose` agent per independent domain, one batch                   |
-| `multi-agent-development` | Sequential — one `general-purpose` implementer per plan task, two review gates                     |
-| `request-code-review`     | Read-only — one fresh-context `general-purpose` reviewer per diff, no memory of the implementation |
+| `multi-agent-dispatch`    | Parallel fan-out — one `researcher` or `implementer` agent per independent domain, one batch       |
+| `multi-agent-development` | Sequential — one `implementer` per plan task, gated by `spec-reviewer` and `quality-reviewer`      |
+| `request-code-review`     | Read-only — one fresh-context `diff-reviewer` per diff, no memory of the implementation            |
 
 > [!NOTE]
-> Read-only roles (investigator, scanner) are a prompt constraint, not a tool restriction — the dispatching skill must state "never use Write/Edit/Bash" explicitly. Implementer roles run in an isolated git worktree (`isolation: "worktree"`).
+> Read-only roles (researcher, reviewers) utilize the specialized `researcher` and `*-reviewer` agents which enforce hard tool restrictions (Write/Edit tools are disabled) at the harness level. Implementer and conflict-resolver roles run in an isolated git worktree (`isolation: "worktree"`).
 
 ### Hooks
 
