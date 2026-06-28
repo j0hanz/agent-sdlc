@@ -13,11 +13,11 @@ source "$SCRIPT_DIR/lib.sh" 2>/dev/null || exit 0
 
 # Legacy env var and frontmatter flag force mode to 'off'
 if [ "${AGENT_SDLC_SKILL_NUDGE:-1}" = "0" ]; then
-  AGENT_SDLC_BOOTSTRAP_MODE="off"
+  BOOTSTRAP_MODE="off"
+else
+  # Default to 'full' if not set
+  BOOTSTRAP_MODE="${AGENT_SDLC_BOOTSTRAP_MODE:-full}"
 fi
-
-# Default to 'full' if not set
-BOOTSTRAP_MODE="${AGENT_SDLC_BOOTSTRAP_MODE:-full}"
 
 # Mode: off — exit immediately with no output
 if [ "$BOOTSTRAP_MODE" = "off" ]; then

@@ -4,16 +4,18 @@
 # only ever degrade an additive hook to a no-op, never silently disable the
 # one blocking guard.
 
-# Load project-local settings
+# Load project-local settings (frontmatter only if env var not already set)
 AGENT_SDLC_SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/claude-agent-sdlc.local.md"
-if [[ -f "$AGENT_SDLC_SETTINGS_FILE" ]]; then
-  FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_SDLC_SETTINGS_FILE" 2>/dev/null || true)
-  if [[ -n "$FRONTMATTER" ]]; then
-    NUDGE_VAL=$(echo "$FRONTMATTER" | grep '^skill_nudge:' | sed 's/skill_nudge: *//' 2>/dev/null || true)
-    if [[ "$NUDGE_VAL" == "false" ]]; then
-      export AGENT_SDLC_SKILL_NUDGE=0
-    elif [[ "$NUDGE_VAL" == "true" ]]; then
-      export AGENT_SDLC_SKILL_NUDGE=1
+if [[ -z "${AGENT_SDLC_SKILL_NUDGE:-}" ]]; then
+  if [[ -f "$AGENT_SDLC_SETTINGS_FILE" ]]; then
+    FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_SDLC_SETTINGS_FILE" 2>/dev/null || true)
+    if [[ -n "$FRONTMATTER" ]]; then
+      NUDGE_VAL=$(echo "$FRONTMATTER" | grep '^skill_nudge:' | sed 's/skill_nudge: *//' 2>/dev/null || true)
+      if [[ "$NUDGE_VAL" == "false" ]]; then
+        export AGENT_SDLC_SKILL_NUDGE=0
+      elif [[ "$NUDGE_VAL" == "true" ]]; then
+        export AGENT_SDLC_SKILL_NUDGE=1
+      fi
     fi
   fi
 fi
