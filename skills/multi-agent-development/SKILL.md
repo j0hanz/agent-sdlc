@@ -177,3 +177,9 @@ Outcome: two independent tasks ran wall-clock in parallel inside an otherwise se
 - **Conflicts**: If a Git merge fails, do NOT immediately abort or escalate. Dispatch the specialized `conflict-resolver` agent (`agents/conflict-resolver.md`) to read conflict markers, resolve them, test, and commit the resolution. Only pause and ask the user if the conflict resolver returns `VERDICT: BLOCKED`.
 - **Resuming**: Before restarting, check `.claude/rolling_summary.md`'s `## Task Ledger` section first to see which tasks have already completed — trust the ledger over self-recollection. Fall back to `git log` only if the ledger section is absent or unreadable (e.g., first task of a fresh plan). The ledger is append-only and read by `prune_context.py --task-complete`, so it is the primary source of truth for task recovery.
 - **Context**: The orchestrator thread accumulates summaries across every task loop even though subagents are isolated. Run `context-optimizer` after every cluster boundary (never mid-task) once 3+ tasks have reported back since the last optimization pass, or sooner if responses noticeably slow down. Prune intermediate subagent logs, thinking steps, and full file diffs from the main conversation context once integrated, keeping only a high-level summary and the merge commit hash.
+
+## Next Skills
+
+- `verification-before-completion`: Run this for Final Validation handoff.
+- `context-optimizer`: Run this if mid-loop bloat occurs.
+- `diagnose`: Run this for merge/test failure investigation.
