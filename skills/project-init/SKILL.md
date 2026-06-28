@@ -3,7 +3,7 @@ name: project-init
 description: "Bootstrap a repo's agent instructions via a blind parallel discovery fan-out converging into a deterministic generator. Produces a lean (<100-line) markdown-kv AGENTS.md plus one-line CLAUDE.md/GEMINI.md redirect stubs. Discovery agents are read-only and emit evidence-cited claims; a single script is the sole writer and never executes a discovered command. Trigger on: 'init project', 'project-init', 'onboard repo', 'generate AGENTS.md', 'setup agent instructions', 'initialize project memory', 'audit AGENTS.md'."
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash(python *) Bash(python3 *) AskUserQuestion Skill Read Grep Glob Agent
+allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill, Read, Grep, Glob, Agent
 ---
 
 # project-init
