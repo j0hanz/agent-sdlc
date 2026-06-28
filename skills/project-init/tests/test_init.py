@@ -271,3 +271,23 @@ def test_cli_package_filtering(tmp_path: Path, monkeypatch):
     assert "pm: pnpm" in raw
     assert "build: pnpm build" in raw
     assert "test: vitest" not in raw
+
+
+def test_render_package_scoped_agents_md(tmp_path: Path):
+    """Rendering with package parameter excludes hard rules/attribution and adds package-scoped header."""
+    winners = {
+        "purpose": init.Claim("purpose", "test pkg purpose", 4, 1.0),
+        "stack": init.Claim("stack", "Go 1.22", 4, 1.0),
+    }
+    out = init.render_agents_md(
+        winners, "minimal", "development", "always", "local-only", package="packages/api"
+    )
+
+    assert "# Agent Instructions: packages/api" in out
+    assert "purpose: test pkg purpose" in out
+    assert "stack: Go 1.22" in out
+    assert "## Hard Rules" not in out
+    assert "## Commit Attribution" not in out
+    assert "project-init:hard-rules" not in out
+    assert "project-init:package-scoped packages/api" in out
+

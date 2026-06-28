@@ -349,6 +349,7 @@ def render_agents_md(
     testing: str,
     ci: str,
     model: str = "<Model Name>",
+    package: str | None = None,
 ) -> str:
     """Assemble the markdown-kv AGENTS.md from verified winners + survey answers."""
     purpose = (
@@ -356,20 +357,38 @@ def render_agents_md(
         if "purpose" in winners
         else "<one sentence — what this repo does>"
     )
-    lines = ["# Agent Instructions", "", f"purpose: {purpose}"]
+
+    if package:
+        pkg_normalized = package.strip().replace("\\", "/").rstrip("/")
+        lines = [
+            f"# Agent Instructions: {pkg_normalized}",
+            "",
+            f"purpose: {purpose}"
+        ]
+    else:
+        lines = ["# Agent Instructions", "", f"purpose: {purpose}"]
+
     if "stack" in winners:
         lines.append(f"stack: {winners['stack'].value}")
-    lines += [
-        "",
-        "## Hard Rules",
-        "",
-        f"commit: {HARD_RULES_TEXT['commit'][commit]}",
-        f"maturity: {HARD_RULES_TEXT['maturity'][maturity]}",
-        f"testing: {HARD_RULES_TEXT['testing'][testing]}",
-        f"ci: {HARD_RULES_TEXT['ci'][ci]}",
-        "",
-        f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} -->",
-    ]
+
+    if package:
+        pkg_normalized = package.strip().replace("\\", "/").rstrip("/")
+        lines += [
+            "",
+            f"<!-- project-init:package-scoped {pkg_normalized} -->",
+        ]
+    else:
+        lines += [
+            "",
+            "## Hard Rules",
+            "",
+            f"commit: {HARD_RULES_TEXT['commit'][commit]}",
+            f"maturity: {HARD_RULES_TEXT['maturity'][maturity]}",
+            f"testing: {HARD_RULES_TEXT['testing'][testing]}",
+            f"ci: {HARD_RULES_TEXT['ci'][ci]}",
+            "",
+            f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} -->",
+        ]
 
     def section(title: str, keys: list[str]) -> None:
         rows = [(k, winners[k].value) for k in keys if k in winners]
@@ -393,11 +412,12 @@ def render_agents_md(
         for k in file_keys:
             lines.append(f"| {k.split('.', 1)[1]} | `{winners[k].value}` |")
 
-    lines.extend(["", "## Commit Attribution", "", f"Co-Authored-By: {model}", ""])
+    if not package:
+        lines.extend(["", "## Commit Attribution", "", f"Co-Authored-By: {model}", ""])
     return "\n".join(lines)
 
 
-def _trim_to_budget(winners: dict[str, Claim]) -> tuple[dict[str, Claim], list[str]]:
+def _trim_to_budget(winners: dict[str, Claim], package: str | None = None) -> tuple[dict[str, Claim], list[str]]:
     """Drop lowest-priority non-required keys until the rendered file fits MAX_LINES.
 
     Returns (kept, dropped-reasons). The caller still lints; if required keys
@@ -408,7 +428,7 @@ def _trim_to_budget(winners: dict[str, Claim]) -> tuple[dict[str, Claim], list[s
     # Render with placeholder survey values just to count lines.
     while True:
         body = render_agents_md(
-            kept, "minimal", "development", "not-enforced", "local-only"
+            kept, "minimal", "development", "not-enforced", "local-only", package=package
         )
         if len(body.splitlines()) <= MAX_LINES - 1:
             return kept, dropped
@@ -439,16 +459,23 @@ def lint_agents_md(content: str) -> list[str]:
         fails.append(f"{len(lines)} lines exceeds the {MAX_LINES}-line budget")
     if not lines or not lines[0].startswith("# "):
         fails.append("must start with an H1 header")
-    if "## Hard Rules" not in content:
-        fails.append('missing "## Hard Rules" section')
-    if not _MARKER_RE.search(content):
-        fails.append("missing/malformed project-init:hard-rules v1 marker")
-    if "Co-Authored-By:" not in content:
-        fails.append('missing "Co-Authored-By:" attribution')
-    if "<Model Name>" in content:
-        fails.append('unresolved "<Model Name>" placeholder')
-    if "## Commit Attribution" not in content:
-        fails.append('missing "## Commit Attribution" section')
+
+    is_package = "project-init:package-scoped" in content
+
+    if is_package:
+        if not re.search(r"<!--\s*project-init:package-scoped\s+\S+\s*-->", content):
+            fails.append("missing/malformed project-init:package-scoped marker")
+    else:
+        if "## Hard Rules" not in content:
+            fails.append('missing "## Hard Rules" section')
+        if not _MARKER_RE.search(content):
+            fails.append("missing/malformed project-init:hard-rules v1 marker")
+        if "Co-Authored-By:" not in content:
+            fails.append('missing "Co-Authored-By:" attribution')
+        if "<Model Name>" in content:
+            fails.append('unresolved "<Model Name>" placeholder')
+        if "## Commit Attribution" not in content:
+            fails.append('missing "## Commit Attribution" section')
 
     in_code = False
     for i, line in enumerate(lines, 1):
@@ -573,7 +600,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
             if not v.evidence or v.evidence.path.replace("\\", "/").startswith(pkg_prefix)
         }
 
-    winners, trimmed = _trim_to_budget(winners)
+    winners, trimmed = _trim_to_budget(winners, package=args.package)
     dropped += trimmed
 
     content = render_agents_md(
@@ -583,6 +610,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
         args.testing,
         args.ci,
         model=args.model or "<Model Name>",
+        package=args.package,
     )
     fails = lint_agents_md(content)
     # Preview (no --out, no --model): the unresolved attribution placeholder is
