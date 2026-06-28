@@ -182,7 +182,7 @@ def update_rolling_summary(
 
 
 def append_task_ledger(summary_path: Path, task_line: str) -> str:
-    """Appends a line to the Task Ledger section, creating it if needed."""
+    """Appends a line to the Task Ledger section, creating it if needed (FIFO order)."""
     summary_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Read existing content
@@ -195,45 +195,34 @@ def append_task_ledger(summary_path: Path, task_line: str) -> str:
 
     # Check if Task Ledger section exists
     if "## Task Ledger" in content:
-        # Append after the heading
         lines = content.split("\n")
-        output = []
-        ledger_found = False
-        for i, line in enumerate(lines):
-            output.append(line)
-            if line.strip() == "## Task Ledger" and not ledger_found:
-                ledger_found = True
-                # Find where to insert (after the heading, but before next heading or end)
-                insert_at = i + 1
-                # Skip blank lines after heading
-                while insert_at < len(lines) and lines[insert_at].strip() == "":
-                    output.append(lines[insert_at])
-                    insert_at += 1
-                    i += 1
-
-        # Reconstruct to insert the new line
-        output = []
+        # Find the Task Ledger heading
         ledger_idx = -1
         for i, line in enumerate(lines):
             if line.strip() == "## Task Ledger":
                 ledger_idx = i
-            output.append(line)
+                break
 
         if ledger_idx >= 0:
-            # Find the position after the heading and any blank lines
+            # Find the last task entry (Task N: complete ...) in the ledger section
             insert_pos = ledger_idx + 1
-            while insert_pos < len(lines) and lines[insert_pos].strip() == "":
-                insert_pos += 1
+            last_task_idx = ledger_idx
 
-            # Check if next content is another heading (## or #)
-            if insert_pos < len(lines) and lines[insert_pos].startswith("#"):
-                # Insert before the heading
-                output.insert(insert_pos, task_line)
-            else:
-                # Insert after blank lines
-                output.insert(insert_pos, task_line)
+            for i in range(ledger_idx + 1, len(lines)):
+                # Stop at the next section heading
+                if lines[i].startswith("#"):
+                    break
+                # Track the last task entry line
+                if lines[i].strip().startswith("Task ") and ": complete" in lines[i]:
+                    last_task_idx = i
 
-        final_content = "\n".join(output)
+            # Insert after the last task entry, or after the heading if no entries exist
+            insert_pos = last_task_idx + 1
+
+            output = lines[:insert_pos] + [task_line] + lines[insert_pos:]
+            final_content = "\n".join(output)
+        else:
+            final_content = content
     else:
         # Create the section at the end
         if content and not content.endswith("\n"):
