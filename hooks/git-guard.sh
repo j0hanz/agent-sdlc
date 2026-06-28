@@ -21,34 +21,7 @@ extract_command() {
     printf '%s' "$json" | jq -r '.tool_input.command // empty' 2>/dev/null
     return
   fi
-  if [[ "$json" =~ \"command\"[[:space:]]*:[[:space:]]*\"((\\.|[^\"\\])*)\" ]]; then
-    local raw="${BASH_REMATCH[1]}"
-    # Single left-to-right pass so a doubled backslash (JSON \\) is consumed
-    # atomically and can never be misread as the start of a later \n/\t
-    # escape — four independent global substitutions (the previous
-    # approach) could misfire on a raw backslash immediately followed by a
-    # literal 'n' or 't', corrupting Windows-style paths like C:\new\... into
-    # a false-positive deny.
-    local out="" i=0 len=${#raw} c next
-    while ((i < len)); do
-      c="${raw:i:1}"
-      if [[ "$c" == '\' && $((i + 1)) -lt $len ]]; then
-        next="${raw:i+1:1}"
-        case "$next" in
-        '"') out+='"' ;;
-        n) out+=$'\n' ;;
-        t) out+=$'\t' ;;
-        '\') out+='\' ;;
-        *) out+="$c$next" ;;
-        esac
-        ((i += 2))
-      else
-        out+="$c"
-        ((i += 1))
-      fi
-    done
-    printf '%s' "$out"
-  fi
+  node -e 'try { console.log(JSON.parse(process.argv[1]).tool_input.command); } catch (e) {}' "$json" 2>/dev/null
 }
 
 command=$(extract_command "$input") || command=""

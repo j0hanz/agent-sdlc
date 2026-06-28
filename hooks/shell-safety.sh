@@ -44,43 +44,14 @@ input=$(cat)
 
 extract_command() {
   # extract_command <json> — pulls .tool_input.command out of the PreToolUse
-  # payload. Prefers jq; falls back to a bash-only regex extractor so a
-  # missing jq degrades to best-effort parsing instead of disabling the
-  # guard outright (an empty result here exits 0 further down, same as if
-  # the command were genuinely absent).
+  # payload. Prefers jq; falls back to a Node.js one-liner since Node is a
+  # guaranteed prerequisite for this plugin environment.
   local json="$1"
   if command -v jq >/dev/null 2>&1; then
     printf '%s' "$json" | jq -r '.tool_input.command // empty' 2>/dev/null
     return
   fi
-  if [[ "$json" =~ \"command\"[[:space:]]*:[[:space:]]*\"((\\.|[^\"\\])*)\" ]]; then
-    local raw="${BASH_REMATCH[1]}"
-    # Single left-to-right pass so a doubled backslash (JSON \\) is consumed
-    # atomically and can never be misread as the start of a later \n/\t
-    # escape — four independent global substitutions (the previous
-    # approach) could misfire on a raw backslash immediately followed by a
-    # literal 'n' or 't', corrupting Windows-style paths like C:\new\... into
-    # a false-positive deny.
-    local out="" i=0 len=${#raw} c next
-    while ((i < len)); do
-      c="${raw:i:1}"
-      if [[ "$c" == '\' && $((i + 1)) -lt $len ]]; then
-        next="${raw:i+1:1}"
-        case "$next" in
-        '"') out+='"' ;;
-        n) out+=$'\n' ;;
-        t) out+=$'\t' ;;
-        '\') out+='\' ;;
-        *) out+="$c$next" ;;
-        esac
-        ((i += 2))
-      else
-        out+="$c"
-        ((i += 1))
-      fi
-    done
-    printf '%s' "$out"
-  fi
+  node -e 'try { console.log(JSON.parse(process.argv[1]).tool_input.command); } catch (e) {}' "$json" 2>/dev/null
 }
 
 command=$(extract_command "$input") || command=""
