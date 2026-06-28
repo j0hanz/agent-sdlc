@@ -116,6 +116,7 @@ Blocked/escalated tasks: [list, or "none"]
 - A blocked or skipped task wasn't surfaced to the user — it just silently didn't happen. **If any lane reaches `BLOCKED` or `NEEDS_CONTEXT`, surface it to the user before continuing. Never advance the next cluster while a blocked lane is unresolved.**
 - An old agent was reused across tasks, carrying stale memory into a new task's context.
 - Tasks with `Depends on: none` and disjoint files were still run one-at-a-time instead of clustered — wasted wall-clock time with no correctness benefit.
+- The ledger in `.claude/rolling_summary.md` is append-only and never rewritten in place. On resume, always verify that the ledger's last recorded commit hash (parsed from the ledger line format) is reachable in `git log` (e.g., `git log --oneline <hash>^..HEAD` should succeed). If the ledger's hash is not reachable in git history, surface this as an explicit discrepancy to the user — never silently resolve by picking one source. **Extraction rule (canonical)**: Given the ledger line format `"Task N: complete (commits <base7>..<head7>, review clean)"`, the head hash is extracted as the second 7-character token between the literal `(commits ` and literal `..` — split the parenthetical content (between `(` and `)`) on `..`, take the second segment, and strip any trailing `, review clean` suffix.
 
 ## Worked Example
 
