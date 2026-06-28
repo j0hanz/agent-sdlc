@@ -66,19 +66,24 @@ Phase 3  CONSENT + WRITE
 ## Phase 2: Check and Preview
 
 1. **Combine:** Put all facts from Phase 1 into one file called `claims.json`.
-2. **Test:** Run `init.py generate --claims claims.json --commit <c> --maturity <m> --testing <t> --ci <ci>` (Do not use `--out`. Just print it to the screen).
-3. **Filter:** The script will keep only proven facts and drop bad ones.
-4. **Show the User:** Show the user the draft of `AGENTS.md` and the list of dropped facts. If there is an error, fix the inputs or rerun the bad agent. Do not save yet.
+2. **Test Root:** Run `init.py generate --claims claims.json --commit <c> --maturity <m> --testing <t> --ci <ci>` (Do not use `--out`. Just print it to the screen).
+3. **Test Packages (Monorepos):** If the prescan results show `is_monorepo == true`, run the generate preview for each package folder `<pkg>` in `packages`:
+   `init.py generate --claims claims.json --package <pkg> --commit <c> --maturity <m> --testing <t> --ci <ci>`
+4. **Filter:** The script will keep only proven facts and drop bad ones.
+5. **Show the User:** Show the user the draft of `AGENTS.md` (root and packages) and the list of dropped facts. If there is an error, fix the inputs or rerun the bad agent. Do not save yet.
 
 ---
 
 ## Phase 3: Ask and Save
 
-1. **Protect Old Files:** If `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md` already exist, show them to the user, make a backup (`.bak`), and **ask for explicit permission** before replacing them.
-2. **Save:** Run `init.py generate --claims claims.json ... --model "<active model name>" --out AGENTS.md`.
-3. **Link Files:** Run `init.py wire AGENTS.md CLAUDE.md GEMINI.md`.
-4. **Test the File:** Run `init.py lint AGENTS.md`. It must pass.
-5. **Report to User:** Tell the user what files were saved, how many lines they have, and remind them of the facts that were dropped.
+1. **Protect Old Files:** If root `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md` already exist, or if any package-level `<pkg>/AGENTS.md` exists, show them to the user, make a backup (`.bak`), and **ask for explicit permission** before replacing them.
+2. **Save Root:** Run `init.py generate --claims claims.json ... --model "<active model name>" --out AGENTS.md`.
+3. **Save Packages (Monorepos):** For each package folder `<pkg>`, run:
+   `init.py generate --claims claims.json --package <pkg> --model "<active model name>" --out <pkg>/AGENTS.md`.
+4. **Link Files:** Run `init.py wire AGENTS.md CLAUDE.md GEMINI.md` (root level redirect stubs only).
+5. **Test Root File:** Run `init.py lint AGENTS.md`. It must pass.
+6. **Test Package Files (Monorepos):** For each package folder `<pkg>`, run `init.py lint <pkg>/AGENTS.md`. They must pass.
+7. **Report to User:** Tell the user what files were saved, how many lines they have, and remind them of the facts that were dropped.
 
 ---
 
