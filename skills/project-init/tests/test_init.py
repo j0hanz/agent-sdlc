@@ -181,8 +181,8 @@ def test_stack_key_renders_after_purpose(tmp_path: Path):
     out = init.render_agents_md(
         winners, "minimal", "development", "always", "local-only"
     )
-    assert "stack: Go 1.22" in out
-    assert out.index("stack:") < out.index("## Hard Rules")
+    assert "- Go 1.22" in out
+    assert out.index("## Project") < out.index("- Go 1.22") < out.index("## Hard Rules")
 
 
 def test_prescan_skips_vendor_and_counts_packages(tmp_path: Path):
@@ -300,9 +300,9 @@ def test_cli_package_filtering(tmp_path: Path, monkeypatch):
     )
     assert init._cmd_generate(args) == 0
     raw = (tmp_path / "AGENTS.md").read_text()
-    assert "pm: pnpm" in raw
-    assert "build: pnpm build" in raw
-    assert "test: vitest" not in raw
+    assert "- pnpm" in raw
+    assert "- `pnpm build`" in raw
+    assert "vitest" not in raw
 
 
 def test_render_package_scoped_agents_md(tmp_path: Path):
@@ -321,8 +321,8 @@ def test_render_package_scoped_agents_md(tmp_path: Path):
     )
 
     assert "# Agent Instructions: packages/api" in out
-    assert "purpose: test pkg purpose" in out
-    assert "stack: Go 1.22" in out
+    assert "- test pkg purpose" in out
+    assert "- Go 1.22" in out
     assert "## Hard Rules" not in out
     assert "project-init:hard-rules" not in out
     assert "project-init:package-scoped packages/api" in out
@@ -353,12 +353,11 @@ def test_verify_claim_path_handling(tmp_path: Path):
 def test_skip_value_omits_hard_rule_line_not_ci(tmp_path: Path):
     """`skip` drops the line from AGENTS.md and its marker; ci is never skippable."""
     out = init.render_agents_md({}, "skip", "skip", "skip", "github-actions")
-    assert "commit:" not in out
-    assert "maturity:" not in out
-    assert "testing:" not in out
-    assert "ci: automated CI running on GitHub Actions" in out
+    assert "- Automated CI runs on GitHub Actions" in out
     assert "commit=skip maturity=skip testing=skip ci=github-actions" in out
     assert "## Hard Rules" in out  # ci line keeps the section non-empty
+    hard_rules_body = out.split("## Hard Rules", 1)[1].split("<!--", 1)[0]
+    assert hard_rules_body.count("- ") == 1  # only the CI bullet remains, commit/maturity/testing all skipped
 
 
 def test_skip_sections_filters_winners_and_records_marker(tmp_path: Path, monkeypatch):
@@ -405,7 +404,7 @@ def test_skip_sections_filters_winners_and_records_marker(tmp_path: Path, monkey
     raw = (tmp_path / "AGENTS.md").read_text()
     assert "## Key Conventions" not in raw
     assert "## Dependency Locations" not in raw
-    assert "pm: pnpm" in raw  # untouched section still renders
+    assert "- pnpm" in raw  # untouched section still renders
     assert "sections=conventions,dependencies" in raw
 
 
@@ -434,6 +433,68 @@ def test_skip_sections_rejects_unknown_name(tmp_path: Path, monkeypatch, capsys)
     )
     assert init._cmd_generate(args) == 1
     assert "unknown name(s): bogus" in capsys.readouterr().err
+
+
+def test_bullet_lines_backtick_keeps_trailing_parenthetical_outside():
+    """A value like 'npm run check (...)' backticks only the command, not the explanation."""
+    out = init._bullet_lines(
+        ["npm run check (build + type-check + eslint + prettier + knip + test)"],
+        backtick=True,
+    )
+    assert out == [
+        "- `npm run check` (build + type-check + eslint + prettier + knip + test)"
+    ]
+
+
+def test_bullet_lines_backtick_without_parenthetical():
+    assert init._bullet_lines(["npm install"], backtick=True) == ["- `npm install`"]
+
+
+def test_bullet_lines_split_explodes_conv_fact_separator():
+    """conv.* values pack atomic facts with ' || '; each becomes its own bullet, untouched."""
+    out = init._bullet_lines(
+        ["Throw `FsError` carrying a `Problem` || Never throw raw `Error`"],
+        split=True,
+    )
+    assert out == [
+        "- Throw `FsError` carrying a `Problem`",
+        "- Never throw raw `Error`",
+    ]
+
+
+def test_render_key_conventions_explodes_packed_value(tmp_path: Path):
+    """End-to-end: a single conv.* claim with a packed value renders as multiple bullets."""
+    (tmp_path / "x.txt").write_text("y\n")
+    winners, _ = init.merge_claims(
+        [
+            _claim(
+                "conv.errors",
+                "Throw `FsError` carrying a `Problem` || Never throw raw `Error`",
+                "x.txt",
+            )
+        ],
+        tmp_path,
+    )
+    out = init.render_agents_md(winners, "skip", "skip", "skip", "local-only")
+    assert "- Throw `FsError` carrying a `Problem`" in out
+    assert "- Never throw raw `Error`" in out
+
+
+def test_render_package_manager_splits_pm_and_common_commands(tmp_path: Path):
+    """pm renders as its own bullet; cmd.* nests under a nested Common Commands subsection."""
+    (tmp_path / "package.json").write_text('{"scripts":{"build":"tsc"}}\n')
+    winners, _ = init.merge_claims(
+        [
+            _claim("pm", "npm", "package.json", match="scripts"),
+            _claim("cmd.build", "npm run build", "package.json", match="scripts"),
+        ],
+        tmp_path,
+    )
+    out = init.render_agents_md(winners, "skip", "skip", "skip", "local-only")
+    assert "- npm" in out
+    assert "### Common Commands" in out
+    assert "- `npm run build`" in out
+    assert out.index("## Package Manager") < out.index("### Common Commands")
 
 
 def test_marker_regex_accepts_old_files_without_sections_field():

@@ -14,7 +14,7 @@ This is the OUTPUT-SCHEMA contract for Phase 1 discovery lanes. Each lane return
 ```
 
 - **key** — must be a fixed key or a key under an allowed prefix (below). Anything else is dropped.
-- **value** — the fact, one line. Sanitized on write (newlines/control chars stripped), capped at 200 chars.
+- **value** — the fact, one physical line. Sanitized on write (newlines/control chars stripped), capped at 320 chars. `conv.*` values may pack several atomic facts (see "`conv.*` atomic facts" below); every other key is always a single fact.
 - **evidence.path** — repo-relative path that PROVES the claim. Must resolve to a readable text file inside the repo root (symlinks resolved). Out-of-repo paths are rejected.
 - **evidence.match** — a literal substring that must appear in the cited file. **Required** for `pm`, `cmd.*`, and `file.*` (command/version keys) — a claim of a runnable command with no `match` is dropped as unverifiable. Optional for `dep.*` and `conv.*`.
 - **confidence** — 0–1; tiebreaker only. Evidence tier (lockfile > manifest/config > other > prose) wins first.
@@ -31,7 +31,24 @@ The command buckets (`cmd.*`, `file.*`) are a **closed task set** — an unknown
 | `cmd.<task>`  | Package Manager      | task ∈ `{install, build, dev, start, run, test, lint, format, typecheck, validate, release}` — **match required** |
 | `file.<task>` | File-Scoped Commands | task ∈ `{lint, test, typecheck, format}`, file-targeted (e.g. `eslint path/to/file.js`) — **match required**      |
 | `dep.<name>`  | Dependency Locations | where deps live, e.g. `dep.node_modules` → `node_modules/` — **open suffix, max 6**                               |
-| `conv.<name>` | Key Conventions      | a real, verifiable convention, e.g. `conv.imports` → `ESM only — no require()` — **open suffix, max 7**           |
+| `conv.<name>` | Key Conventions      | a real, verifiable convention; may pack several atomic facts (see below) — **open suffix, max 7 keys**            |
+
+### `conv.*` atomic facts
+
+A `conv.*` value may hold more than one atomic fact, joined by the literal token `||`. The renderer splits each `conv.*` value on that token and emits one bullet per fact. Embed backticks around real identifiers/paths directly in the fact text — the renderer does **not** add them for `conv.*` (unlike `pm`/`cmd.*`/`dep.*`, where the renderer backticks the whole value itself, so don't double up there).
+
+A claim like:
+
+```json
+"value": "Throw `FsError` carrying a `Problem` (`src/core/errors.ts`) || Never throw raw `Error`"
+```
+
+renders as:
+
+- Throw `FsError` carrying a `Problem` (`src/core/errors.ts`)
+- Never throw raw `Error`
+
+Each piece still counts toward the 320-char value cap as one string — keep a topic's whole packed value under that, not 320 chars per fact.
 
 **Aliases** (normalized automatically): `tests`/`unit`→`test`, `tsc`/`tc`/`types`→`typecheck`, `fmt`→`format`, `serve`→`start`, `watch`→`dev`, `compile`→`build`, `check`→`validate`, `setup`→`install`.
 
@@ -50,6 +67,6 @@ When two lanes claim the same key, the higher tier wins (then higher confidence)
 
 ## Lane guidance
 
-- Keep claims minimal and high-signal — the file budget is `<100` lines. Prefer 3–7 conventions, not 20.
+- Keep claims minimal and high-signal — the file budget is `<100` lines. Prefer 3–7 `conv.*` topics, not 20; pack 1-3 atomic facts per topic with `||`, not one giant run-on sentence.
 - Never invent a command. If you can't cite it with a literal `match`, don't claim it.
 - Commands are TEXT. Do not run them; you have no Bash.

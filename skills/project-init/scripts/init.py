@@ -28,6 +28,8 @@ from typing import IO, Any
 
 MARKER_VERSION = "v1"
 MAX_LINES = 100
+VALUE_MAX_CHARS = 320
+CONV_FACT_SEP = " || "  # conv.* values may pack atomic facts; split on this at render time
 MATCH_FILE_SIZE_CAP = 5 * 1024 * 1024  # don't scan blobs/binaries for a match string
 PRESCAN_MAX_DEPTH = 2
 PRESCAN_SKIP_DIRS = {
@@ -65,23 +67,23 @@ MANIFEST_FILES = {
 # rather than mapping to text, so it isn't a key in these dicts.
 HARD_RULES_TEXT: dict[str, dict[str, str]] = {
     "commit": {
-        "strict": "Conventional Commits format (`type(scope): subject`) required. See the `pr-workflow` skill",
-        "relaxed": "free-form commit messages allowed. See the `pr-workflow` skill",
-        "minimal": "no enforced message format",
+        "strict": "Conventional Commits format (`type(scope): subject`) required (see `pr-workflow` skill)",
+        "relaxed": "Free-form commit messages allowed (see `pr-workflow` skill)",
+        "minimal": "No enforced message format",
     },
     "maturity": {
-        "production": "stability first: avoid breaking changes, prefer additive ones, and flag any breaking change before you ship it",
-        "development": "breaking changes are fine. Never add fallback/legacy-compat shims, rewrite to the better approach directly",
+        "production": "Stability first: avoid breaking changes, prefer additive ones, and flag any breaking change before you ship it",
+        "development": "Breaking changes are fine. Never add fallback/legacy-compat shims; rewrite to the better approach directly",
     },
     "testing": {
-        "always": "every change must have passing tests before being called done",
-        "touched-files": "test/typecheck files you changed; don't require full-suite runs",
-        "not-enforced": "no automatic testing requirement, rely on existing CI",
+        "always": "Every change must have passing tests before being called done",
+        "touched-files": "Test/typecheck only files you changed; do not require full-suite runs",
+        "not-enforced": "No automatic testing requirement; rely on existing CI",
     },
     "ci": {
-        "github-actions": "automated CI running on GitHub Actions",
-        "gitlab-ci": "automated CI running on GitLab CI",
-        "local-only": "no automated CI, local-only test execution and deployment",
+        "github-actions": "Automated CI runs on GitHub Actions",
+        "gitlab-ci": "Automated CI runs on GitLab CI",
+        "local-only": "No automated CI; local-only test execution and deployment",
     },
 }
 
@@ -256,7 +258,7 @@ def _sanitize_value(value: str) -> str:
     or `key:` injection from untrusted repo content."""
     value = str(value).replace("\r", " ").replace("\n", " ")
     value = _CONTROL_CHARS_RE.sub("", value)
-    return value.strip()[:200]
+    return value.strip()[:VALUE_MAX_CHARS]
 
 
 @dataclass
@@ -369,6 +371,29 @@ def merge_claims(
     return winners, dropped
 
 
+_TRAILING_PAREN_RE = re.compile(r"^(.*\S)(\s+\(.+\))$")
+
+
+def _bullet_lines(values: list[str], *, backtick: bool = False, split: bool = False) -> list[str]:
+    """Render claim values as `- ` bullets.
+
+    backtick=True wraps each value in backticks, keeping a trailing
+    " (explanation)" suffix outside them (e.g. `npm run check` (...)).
+    split=True explodes a value on CONV_FACT_SEP into one bullet per atomic
+    fact (conv.* only) — facts must already carry their own backticks.
+    """
+    lines = []
+    for value in values:
+        facts = value.split(CONV_FACT_SEP) if split else [value]
+        for fact in facts:
+            fact = fact.strip()
+            if backtick:
+                m = _TRAILING_PAREN_RE.match(fact)
+                fact = f"`{m.group(1)}`{m.group(2)}" if m else f"`{fact}`"
+            lines.append(f"- {fact}")
+    return lines
+
+
 def render_agents_md(
     winners: dict[str, Claim],
     commit: str,
@@ -378,7 +403,7 @@ def render_agents_md(
     package: str | None = None,
     skip_sections: frozenset[str] = frozenset(),
 ) -> str:
-    """Assemble the markdown-kv AGENTS.md from verified winners + survey answers."""
+    """Assemble the bulleted AGENTS.md from verified winners + survey answers."""
     purpose = (
         winners["purpose"].value
         if "purpose" in winners
@@ -387,19 +412,17 @@ def render_agents_md(
 
     pkg_normalized = package.strip().replace("\\", "/").rstrip("/") if package else None
 
-    if pkg_normalized:
-        lines = [f"# Agent Instructions: {pkg_normalized}", "", f"purpose: {purpose}"]
-    else:
-        lines = ["# Agent Instructions", "", f"purpose: {purpose}"]
+    header = f"# Agent Instructions: {pkg_normalized}" if pkg_normalized else "# Agent Instructions"
+    lines = [header, ""]
 
-    if "stack" in winners:
-        lines.append(f"stack: {winners['stack'].value}")
+    project_values = [purpose] + ([winners["stack"].value] if "stack" in winners else [])
+    lines += ["## Project", "", *_bullet_lines(project_values)]
 
     if not pkg_normalized:
         # "skip" omits the line entirely rather than rendering placeholder text —
         # ci is exempt since it's file-detected, never a user choice to skip.
-        hard_rule_lines = [
-            f"{name}: {HARD_RULES_TEXT[name][value]}"
+        hard_rule_values = [
+            HARD_RULES_TEXT[name][value]
             for name, value in (
                 ("commit", commit),
                 ("maturity", maturity),
@@ -407,22 +430,28 @@ def render_agents_md(
             )
             if value != "skip"
         ]
-        hard_rule_lines.append(f"ci: {HARD_RULES_TEXT['ci'][ci]}")
-        lines += ["", "## Hard Rules", "", *hard_rule_lines]
+        hard_rule_values.append(HARD_RULES_TEXT["ci"][ci])
+        lines += ["", "## Hard Rules", "", *_bullet_lines(hard_rule_values)]
 
-    def section(title: str, keys: list[str]) -> None:
-        rows = [(k, winners[k].value) for k in keys if k in winners]
-        if not rows:
-            return
-        lines.extend(["", f"## {title}", ""])
-        for k, v in rows:
-            label = k.split(".", 1)[1] if "." in k else k
-            lines.append(f"{label}: {v}")
+    cmd_keys = sorted(k for k in winners if k.startswith("cmd."))
+    if "pm" in winners or cmd_keys:
+        body = _bullet_lines([winners["pm"].value]) if "pm" in winners else []
+        if cmd_keys:
+            if body:
+                body.append("")
+            cmd_values = [winners[k].value for k in cmd_keys]
+            body += ["### Common Commands", "", *_bullet_lines(cmd_values, backtick=True)]
+        lines += ["", "## Package Manager", "", *body]
 
-    cmd_keys = ["pm"] + sorted(k for k in winners if k.startswith("cmd."))
-    section("Package Manager", cmd_keys)
-    section("Dependency Locations", sorted(k for k in winners if k.startswith("dep.")))
-    section("Key Conventions", sorted(k for k in winners if k.startswith("conv.")))
+    dep_keys = sorted(k for k in winners if k.startswith("dep."))
+    if dep_keys:
+        dep_values = [winners[k].value for k in dep_keys]
+        lines += ["", "## Dependency Locations", "", *_bullet_lines(dep_values, backtick=True)]
+
+    conv_keys = sorted(k for k in winners if k.startswith("conv."))
+    if conv_keys:
+        conv_values = [winners[k].value for k in conv_keys]
+        lines += ["", "## Key Conventions", "", *_bullet_lines(conv_values, split=True)]
 
     file_keys = sorted(k for k in winners if k.startswith("file."))
     if file_keys:

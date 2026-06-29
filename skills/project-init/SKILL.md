@@ -12,7 +12,7 @@ allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill(multi-age
 
 This skill bootstraps a repository's agent instructions via a blind parallel discovery fan-out converging into a deterministic generator.
 
-- **Goal:** A lean, high-signal `AGENTS.md` (<100 lines, markdown-kv `key: value`, never prose) + one-line stub `CLAUDE.md`/`GEMINI.md` that redirect to it.
+- **Goal:** A lean, high-signal `AGENTS.md` (<100 lines, sectioned bullet lists — no `key:` labels, no filler prose) + one-line stub `CLAUDE.md`/`GEMINI.md` that redirect to it.
 - **Method:** Blind parallel discovery (read-only Researcher fan-out, evidence-cited claims) → ONE deterministic generator (`scripts/init.py`) that verifies, merges, and writes.
 - **Invariant:** Discovered commands are transcribed as TEXT, never executed. `init.py` is the SOLE writer.
 
