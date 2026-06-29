@@ -12,8 +12,8 @@ The option prose below must stay byte-identical with `HARD_RULES_TEXT` in `scrip
 
 Header: `Commit policy`
 
-- Strict: Conventional Commits format (`type(scope): subject`) required → `commit=strict`
-- Relaxed: free-form commit messages allowed → `commit=relaxed`
+- Strict: Conventional Commits format (`type(scope): subject`) required. See the `pr-workflow` skill → `commit=strict`
+- Relaxed: free-form commit messages allowed. See the `pr-workflow` skill → `commit=relaxed`
 - Minimal: no enforced message format → `commit=minimal`
 - Don't include: omit the commit-policy line from AGENTS.md → `commit=skip`
 
@@ -23,7 +23,7 @@ Message construction, atomicity, and issue refs belong to the `pr-workflow` skil
 
 Header: `Project maturity`
 
-- Production: stability first. Avoid breaking changes, prefer additive changes, flag breaking changes explicitly before making them → `maturity=production`
+- Production: stability first: avoid breaking changes, prefer additive ones, and flag any breaking change before you ship it → `maturity=production`
 - Development: breaking changes are fine. Never add fallback/legacy-compat shims, rewrite to the better approach directly → `maturity=development`
 - Don't include: omit the maturity line from AGENTS.md → `maturity=skip`
 

@@ -65,12 +65,12 @@ MANIFEST_FILES = {
 # rather than mapping to text, so it isn't a key in these dicts.
 HARD_RULES_TEXT: dict[str, dict[str, str]] = {
     "commit": {
-        "strict": "Conventional Commits format (`type(scope): subject`) required — see the `pr-workflow` skill",
-        "relaxed": "free-form commit messages allowed — see the `pr-workflow` skill",
+        "strict": "Conventional Commits format (`type(scope): subject`) required. See the `pr-workflow` skill",
+        "relaxed": "free-form commit messages allowed. See the `pr-workflow` skill",
         "minimal": "no enforced message format",
     },
     "maturity": {
-        "production": "stability first. Avoid breaking changes, prefer additive changes, flag breaking changes explicitly before making them",
+        "production": "stability first: avoid breaking changes, prefer additive ones, and flag any breaking change before you ship it",
         "development": "breaking changes are fine. Never add fallback/legacy-compat shims, rewrite to the better approach directly",
     },
     "testing": {
@@ -382,7 +382,7 @@ def render_agents_md(
     purpose = (
         winners["purpose"].value
         if "purpose" in winners
-        else "<one sentence — what this repo does>"
+        else "<one sentence describing what this repo does>"
     )
 
     pkg_normalized = package.strip().replace("\\", "/").rstrip("/") if package else None
