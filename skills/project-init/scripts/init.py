@@ -58,6 +58,9 @@ MANIFEST_FILES = {
 }
 
 # ── Hard Rules text (must stay byte-identical with references/hard-rules.md) ─
+# "skip" is a valid value for commit/maturity/testing (never for ci, which is
+# file-detected, not surveyed) — it omits that line from AGENTS.md entirely
+# rather than mapping to text, so it isn't a key in these dicts.
 HARD_RULES_TEXT: dict[str, dict[str, str]] = {
     "commit": {
         "strict": "Conventional Commits format (`type(scope): subject`) required — see the `pr-workflow` skill",
@@ -119,6 +122,15 @@ CMD_ALIASES = {
 }
 OPEN_PREFIXES = ("dep.", "conv.")
 CAPS = {"conv.": 7, "dep.": 6}  # max lines per open bucket — protects the budget
+
+# User-facing names for the "optional sections to omit" survey question ->
+# the key prefix each name controls. Lets a user say "never show me a
+# Dependency Locations section" regardless of what discovery finds.
+SECTION_FLAGS: dict[str, str] = {
+    "conventions": "conv.",
+    "dependencies": "dep.",
+    "file-commands": "file.",
+}
 _SUFFIX_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,31}$")
 
 
@@ -357,6 +369,7 @@ def render_agents_md(
     testing: str,
     ci: str,
     package: str | None = None,
+    skip_sections: frozenset[str] = frozenset(),
 ) -> str:
     """Assemble the markdown-kv AGENTS.md from verified winners + survey answers."""
     purpose = (
@@ -381,16 +394,26 @@ def render_agents_md(
             f"<!-- project-init:package-scoped {pkg_normalized} -->",
         ]
     else:
+        # "skip" omits the line entirely rather than rendering placeholder text —
+        # ci is exempt since it's file-detected, never a user choice to skip.
+        hard_rule_lines = [
+            f"{name}: {HARD_RULES_TEXT[name][value]}"
+            for name, value in (
+                ("commit", commit),
+                ("maturity", maturity),
+                ("testing", testing),
+            )
+            if value != "skip"
+        ]
+        hard_rule_lines.append(f"ci: {HARD_RULES_TEXT['ci'][ci]}")
+        sections_csv = ",".join(sorted(skip_sections)) if skip_sections else "none"
         lines += [
             "",
             "## Hard Rules",
             "",
-            f"commit: {HARD_RULES_TEXT['commit'][commit]}",
-            f"maturity: {HARD_RULES_TEXT['maturity'][maturity]}",
-            f"testing: {HARD_RULES_TEXT['testing'][testing]}",
-            f"ci: {HARD_RULES_TEXT['ci'][ci]}",
+            *hard_rule_lines,
             "",
-            f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} -->",
+            f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} sections={sections_csv} -->",
         ]
 
     def section(title: str, keys: list[str]) -> None:
@@ -419,7 +442,9 @@ def render_agents_md(
 
 
 def _trim_to_budget(
-    winners: dict[str, Claim], package: str | None = None
+    winners: dict[str, Claim],
+    package: str | None = None,
+    skip_sections: frozenset[str] = frozenset(),
 ) -> tuple[dict[str, Claim], list[str]]:
     """Drop lowest-priority non-required keys until the rendered file fits MAX_LINES.
 
@@ -437,6 +462,7 @@ def _trim_to_budget(
             "not-enforced",
             "local-only",
             package=package,
+            skip_sections=skip_sections,
         )
         if len(body.splitlines()) <= MAX_LINES - 1:
             return kept, dropped
@@ -450,7 +476,8 @@ def _trim_to_budget(
 
 # ── Linter ───────────────────────────────────────────────────────────────────
 _MARKER_RE = re.compile(
-    r"<!--\s*project-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+\s+ci=\S+\s*-->"
+    r"<!--\s*project-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+\s+ci=\S+"
+    r"(?:\s+sections=\S+)?\s*-->"
 )
 _TODO_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
 _FILLER_RE = re.compile(
@@ -596,9 +623,26 @@ def _cmd_generate(args: argparse.Namespace) -> int:
         safe_print(f"FAIL: could not load claims: {e}", file=sys.stderr)
         return 1
 
+    skip_sections: frozenset[str] = frozenset()
+    if args.skip_sections:
+        requested = {s.strip() for s in args.skip_sections.split(",") if s.strip()}
+        unknown = requested - SECTION_FLAGS.keys()
+        if unknown:
+            safe_print(
+                f"FAIL: --skip-sections has unknown name(s): {', '.join(sorted(unknown))} "
+                f"(valid: {', '.join(sorted(SECTION_FLAGS))})",
+                file=sys.stderr,
+            )
+            return 1
+        skip_sections = frozenset(requested)
+
     winners, dropped = merge_claims(raws, root)
     if args.purpose:
         winners["purpose"] = Claim("purpose", _sanitize_value(args.purpose), 4, 1.0)
+
+    for name in skip_sections:
+        prefix = SECTION_FLAGS[name]
+        winners = {k: v for k, v in winners.items() if not k.startswith(prefix)}
 
     if args.package:
         pkg_prefix = args.package.strip().replace("\\", "/").rstrip("/") + "/"
@@ -609,7 +653,9 @@ def _cmd_generate(args: argparse.Namespace) -> int:
             or v.evidence.path.replace("\\", "/").startswith(pkg_prefix)
         }
 
-    winners, trimmed = _trim_to_budget(winners, package=args.package)
+    winners, trimmed = _trim_to_budget(
+        winners, package=args.package, skip_sections=skip_sections
+    )
     dropped += trimmed
 
     content = render_agents_md(
@@ -619,6 +665,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
         args.testing,
         args.ci,
         package=args.package,
+        skip_sections=skip_sections,
     )
     fails = lint_agents_md(content)
 
@@ -675,13 +722,19 @@ def _build_parser() -> argparse.ArgumentParser:
     gen = sub.add_parser("generate", help="Verify+merge claims into AGENTS.md.")
     gen.add_argument("--claims", type=Path, required=True, help="JSON array of claims.")
     gen.add_argument(
-        "--commit", required=True, choices=sorted(HARD_RULES_TEXT["commit"])
+        "--commit",
+        required=True,
+        choices=sorted(HARD_RULES_TEXT["commit"]) + ["skip"],
     )
     gen.add_argument(
-        "--maturity", required=True, choices=sorted(HARD_RULES_TEXT["maturity"])
+        "--maturity",
+        required=True,
+        choices=sorted(HARD_RULES_TEXT["maturity"]) + ["skip"],
     )
     gen.add_argument(
-        "--testing", required=True, choices=sorted(HARD_RULES_TEXT["testing"])
+        "--testing",
+        required=True,
+        choices=sorted(HARD_RULES_TEXT["testing"]) + ["skip"],
     )
     gen.add_argument("--ci", required=True, choices=sorted(HARD_RULES_TEXT["ci"]))
     gen.add_argument("--purpose", default=None)
@@ -689,6 +742,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--package",
         default=None,
         help="Relative path to package directory (e.g. 'packages/api').",
+    )
+    gen.add_argument(
+        "--skip-sections",
+        default="",
+        help=(
+            "Comma-separated optional sections to omit regardless of what discovery "
+            f"finds. Valid names: {', '.join(sorted(SECTION_FLAGS))}."
+        ),
     )
     gen.add_argument("--out", type=Path, default=None)
 

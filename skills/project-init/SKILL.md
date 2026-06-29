@@ -15,7 +15,7 @@ allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill, Read, Gr
 ```
 Phase 0  PRESCAN + SURVEY
   -- valid project-init marker found --> reuse encoded answers (offer --force re-survey) --> Phase 1
-  -- no marker -----------------------> AskUserQuestion (3 Qs) ------------------------------> Phase 1
+  -- no marker -----------------------> AskUserQuestion (4 Qs) ------------------------------> Phase 1
   -- no manifest (trivial repo) ------> single serial discovery lane (skip fan-out) ---------> Phase 2
 
 Phase 1  DISCOVERY FAN-OUT  (blind, read-only, claims as JSON)
@@ -36,9 +36,9 @@ Phase 3  CONSENT + WRITE
 ## Phase 0: Check and Ask
 
 1. **Scan:** Run `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py" prescan .` to get project details. (Below, `init.py` is shorthand for this same `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py"` invocation.)
-2. **Check for Old Rules:** Look for `AGENTS.md`. If it has the `<!-- project-init:hard-rules... -->` tag, use those answers. Do not ask the user again unless they force it.
-3. **Ask the User (if no old rules):** Run `AskUserQuestion` exactly once. Ask the 3 questions from `references/hard-rules.md` (commit policy, project maturity, testing rigor). Use the exact words provided. Do not add an "Other" choice. Stop if the user cancels.
-4. **Find CI Automatically:** Do not ask the user about CI. Look for folders: `.github/workflows/` means `github-actions`, `.gitlab-ci.yml` means `gitlab-ci`. Otherwise, use `local-only`.
+2. **Check for Old Rules:** Look for `AGENTS.md`. If it has the `<!-- project-init:hard-rules... -->` tag, use those answers (`commit=`, `maturity=`, `testing=`, `ci=`, and `sections=` if present — a marker written before `sections=` existed has none, treat that as "include everything"). Do not ask the user again unless they force it.
+3. **Ask the User (if no old rules):** Run `AskUserQuestion` exactly once with all 4 questions from `references/hard-rules.md` (commit policy, project maturity, testing rigor, optional sections to omit — the last is multiSelect, 0–3 picks). Use the exact words provided, including the "Don't include" option on the first three. Do not add an extra "Other" choice (the tool already provides one). Stop if the user cancels.
+4. **Find CI Automatically:** Do not ask the user about CI. Look for folders: `.github/workflows/` means `github-actions`, `.gitlab-ci.yml` means `gitlab-ci`. Otherwise, use `local-only`. CI has no "Don't include" — it's never skippable.
 5. **Choose Path:** If the scan says `has_manifest == false`, read the project files yourself, skip Phase 1, and go straight to Phase 2. Otherwise, go to Phase 1.
 
 ---
@@ -66,9 +66,9 @@ Phase 3  CONSENT + WRITE
 ## Phase 2: Check and Preview
 
 1. **Combine:** Put all facts from Phase 1 into one file called `claims.json`.
-2. **Test Root:** Run `init.py generate --claims claims.json --commit <c> --maturity <m> --testing <t> --ci <ci>` (Do not use `--out`. Just print it to the screen).
+2. **Test Root:** Run `init.py generate --claims claims.json --commit <c> --maturity <m> --testing <t> --ci <ci> --skip-sections <s>` (Do not use `--out`. Just print it to the screen). Omit `--skip-sections` entirely if the user selected nothing.
 3. **Test Packages (Monorepos):** If the prescan results show `is_monorepo == true`, run the generate preview for each package folder `<pkg>` in `packages`:
-   `init.py generate --claims claims.json --package <pkg> --commit <c> --maturity <m> --testing <t> --ci <ci>`
+   `init.py generate --claims claims.json --package <pkg> --commit <c> --maturity <m> --testing <t> --ci <ci> --skip-sections <s>`
 4. **Filter:** The script will keep only proven facts and drop bad ones.
 5. **Show the User:** Show the user the draft of `AGENTS.md` (root and packages) and the list of dropped facts. If there is an error, fix the inputs or rerun the bad agent. Do not save yet.
 
@@ -77,9 +77,9 @@ Phase 3  CONSENT + WRITE
 ## Phase 3: Ask and Save
 
 1. **Protect Old Files:** If root `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md` already exist, or if any package-level `<pkg>/AGENTS.md` exists, show them to the user, make a backup (`.bak`), and **ask for explicit permission** before replacing them.
-2. **Save Root:** Run `init.py generate --claims claims.json ... --out AGENTS.md`.
+2. **Save Root:** Run `init.py generate --claims claims.json ... --skip-sections <s> --out AGENTS.md`.
 3. **Save Packages (Monorepos):** For each package folder `<pkg>`, run:
-   `init.py generate --claims claims.json --package <pkg> --out <pkg>/AGENTS.md`.
+   `init.py generate --claims claims.json --package <pkg> --skip-sections <s> --out <pkg>/AGENTS.md`.
 4. **Link Files:** Run `init.py wire AGENTS.md CLAUDE.md GEMINI.md` (root level redirect stubs only).
 5. **Test Root File:** Run `init.py lint AGENTS.md`. It must pass.
 6. **Test Package Files (Monorepos):** For each package folder `<pkg>`, run `init.py lint <pkg>/AGENTS.md`. They must pass.

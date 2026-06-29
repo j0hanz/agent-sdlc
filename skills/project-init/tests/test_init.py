@@ -350,6 +350,104 @@ def test_verify_claim_path_handling(tmp_path: Path):
     assert claim.evidence.path == "packages/api/package.json"
 
 
+def test_skip_value_omits_hard_rule_line_not_ci(tmp_path: Path):
+    """`skip` drops the line from AGENTS.md and its marker; ci is never skippable."""
+    out = init.render_agents_md({}, "skip", "skip", "skip", "github-actions")
+    assert "commit:" not in out
+    assert "maturity:" not in out
+    assert "testing:" not in out
+    assert "ci: automated CI running on GitHub Actions" in out
+    assert "commit=skip maturity=skip testing=skip ci=github-actions" in out
+    assert "## Hard Rules" in out  # ci line keeps the section non-empty
+
+
+def test_skip_sections_filters_winners_and_records_marker(tmp_path: Path, monkeypatch):
+    """--skip-sections removes the matching keys and is recorded in the marker
+    for re-survey reuse, even though the rest of the section logic is untouched."""
+    (tmp_path / "package.json").write_text('{"packageManager": "pnpm@9"}\n')
+    claims_file = tmp_path / "claims.json"
+    claims_file.write_text(
+        json.dumps(
+            [
+                _claim("pm", "pnpm", "package.json", match="pnpm"),
+                _claim("cmd.build", "pnpm build", "package.json", match="pnpm"),
+                _claim("cmd.test", "pnpm test", "package.json", match="pnpm"),
+                _claim("conv.imports", "ESM only", "package.json", match="pnpm"),
+                _claim(
+                    "dep.node_modules", "node_modules/", "package.json", match="pnpm"
+                ),
+            ]
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--skip-sections",
+            "conventions,dependencies",
+            "--out",
+            "AGENTS.md",
+        ]
+    )
+    assert init._cmd_generate(args) == 0
+    raw = (tmp_path / "AGENTS.md").read_text()
+    assert "## Key Conventions" not in raw
+    assert "## Dependency Locations" not in raw
+    assert "pm: pnpm" in raw  # untouched section still renders
+    assert "sections=conventions,dependencies" in raw
+
+
+def test_skip_sections_rejects_unknown_name(tmp_path: Path, monkeypatch, capsys):
+    claims_file = tmp_path / "claims.json"
+    claims_file.write_text("[]\n")
+    monkeypatch.chdir(tmp_path)
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--skip-sections",
+            "bogus",
+        ]
+    )
+    assert init._cmd_generate(args) == 1
+    assert "unknown name(s): bogus" in capsys.readouterr().err
+
+
+def test_marker_regex_accepts_old_files_without_sections_field():
+    """Backward-compat: AGENTS.md written before the sections= field existed
+    must still lint clean, or every pre-existing repo would break on re-lint."""
+    old_style = (
+        "# Agent Instructions\n\npurpose: x\n\n## Hard Rules\n\n"
+        "commit: free-form\nmaturity: dev\ntesting: always\nci: local\n\n"
+        "<!-- project-init:hard-rules v1 commit=minimal maturity=development "
+        "testing=always ci=local-only -->\n"
+    )
+    assert init.lint_agents_md(old_style) == []
+
+
 def test_cli_package_validation(tmp_path: Path, monkeypatch, capsys):
     """CLI option --package must exist and stay within the repo root."""
     claims_file = tmp_path / "claims.json"
