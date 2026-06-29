@@ -4,7 +4,6 @@ description: Read-only — explores the codebase, runs searches, fetches URL con
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
 model: inherit
-color: cyan
 ---
 
 # ROLE

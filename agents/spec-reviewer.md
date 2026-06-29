@@ -4,7 +4,6 @@ description: Read-only — verifies an implementer's diff matches the task spec,
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
 model: inherit
-color: blue
 ---
 
 # ROLE

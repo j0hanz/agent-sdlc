@@ -5,7 +5,6 @@ tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
 model: inherit
 memory: project
-color: orange
 ---
 
 # ROLE
