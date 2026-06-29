@@ -15,8 +15,6 @@ Trigger: structural/architecture audit request
   -> 4. OUTPUT  (flat, corroborated-first report)
 ```
 
-- **Trigger:** circular dependencies, infra-bleed, hidden coupling, God files, unclear/contradictory module responsibilities. Not for bugs (`diagnose`), security/diffs (`find-bugs`, `security-review`), or over-engineering/YAGNI (`ponytail-audit`) — this skill is structural/architecture only.
-
 ## Step 1: GROUP
 
 - List the target repo's top-level directories one level deep (`Glob` for entries, no file content read).

@@ -18,10 +18,6 @@ Start: Ready to Complete
   -> 3. Decision Logic (see table below)
 ```
 
-**trigger:** user says "ready", "mark as done", "looks good", or task is complete.
-**constraint:** never confirm based on reading code alone.
-**output:** verification evidence (test results or manual log).
-
 ## 1. Mandatory Checklist
 
 The standing bar every change clears is [`references/definition-of-done.md`](references/definition-of-done.md) — the project-wide Definition of Done. The items below are that bar applied here; read it first.

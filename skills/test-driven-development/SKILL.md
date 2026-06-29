@@ -37,10 +37,6 @@ Start: TDD Request -> Carve-out applies (spike/trivial/CSS)? -- yes --> AskUserQ
                                                        -- yes --> verification-before-completion (handoff)
 ```
 
-**trigger:** TDD, write tests, implement feature, build this.
-**constraint:** one failing test before any implementation code.
-**constraint:** exactly one scenario in flight at a time — no skipping ahead to the next test before the current RED-GREEN-REFACTOR cycle closes.
-
 ## Step 0: Confirm Scope
 
 **action:** `AskUserQuestion`.
