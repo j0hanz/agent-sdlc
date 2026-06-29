@@ -71,7 +71,7 @@ Creative Checkpoint
 - **Scan:** Run `python scripts/scan_context.py -- '<nouns>' --cwd '<root>' | python scripts/compress_report.py` (fallback to `grep` if it fails).
 - **Report:** Extract Related Files, Recent Changes, Terms, Interfaces, Constraints, Scope (S/M/L/XL), and Unknowns.
 - **Zero-Code Check:** Stop and offer exit if existing code/config already solves this.
-- **Understanding Lock:** Summarize the problem. **Require explicit user confirmation** before generating any ideas.
+- **Understanding Lock:** Summarize the problem. **Require explicit user confirmation via `AskUserQuestion`** before generating any ideas.
 - **Routing:**
 - Scope XL → Offer to break it down.
 - Ambiguous → Go to Phase 2.
@@ -106,7 +106,7 @@ Creative Checkpoint
 
 - **Synthesize:** Group similar ideas. Combine strong mechanisms with risk-mitigations from other lanes.
 - **Distill:** Present 2-3 distinct approaches. Approach A must be Minimalist. For each, include: What, Gains, Costs, Fit, First Step.
-- **Approval Lock:** Ask the user to choose one approach. **Await explicit user choice. Do not guess.**
+- **Approval Lock:** Ask the user via `AskUserQuestion` to choose one approach. **Await explicit user choice. Do not guess.**
 - **Routing:** If Phase 5 flag is set → Phase 5. Otherwise → Phase 6.
 
 ## Phase 5: Parallel Critique

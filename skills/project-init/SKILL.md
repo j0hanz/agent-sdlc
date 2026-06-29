@@ -3,7 +3,7 @@ name: project-init
 description: 'Use when a repository needs AGENTS.md, CLAUDE.md, or GEMINI.md — initializing a new repo, bootstrapping agent instructions, or auditing an existing instructions file.'
 disable-model-invocation: false
 user-invocable: true
-allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill, Read, Grep, Glob, Agent
+allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill(multi-agent-dispatch), Read, Grep, Glob
 ---
 
 # project-init
@@ -42,10 +42,10 @@ Phase 3  CONSENT + WRITE
 **MANDATORY**: Before conducting the survey, you MUST read the option mappings in `references/hard-rules.md`. Do NOT load `references/canonical-keys.md` during this phase.
 
 1. **Scan:** Run `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py" prescan .` to get project details. (Below, `init.py` is shorthand for this same `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py"` invocation.)
-2. **Check for Old Rules:** Look for `AGENTS.md`. If it has the `<!-- project-init:hard-rules... -->` tag, use those answers (`commit=`, `maturity=`, `testing=`, `ci=`, and `sections=` if present — a marker written before `sections=` existed has none, treat that as "include everything"). Do not ask the user again unless they force it.
+2. **Check for Old Rules:** Read `AGENTS.md` if present. If it has the `<!-- project-init:hard-rules... -->` tag, use those answers (`commit=`, `maturity=`, `testing=`, `ci=`, and `sections=` if present — a marker written before `sections=` existed has none, treat that as "include everything"). Do not ask the user again unless they force it.
 3. **Ask the User (if no old rules):** Run `AskUserQuestion` exactly once with all 4 questions from `references/hard-rules.md` (commit policy, project maturity, testing rigor, optional sections to omit — the last is multiSelect, 0–3 picks). Use the exact words provided, including the "Don't include" option on the first three. Do not add an extra "Other" choice (the tool already provides one). Stop if the user cancels.
 4. **Find CI Automatically:** Do not ask the user about CI. Look for folders: `.github/workflows/` means `github-actions`, `.gitlab-ci.yml` means `gitlab-ci`. Otherwise, use `local-only`. CI has no "Don't include" — it's never skippable.
-5. **Choose Path:** If the scan says `has_manifest == false`, read the project files yourself, skip Phase 1, and go straight to Phase 2. Otherwise, go to Phase 1.
+5. **Choose Path:** If the scan says `has_manifest == false`, explore the project yourself (`Glob` for structure, `Grep` for content, `Read` for specific files), skip Phase 1, and go straight to Phase 2. Otherwise, go to Phase 1.
 
 ---
 

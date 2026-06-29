@@ -3,7 +3,7 @@ name: request-code-review
 description: 'Use when implementation is complete and the diff needs a fresh-eye review before merging — security audit, correctness check, or pre-PR validation. Prefer over receive-code-review when requesting a new review rather than acting on existing feedback.'
 disable-model-invocation: false
 argument-hint: '[target: branch, commit, file, or "current diff"]'
-allowed-tools: Bash(git *), Agent, AskUserQuestion
+allowed-tools: Bash(git *), Agent(diff-reviewer), AskUserQuestion
 disallowed-tools: Write, Edit
 ---
 
