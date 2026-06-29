@@ -19,23 +19,20 @@ Do not skip discovery just because a task looks easy. If a task needs zero disco
 
 **2. WORKFLOW RULES**
 
-- **Brainstorming:** Many agents create ideas independently.
-- **Critique:** Many agents review ideas independently.
-- **Synthesis & Arbitration:** Specific agents combine ideas and make final decisions to prevent chaos and fake agreement.
+- **Internal Brainstorming:** Generate multiple divergent ideas in a single shot using structured internal thinking to simulate different perspectives.
+- **Internal Critique:** Review ideas by adopting multiple personas (e.g., Skeptic, Guardian, Advocate) sequentially within the same context.
+- **Synthesis:** Combine ideas and make final decisions yourself without needing to spawn subagents.
 
-**3. STRICT AGENT ROLES**
-Agents are read-only. They must strictly stick to their job:
+**3. STRICT ROLES (SIMULATED)**
+Adopt these roles within your thought process:
 
-- **Phase 3 Ideators:** Brainstorm ideas. (Do not critique).
-- **Phase 4 Synthesizer:** Combine ideas.
-- **Phase 5 Reviewers (Skeptic, Guardian, Advocate):** Find flaws. (Do not redesign).
-- **Phase 5 Arbiter:** Resolve debates. (Do not invent new problems).
+- **Phase 3 Lenses:** Brainstorm from distinct angles (Minimalist, Conventional, Radical).
+- **Phase 5 Reviewers (Skeptic, Guardian, Advocate):** Find flaws in the synthesized design.
 
 **4. DISPATCH SETTINGS**
 
-- **Default Agent:** Use the named `researcher` agent (`agents/researcher.md`) for all read-only roles (Ideators, Reviewers, Arbiter).
-- **Code Scans:** Use the named `researcher` agent (`agents/researcher.md`).
-- **Parallel Work:** Use the `multi-agent-dispatch` skill for Phases 3 and 5.
+- **Code Scans:** Run the provided python scripts directly.
+- **Parallel Work:** Do NOT use subagents. Use single-shot multi-lane ideation (generating multiple perspectives in one response) to save time and tokens.
 
 ## Process Flow
 
@@ -52,14 +49,14 @@ Creative Checkpoint
   -- zero-code / analogous / 10x found -> seeds Minimalist lane -> 3
   -- none ---------------------------------------------------- -> 3
 
-3. Parallel Divergent Ideation  (fan out N independent ideators)
+3. Multi-Lane Ideation (Single-shot, distinct perspectives)
   ------------------------------------------------------------> 4. Convergence & Synthesis
 
 4. Convergence & Synthesis
-  -- approved approach + flagged (L/XL, high risk, attack surface) --> 5. Parallel Critique
+  -- approved approach + flagged (L/XL, high risk, attack surface) --> 5. Persona Critique
   -- approved approach + not flagged -------------------------------> 6. Design Brief
 
-5. Parallel Critique  (Skeptic | Constraint Guardian | User Advocate) + Arbiter
+5. Persona Critique (Skeptic | Constraint Guardian | User Advocate)
   -- APPROVED -------------> 6. Design Brief
   -- REVISE ---------------> back to 4 (re-synthesize)
   -- REJECT ---------------> back to 3 (re-ideate)
@@ -68,10 +65,10 @@ Creative Checkpoint
 ## Phase 1: Framing & Discovery
 
 - **Probe:** Identify target users. Ask clarifying questions if the request is ambiguous.
-- **Scan:** Run `python ${CLAUDE_SKILL_DIR}/scripts/scan_context.py -- '<nouns>' --cwd '<root>' | python ${CLAUDE_SKILL_DIR}/scripts/compress_report.py` (fallback to `grep` if it fails).
+- **Scan:** Run `python C:/agent-dev/skills/parallel-brainstorming/scripts/scan_context.py -- '<nouns>' --cwd '<root>' | python C:/agent-dev/skills/parallel-brainstorming/scripts/compress_report.py` (fallback to `grep_search` if it fails).
 - **Report:** Extract Related Files, Recent Changes, Terms, Interfaces, Constraints, Scope (S/M/L/XL), and Unknowns.
 - **Zero-Code Check:** Stop and offer exit if existing code/config already solves this.
-- **Understanding Lock:** Summarize the problem. **Require explicit user confirmation via `AskUserQuestion`** before generating any ideas.
+- **Understanding Lock:** Summarize the problem and your understanding. Only use `AskUserQuestion` if you have genuine doubts. Otherwise, proceed directly to Phase 3.
 - **Routing:**
 - Scope XL → Offer to break it down.
 - Ambiguous → Go to Phase 2.
@@ -88,10 +85,10 @@ Creative Checkpoint
 - **Evaluate:** Look for a 10x simpler or zero-code solution.
 - **Seed:** If found, use this as "Approach A" (Minimalist lane) in Phase 3.
 
-## Phase 3: Parallel Divergent Ideation
+## Phase 3: Multi-Lane Divergent Ideation
 
-- **Parallel Dispatch:** Run 2-5 independent reasoning agents. **They must not see each other's output.**
-- **Context:** Give all agents the exact same feature description and Context Report.
+- **Single-Shot Generation:** Generate 2-3 distinct approaches in one response. **Do not spawn subagents.**
+- **Context:** Use the feature description and Context Report to inform all perspectives.
 - **Lenses (Assign 1 per agent):**
 
 1. _Conventional:_ Use existing codebase patterns.
@@ -109,10 +106,10 @@ Creative Checkpoint
 - **Approval Lock:** Ask the user via `AskUserQuestion` to choose one approach. **Await explicit user choice. Do not guess.**
 - **Routing:** If Phase 5 flag is set → Phase 5. Otherwise → Phase 6.
 
-## Phase 5: Parallel Critique
+## Phase 5: Persona Critique
 
 - **Trigger:** Phase 5 flag is set, or user requested a stress test.
-- **Parallel Review:** Dispatch 3 blind, read-only agents:
+- **Simulated Review:** Adopt 3 personas in your thought process to evaluate the chosen design:
 
 1. _Skeptic:_ Finds edge cases and failure modes.
 2. _Constraint Guardian:_ Enforces scale, performance, and security rules.
@@ -120,14 +117,14 @@ Creative Checkpoint
 
 - **Severity Rating:** High (Blocks deployment), Med (Worse outcome), Low (Minor). Ignore styling/naming.
 - **Resolution:** Record objections. You must "Accept & Revise" or "Reject with technical rationale" for all High/Med issues.
-- **Arbiter Gate:** A final, independent agent reviews resolutions. Returns `APPROVED`, `REVISE`, or `REJECT`.
+- **Self-Arbitration:** Resolve any debates yourself. Decide whether the design is `APPROVED`, needs `REVISE`, or is `REJECT`.
 
 ## Phase 6: Design Brief
 
 - **Self-Review:** Fix any contradictions or scope creep in the chosen design before writing.
 - **Format:** Write a strict `markdown-kv` brief containing: Approach, Why, Scope, Constraints, Interface, Architecture, Risks, First Step.
 - **Save:** Present in chat, then write to `docs/design/YYYY-MM-DD-<topic>-design.md`.
-- **Commit Guard:** Ask before running git commit. Default to NO. If approved, hand off to `pr-workflow` for the actual commit/message — don't hand-roll a message here.
+- **Commit Guard:** Do not commit. If the user wants to commit, hand off to `pr-workflow` or let them do it manually.
 
 ## Worked Example
 
@@ -135,15 +132,14 @@ Request: "add a way for users to save and re-run searches."
 
 1. **Phase 1:** Scan finds an existing `Filter` model and a one-off "recent searches" list already in `localStorage`. Scope: M. No flag (not high-risk, not L/XL).
 2. **Creative Checkpoint:** Minimalist seed found — extend the existing `Filter` model with a `name` + `saved: boolean` column instead of a new table.
-3. **Phase 3 (3 blind ideators):** Conventional — new `SavedSearch` table + CRUD API, mirrors existing `Bookmark` feature. Minimalist — reuse `Filter` + 2 columns, no new endpoints (piggyback on existing filter-list endpoint). Constraint-First — same as Minimalist but adds a per-user cap (20 saved searches) to bound query cost.
+3. **Phase 3 (Multi-lane generation):** Conventional — new `SavedSearch` table + CRUD API, mirrors existing `Bookmark` feature. Minimalist — reuse `Filter` + 2 columns, no new endpoints (piggyback on existing filter-list endpoint). Constraint-First — same as Minimalist but adds a per-user cap (20 saved searches) to bound query cost.
 4. **Phase 4:** Synthesize 2 approaches — Approach A (Minimalist + cap, cheapest) and Approach B (Conventional, more flexible but a new table + endpoints). User picks Approach A. Not flagged for L/XL or high risk → skip Phase 5.
 5. **Phase 6:** Design Brief written to `docs/design/2026-06-29-saved-searches-design.md`: Approach (extend `Filter`), Why (reuses existing model, smallest diff), Scope (M), Constraints (cap 20/user), Interface (`Filter.saved`, `Filter.name`), Architecture (no new table), Risks (cap needs a migration default), First Step (`ALTER TABLE filters ADD COLUMN saved boolean DEFAULT false`).
 6. Commit Guard: user declines auto-commit → brief left in chat + on disk; handoff to `request-plan` to formalize tasks.
 
 ## STRICT RULES (NEVER DO)
 
-- **Cross-Talk:** Phase 3 agents must remain blind to each other to prevent bias.
-- **Ship Raw Ideas:** Phase 4 synthesis is mandatory. Never present raw swarm ideas as the final answer.
-- **Self-Arbitrate:** You cannot review your own design in Phase 5.
-- **Accept Empty Rejections:** Arbiter requires a technical reason for any rejected High-severity issue.
-- **Re-dispatch:** Never re-run an agent whose output you already have.
+- **Blend Ideation:** Keep your generated Phase 3 perspectives distinct and avoid bleeding them into each other until Phase 4 synthesis.
+- **Ship Raw Ideas:** Phase 4 synthesis is mandatory. Never present raw brainstormed ideas as the final answer.
+- **Accept Empty Rejections:** Require a technical reason for any rejected High-severity issue during Phase 5 critique.
+- **Use Subagents for Ideation:** Do not use `invoke_subagent` for Phase 3 or 5. Do it yourself to save tokens and time.
