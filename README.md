@@ -75,22 +75,22 @@ claude --plugin-dir ./agent-sdlc
 
 Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 14 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
 
-| Skill                            | Trigger                                                    | Purpose                                                        |
-| :------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------- |
-| `parallel-brainstorming`         | "brainstorm", "add a feature", "explore approaches"        | Parallel multi-agent ideation + critique before implementation |
-| `request-plan`                   | "plan", "design", "draft a plan", "write a spec"           | Multi-agent ideate-and-synthesize: drafts plan/specs.md        |
-| `receive-plan`                   | "check my plan", "is this plan ready", "verify this spec"  | Multi-agent critique panel + Traceability Auditor gate         |
-| `diagnose`                       | "debug", "fix crash", "not working", "why is this failing" | Root-cause debugging before any fix                            |
-| `request-code-review`            | "review", "check this", "is this correct"                  | Dispatches a fresh-context subagent to review the diff         |
-| `receive-code-review`            | "reviewer said", "PR comments"                             | Verify, push back on, and implement review feedback            |
-| `test-driven-development`        | "TDD", "write tests", "implement this"                     | Red-green-refactor workflow                                    |
-| `architecting`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
-| `pr-workflow`                    | "commit this", "open a PR", "ship it", "push my work"      | Branch, commit, push & open a PR — multi-agent aware delivery  |
-| `gh-actions`                     | "GitHub Actions", "gh CLI", "harden a workflow", "OIDC"    | Secure CI/CD authoring and `gh` CLI scripting                  |
-| `context-optimizer`              | "optimize context", "compress context", "reduce tokens"    | Prunes conversation bloat before hitting context limits        |
-| `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
-| `using-agent-sdlc-skills`        | (meta-routing)                                             | Routes to the right skill based on context                     |
-| `project-init`                   | "init project", "generate AGENTS.md", "onboard repo"       | Parallel discovery fan-out → lean AGENTS.md + stubs            |
+| Skill                            | Trigger                                                                  | Purpose                                                        |
+| :------------------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------------- |
+| `parallel-brainstorming`         | "brainstorm", "add a feature", "explore approaches"                      | Parallel multi-agent ideation + critique before implementation |
+| `request-plan`                   | "plan", "design", "draft a plan", "write a spec"                         | Multi-agent ideate-and-synthesize: drafts plan/specs.md        |
+| `receive-plan`                   | "check my plan", "is this plan ready", "verify this spec"                | Multi-agent critique panel + Traceability Auditor gate         |
+| `diagnose`                       | "debug", "fix crash", "not working", "why is this failing"               | Root-cause debugging before any fix                            |
+| `request-code-review`            | "review", "check this", "is this correct"                                | Dispatches a fresh-context subagent to review the diff         |
+| `receive-code-review`            | "reviewer said", "PR comments"                                           | Verify, push back on, and implement review feedback            |
+| `test-driven-development`        | "TDD", "write tests", "implement this"                                   | Red-green-refactor workflow                                    |
+| `architecting`                   | "architecture", "structure", "how is this organized"                     | Codebase structural analysis                                   |
+| `pr-workflow`                    | "commit this", "open a PR", "ship it", "push my work"                    | Branch, commit, push & open a PR — multi-agent aware delivery  |
+| `gh-actions`                     | "GitHub Actions", "gh CLI", "harden a workflow", "OIDC"                  | Secure CI/CD authoring and `gh` CLI scripting                  |
+| `context-optimizer`              | "optimize context", "compress context", "reduce tokens"                  | Prunes conversation bloat before hitting context limits        |
+| `verification-before-completion` | (automatic before task completion)                                       | Verify changes work before marking done                        |
+| `using-agent-sdlc-skills`        | (meta-routing)                                                           | Routes to the right skill based on context                     |
+| `project-init`                   | "init project", "generate AGENTS.md/CLAUDE.md/GEMINI.md", "onboard repo" | Parallel discovery fan-out → lean AGENTS.md + stubs            |
 
 ### Subagent Dispatch
 
@@ -162,18 +162,19 @@ This file configures local settings for the `claude-agent-sdlc` plugin.
 
 ## Scripts
 
-| Command                    | Description                                     |
-| :------------------------- | :---------------------------------------------- |
-| `npm run validate`         | Validate the plugin manifest                    |
-| `npm test`                 | Validate, then run all Node.js and Python tests |
-| `npm run test:node`        | Run Node.js unit tests only                     |
-| `npm run test:python`      | Run Python unit tests only                      |
-| `npm run test:integration` | Run integration tests                           |
-| `npm run test:eval`        | Run skill-triggering evals for selected skills  |
-| `npm run lint`             | Lint with ESLint                                |
-| `npm run lint:fix`         | Lint and auto-fix with ESLint                   |
-| `npm run format`           | Format all files with Prettier                  |
-| `npm run format:check`     | Check formatting without writing changes        |
+| Command                           | Description                                                          |
+| :-------------------------------- | :------------------------------------------------------------------- |
+| `npm run validate`                | Validate the plugin manifest                                         |
+| `npm test`                        | Validate, then run all Node.js and Python tests                      |
+| `npm run test:node`               | Run Node.js unit tests only                                          |
+| `npm run test:python`             | Run Python unit tests only                                           |
+| `npm run test:integration`        | Run integration tests                                                |
+| `npm run test:eval`               | Run skill-triggering evals for selected skills                       |
+| `npm run lint`                    | Lint with ESLint                                                     |
+| `npm run lint:fix`                | Lint and auto-fix with ESLint                                        |
+| `npm run format`                  | Format all files with Prettier                                       |
+| `npm run format:check`            | Check formatting without writing changes                             |
+| `npm version patch\|minor\|major` | Bump version, sync manifests, tag, and push — triggers `release.yml` |
 
 ## Contributing
 
