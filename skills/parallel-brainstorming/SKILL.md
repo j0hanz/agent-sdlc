@@ -2,6 +2,7 @@
 name: parallel-brainstorming
 description: 'Use when requirements are vague or the solution space is open — before a plan exists and before touching code. Prefer over request-plan or architecting when the problem is unproven and multiple distinct approaches need to be explored. Not for bug fixes or one-line changes with no design space.'
 disable-model-invocation: false
+allowed-tools: Agent(researcher), AskUserQuestion, Write
 ---
 
 # parallel-brainstorming

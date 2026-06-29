@@ -3,6 +3,7 @@ name: multi-agent-dispatch
 description: 'Use when executing multiple tasks that are fully independent — no shared files, no dependencies between them, no required ordering. Prefer over multi-agent-development when tasks are file-disjoint and can safely run concurrently.'
 disable-model-invocation: false
 argument-hint: '[the independent tasks to parallelize]'
+allowed-tools: Agent(implementer), Agent(researcher), Agent(conflict-resolver)
 ---
 
 # multi-agent-dispatch

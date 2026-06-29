@@ -3,6 +3,7 @@ name: diagnose
 description: 'Use when there is a bug, crash, test failure, or unexpected behavior that needs root-cause analysis before a fix is attempted. Prefer over test-driven-development when diagnosing an existing defect rather than building a new feature.'
 disable-model-invocation: false
 argument-hint: '[symptom description or error trace]'
+allowed-tools: Agent(researcher), Agent(implementer), AskUserQuestion
 ---
 
 # diagnose

@@ -4,6 +4,7 @@ description: 'Use when a plan and spec pair already exists and needs validation 
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[path to plan.md / specs.md, or "the plan I just wrote"]'
+allowed-tools: Agent(researcher)
 ---
 
 # receive-plan

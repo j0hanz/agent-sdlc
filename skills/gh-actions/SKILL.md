@@ -2,6 +2,7 @@
 name: gh-actions
 description: 'Use when authoring or hardening GitHub Actions workflows, pinning actions to SHA, configuring OIDC, or writing headless gh CLI batch scripts. Not for committing or opening a PR for a normal code change — that is pr-workflow.'
 disable-model-invocation: false
+allowed-tools: Bash(python3 *), Bash(gh *), Agent(researcher)
 ---
 
 # gh-actions

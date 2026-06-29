@@ -2,7 +2,7 @@
 name: architecting
 description: 'Use when the codebase has structural problems crossing module boundaries — God classes, circular dependencies, boundary violations, or high git coupling — or when designing a new module and deciding where code lives. Prefer over request-plan when the problem is structural rather than a missing feature.'
 disable-model-invocation: false
-allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion
+allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Agent(researcher)
 ---
 
 # architecting

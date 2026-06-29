@@ -2,6 +2,7 @@
 name: context-optimizer
 description: 'Use when context is bloated, token limits are near, or the session has grown slow — before running /clear directly when task progress must be preserved.'
 disable-model-invocation: false
+allowed-tools: Bash(python *), Bash(python3 *)
 ---
 
 # context-optimizer

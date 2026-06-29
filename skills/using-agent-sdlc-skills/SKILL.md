@@ -2,6 +2,7 @@
 name: using-agent-sdlc-skills
 description: 'Use at the start of any new task to route it through the correct lifecycle gate — onboarding, planning, scoping, execution, or delivery. Prefer over jumping directly to an individual skill when the right starting point is unclear.'
 disable-model-invocation: false
+allowed-tools: Skill
 ---
 
 <SUBAGENT-STOP>
