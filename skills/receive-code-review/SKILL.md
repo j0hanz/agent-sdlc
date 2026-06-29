@@ -6,7 +6,7 @@ disable-model-invocation: false
 
 # receive-code-review
 
-Code review feedback requires technical evaluation, not emotional performance or blind compliance. Verify before implementing. Ask before assuming.
+Code review feedback requires technical evaluation, not deference or performance. Verify before implementing. Ask before assuming.
 
 ## Process Flow
 
@@ -23,50 +23,54 @@ Start: Feedback Received
   -- all items fixed --> verification-before-completion (handoff)
 ```
 
-## Never Do This
+## Strict Rules (NEVER)
 
-- **No Chatting:** Never say thanks or "you're right." Just fix it.
-- **No Blind Fixes:** Never change code without checking it first.
-- **No Grouping:** Fix one thing, test it, repeat. Do not do them all at once.
-- **No Ignoring Rules:** Follow `AGENTS.md` and the user. If they fight, tell the user.
-- **No Huge Changes:** Ask first before changing 10+ files or core designs.
-- **No Loops:** Stop after 2 reviews of the same code. Ask the user.
+- **No Performative Acknowledgment:** Skip thanks/agreement framing. State the fix.
+- **No Blind Implementation:** Never change code without first verifying the finding against the actual codebase.
+- **No Batching:** Fix one finding, test it, repeat. Never apply multiple findings before testing any of them.
+- **No Rule Override:** `AGENTS.md` and explicit user instructions govern. If a finding conflicts with either, surface the conflict to the user rather than resolving it unilaterally.
+- **No Unbounded Scope:** A fix touching 10+ files or a core design decision requires user confirmation before proceeding.
+- **No Re-Review Loops:** Cap re-review of the same finding at 2 passes. On the 3rd, escalate to the user instead of retrying.
 
-## Who to Trust
+## Source Trust Model
 
-- **Human:** Trust. Fix it. Ask if confused.
-- **Subagent (`request-code-review`):** Do not trust. Verify everything.
-- **GitHub PR/Bot:** Do not trust. Read: `gh pr view <number> --comments`. Reply: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body="..."`.
+- **Human reviewer:** Trusted. Implement directly; ask only if the instruction is ambiguous.
+- **Subagent (`request-code-review`):** Not trusted by default — verify every finding against the codebase before acting on it.
+- **GitHub PR / bot comment:** Not trusted by default. Read via `gh pr view <number> --comments`; reply via `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body="..."`.
 
-## Ask First
+## Clarification Gate
 
-- **Read All:** Read all feedback before you start.
-- **Ask Questions:** Use `AskUserQuestion` to ask about confusing things (max 4 questions at once).
-- **Stop and Wait:** Do not fix code if you are confused about it.
+- Read all feedback before starting any fix — partial reads cause out-of-order or contradictory edits.
+- Use `AskUserQuestion` for ambiguous findings (max 4 questions per round).
+- Do not implement a fix while the underlying finding is still unclear — stop and ask first.
 
-## Always Do This
+## Verification Requirements
 
-- **Read Docs:** Read `AGENTS.md` before coding.
-- **Check the Code:** Use `git grep` and tests to see if a fix is actually needed.
-- **Run Tests:** Test before and after you change code.
-- **Look for Reasons:** Check if the code was written that way on purpose.
-- **Delete Unused Code:** If code is never used, ask to delete it instead of fixing it.
+- Read `AGENTS.md` before making any change.
+- Confirm via `git grep`/tests that the finding's premise actually holds in the current codebase — a finding can be stale or already addressed.
+- Check whether the flagged code was written that way deliberately (comments, commit history, adjacent tests) before treating it as a defect.
+- Run tests before and after every fix.
+- If code is confirmed dead/unused, propose deletion to the user rather than patching it.
 
-## How to Talk
+## Response Format
 
-- **Good Fix:** Say "Fixed. [what changed]".
-- **Bad Idea:** Say no and prove why using the code.
-- **Need Help:** Say "Can't verify this without [X]. Should I proceed?".
-- **Mistakes:** Say "Checked [X]. Fixing." (Never apologize).
+- **Fix applied:** `Fixed: [what changed and why]`.
+- **Finding rejected:** State the rejection and the codebase evidence that contradicts the finding — no rejection without a named technical reason.
+- **Verification blocked:** `Cannot verify without [X]. Proceed?` — stop and wait rather than guessing.
+- **Correction mid-task:** `Checked [X]. Revising.` — state the correction, no apology framing.
 
-## How to Work
+## Execution Order
 
-- **Order to Fix:** 1. Big bugs. 2. Typos. 3. Hard changes.
-- **Test Always:** Test every single fix right after you make it.
+1. Blocking/security defects.
+2. Correctness defects.
+3. Hygiene/typos.
+4. Larger structural changes (only after user confirmation per the unbounded-scope rule above).
 
-## What Tools to Use
+Test immediately after each individual fix — never batch multiple fixes before the first test run.
 
-- **Bugs & Security:** Use `diagnose` to find the real problem.
-- **Cleanups:** Fix the code directly.
-- **Finished:** Run `verification-before-completion`, then ask for a new review.
-- **Stuck:** If you fail twice, STOP. Mark as **BLOCKED**. Wait for the user. Do not try again.
+## Routing
+
+- **Bugs & security findings:** Hand off to `diagnose` for root-cause analysis before patching.
+- **Hygiene/cleanup findings:** Fix directly in this skill.
+- **All items resolved:** Run `verification-before-completion`, then request a fresh review.
+- **Stuck after 2 attempts on the same finding:** Mark **BLOCKED**, escalate to the user, do not retry a 3rd time.

@@ -1,6 +1,7 @@
 ---
 name: using-agent-sdlc-skills
 description: "Orchestrates software engineering tasks by analyzing user prompts and routing them to the optimal workflow in the development lifecycle. Accepts any high-level task description, bug report, or feature request as input, and outputs a diagnostic recommendation or transition to the target tool. Trigger on: 'start task', 'route work', 'using-agent-sdlc-skills', 'skill selection', 'task diagnostic', 'orchestrate development'. Also triggers when the workspace requires a multi-stage routing check for new issues, PR reviews, or system refactoring. Always prefer this orchestrator over individual tools (like diagnose or request-plan) for initial user prompts to ensure correct lifecycle gating."
+disable-model-invocation: false
 ---
 
 <SUBAGENT-STOP>
@@ -115,7 +116,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 ### Transition States
 
 - **TDD Escalation:** If TDD fails to pass after 3 attempts, it must return to `diagnose` or `request-plan`.
-- **Review Failure:** `receive-code-review` analyzes the failure level and routes back to the appropriate corrective skill, using `request-code-review`'s Tier classification (`references/patterns.md` in that skill): Tier 1 = Security, Tier 2 = Correctness, Tier 3 = Performance, Tier 4 = Reuse/hygiene. Tier 1/2 findings route to `diagnose`; Tier 4 findings are fixed inline by `receive-code-review` itself; Tier 3 findings are non-blocking and require no escalation. Gate 4 describes this routing using "blocking issue"/"hygiene issue" wording — both describe the same classification system.
+- **Review Failure:** `receive-code-review` analyzes the failure level and routes back to the appropriate corrective skill, using `request-code-review`'s Tier classification (`references/reviewer-dispatch-prompt.md` in that skill): Tier 1 = Security, Tier 2 = Correctness, Tier 3 = Performance, Tier 4 = Reuse/hygiene. Tier 1/2 findings route to `diagnose`; Tier 4 findings are fixed inline by `receive-code-review` itself; Tier 3 findings are non-blocking and require no escalation. Gate 4 describes this routing using "blocking issue"/"hygiene issue" wording — both describe the same classification system.
 - **Re-review Cap:** Once `diagnose` verifies its fix (or `receive-code-review` fixes a Tier 4 item inline), control returns to `receive-code-review`, which re-invokes `request-code-review` for a fresh-context re-review of the same range. This cycle is capped at 2 re-reviews before escalating to the user.
 
 ---

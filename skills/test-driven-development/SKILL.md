@@ -36,75 +36,71 @@ Start: TDD Request -> Carve-out applies (spike/trivial/CSS)? -- yes --> AskUserQ
                                                        -- yes --> verification-before-completion (handoff)
 ```
 
-**Trigger:** TDD, write tests, implement feature, build this.
+**trigger:** TDD, write tests, implement feature, build this.
+**constraint:** one failing test before any implementation code.
+**constraint:** exactly one scenario in flight at a time — no skipping ahead to the next test before the current RED-GREEN-REFACTOR cycle closes.
 
-**Rules:**
+## Step 0: Confirm Scope
 
-- Write a failing test _before_ writing any code.
-- Do exactly ONE thing at a time. No skipping ahead.
-- Example: Finish RED+GREEN+REFACTOR for one small piece completely before starting the next test.
-
-## Step 0: Ask First
-
-Ask the user how to start using `AskUserQuestion`:
+**action:** `AskUserQuestion`.
 
 1. **Recommended:** Start TDD for [feature].
-2. **Alternative:** Try something else first (like exploring) and explain why.
+2. **Alternative:** Explore first, then start TDD — state the reason exploration is needed before code.
 
-## Step 1: Plan the Code Shape
+## Step 1: Define the Interface
 
-Ask the user to confirm how the code will work using `AskUserQuestion`:
+**action:** `AskUserQuestion` to lock the shape before writing a test against it.
 
-1. **Recommended:** Use this shape: `name(inputs) -> output`.
-2. **Alternative:** Suggest a different shape and explain why.
+1. **Recommended:** `name(inputs) -> output`.
+2. **Alternative:** Propose a different shape and justify it.
 
-- List errors that might happen.
-- Show 2-3 examples of how to use it.
-- Tell them where the test file goes.
-- **Check:** Run all old tests first to make sure everything works before adding new ones.
+- Enumerate expected error conditions.
+- Provide 2-3 call-site examples.
+- State the target test file path.
+- **Gate:** run the existing suite first — establish a clean baseline before adding new tests.
 
 ## Step 2: RED (Failing Test)
 
-_If using JavaScript/TypeScript, read `references/js-ts-patterns.md` fully._
+_If JavaScript/TypeScript, read `references/js-ts-patterns.md` fully._
 
-1. Write the simplest test for one small thing.
-2. Write blank code (like `return null`) just so it runs.
+1. Write the smallest test for one behavior.
+2. Stub the implementation (e.g. `return null`) — just enough to compile/run.
 3. Run the test.
-4. **Stop:** Make sure it FAILS. If it passes, delete it and write it differently.
+4. **Gate:** confirm FAILURE. A test that passes immediately is testing nothing — delete and rewrite it.
 
-### The Make-Sure Test
+### N-1 Test (False-Green Elimination)
 
-Before you trust a passing test:
+Before trusting a passing test:
 
-1. Take out your code fix.
-2. Run the test to make sure it fails again.
-3. Put your code fix back in.
-4. Run the test to make sure it passes.
+1. Revert the implementation.
+2. Run the test — confirm it fails (RED).
+3. Restore the implementation.
+4. Run the test — confirm it passes (GREEN).
 
-## Step 3: GREEN (Make it Pass)
+## Step 3: GREEN (Make It Pass)
 
-_If stuck on how simple to be, read `references/minimal-impl-examples.md` fully._
+_If unsure how minimal is minimal, read `references/minimal-impl-examples.md` fully._
 
-1. Save your work first.
-2. Write the **smallest amount of code possible** to make the test pass.
-3. Do not add extra code "just in case."
-4. If you fail 3 times, start over with a smaller test.
-5. If still stuck, use `diagnose` or `request-plan` tools.
+1. Checkpoint the working tree before editing.
+2. Write the smallest implementation that satisfies the test — no speculative generality.
+3. No code added "just in case" — only what the current test requires.
+4. 3 failed attempts on the same test → restart with a smaller test.
+5. Still stuck → escalate to `diagnose` or `request-plan`.
 
 ## Step 4: REFACTOR (Clean Up)
 
-- **Stop:** Only do this if tests are passing (GREEN).
-- Clean up the code (rename things, remove repeated code).
-- Do not fix code and clean up at the same time. They must be separate steps.
-- Run tests again after cleaning.
+- **Gate:** only proceed while GREEN.
+- Improve structure (naming, deduplication) without changing behavior.
+- Never interleave a behavior fix with a refactor — they are separate passes.
+- Re-run tests after every refactor; must stay GREEN.
 
 ## Strict Rules
 
-- Only fake (mock) outside things like databases or APIs. Never fake your own code.
-- Never write a second test until the first one is completely done.
-- Always run tests between the RED and GREEN steps.
-- Never change a test just to force it to pass. Fix your code instead. If the test is broken, go back to RED and explain why before changing it.
+- Mock only true externals (databases, APIs, network) — never mock the code under test.
+- No second test until the first has completed its full RED-GREEN-REFACTOR cycle.
+- Always run the test between RED and GREEN to confirm the failure before implementing.
+- Never edit a test to force a pass. Fix the implementation. If the test itself is wrong, return to RED, state why, then rewrite it.
 
 ## Next Steps
 
-When everything is done and clean, use `verification-before-completion` to double-check your work.
+On full coverage and a clean REFACTOR, hand off to `verification-before-completion`.

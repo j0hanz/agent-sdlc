@@ -1,6 +1,7 @@
 ---
 name: parallel-brainstorming
 description: "Multi-agent parallel brainstorming for discovery and solution design. Fans out independent ideator agents that generate candidate approaches simultaneously — not sequentially — to maximize diversity and defeat anchoring, groupthink, and dominant-voice bias, then converges them into 2-3 grounded approaches, runs parallel critique lanes (Skeptic, Constraint Guardian, User Advocate) plus an Arbiter, and writes a markdown-kv Design Brief in docs/design/. Trigger on: 'parallel brainstorming', 'brainstorm a solution', 'design a feature', 'add a feature', 'explore approaches', 'generate options', 'multi-agent design', 'write a design doc', 'requirements discovery', 'build a new feature'. Also triggers when requirements are vague, when you want many distinct options instead of one, or when a request hides unstated stakeholders or terminology. Prefer over request-plan or architecting when the solution space is still open and unproven. Not for bug fixes, typos, or one-line config changes with no design space."
+disable-model-invocation: false
 ---
 
 # parallel-brainstorming
@@ -140,6 +141,17 @@ Creative Checkpoint
 - **Commit Guard:** Ask before running git commit. Default to NO. If approved, hand off to `pr-workflow` for the actual commit/message — don't hand-roll a message here.
 
 ---
+
+## Worked Example
+
+Request: "add a way for users to save and re-run searches."
+
+1. **Phase 1:** Scan finds an existing `Filter` model and a one-off "recent searches" list already in `localStorage`. Scope: M. No flag (not high-risk, not L/XL).
+2. **Creative Checkpoint:** Minimalist seed found — extend the existing `Filter` model with a `name` + `saved: boolean` column instead of a new table.
+3. **Phase 3 (3 blind ideators):** Conventional — new `SavedSearch` table + CRUD API, mirrors existing `Bookmark` feature. Minimalist — reuse `Filter` + 2 columns, no new endpoints (piggyback on existing filter-list endpoint). Constraint-First — same as Minimalist but adds a per-user cap (20 saved searches) to bound query cost.
+4. **Phase 4:** Synthesize 2 approaches — Approach A (Minimalist + cap, cheapest) and Approach B (Conventional, more flexible but a new table + endpoints). User picks Approach A. Not flagged for L/XL or high risk → skip Phase 5.
+5. **Phase 6:** Design Brief written to `docs/design/2026-06-29-saved-searches-design.md`: Approach (extend `Filter`), Why (reuses existing model, smallest diff), Scope (M), Constraints (cap 20/user), Interface (`Filter.saved`, `Filter.name`), Architecture (no new table), Risks (cap needs a migration default), First Step (`ALTER TABLE filters ADD COLUMN saved boolean DEFAULT false`).
+6. Commit Guard: user declines auto-commit → brief left in chat + on disk; handoff to `request-plan` to formalize tasks.
 
 ## STRICT RULES (NEVER DO)
 

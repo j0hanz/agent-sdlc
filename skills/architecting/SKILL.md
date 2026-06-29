@@ -66,6 +66,13 @@ Trigger: Review/Design Request
 - **Stability:** UI/DB depends on Domain. Never reverse.
 - **Scale (YAGNI):** Skip formal patterns for <1,000 lines, throwaways, or single-dev setups.
 
+- **Worked_Example (Mode_A):**
+- Trigger: "checkout module is a God class, 1800 lines, touches billing/inventory/email directly."
+- Phase_1: `detect_bleed.py dir=src/checkout infra=stripe,pg,nodemailer` flags 14 direct infra imports inside `src/checkout/Checkout.ts`; `git_coupling.py` shows `Checkout.ts` and `InventoryService.ts` co-change in 11/14 commits despite no declared dependency.
+- Phase_2: Present candidate — `[Checkout/Inventory seam], [Checkout.ts, InventoryService.ts], [Checkout calls InventoryService internals directly, no interface], [explains the 11/14 git-coupling], [Impact: high — blocks independent billing changes], [Risk: med], [Mermaid: tangled vs. clean]`.
+- Phase_3: User picks the seam → `INTERFACE_SHAPES.md` proposes an `InventoryPort` interface; `DOMAIN_INTERVIEW.md` confirms inventory reservation is a distinct bounded context.
+- Phase_4: ADR-0007 recorded: "Extract InventoryPort interface between Checkout and Inventory."
+- Phase_5: `architecture-brief.json` written; handoff to `request-plan` with the brief attached as context.
 - **Next_Skills:**
 - **request-plan:** Formalize specs for new designs or major seam extractions.
 - **multi-agent-development:** Execute complex architectural changes.

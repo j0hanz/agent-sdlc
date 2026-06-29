@@ -41,7 +41,7 @@ Stat Check: Run `git diff --stat {{base}}..{{head}}`
 Prompt: Fill `references/reviewer-dispatch-prompt.md`
 Dispatch: Run `diff-reviewer` (Write/Edit denied by its tools frontmatter)
 Safety Check: Run `git status --porcelain` (if modified: discard, restore, re-dispatch)
-Output Validation: Require `## Code Review Result` block (retry once if missing, then fail)
+Output Validation: Require `## Code Review Result` block with `Status`, `Blocking Issues`, `Advisory Issues`, and `What Was Checked` sections (retry once if missing, then fail). Full schema and a filled example live in `references/reviewer-dispatch-prompt.md`.
 
 ## Phase 2: Hand Off
 

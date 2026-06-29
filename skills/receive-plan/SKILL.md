@@ -61,6 +61,22 @@ Staleness: any manual edit to an `APPROVED` plan after this point invalidates th
 
 Always itemize every failing check with file:line / REQ-id / TASK-id specificity — never a bare pass/fail summary. Mechanical checks (Traceability Auditor) are naturally itemizable; require the same specificity from the qualitative seats.
 
+## Worked Example
+
+Plan: `plan/saved-searches.specs.md` + `.plan.md`, drafted hand-written (no `request-plan` session), depth unknown → defaults to `contract`.
+
+1. **Identify Origin:** hand-written → REVISE will surface to the user, not auto-loop.
+2. **Panel + Auditor** (one message, blind): Spec-Correctness finds REQ-003 ("search must paginate") has no corresponding task; Dependency-Correctness finds no issue; Scope-Risk flags TASK-004 (schema migration) as underspecified (no rollback step); Traceability Auditor reports `Satisfies: 6/7 checked` — one `REQ-003` reference doesn't resolve, matching the Spec-Correctness finding independently.
+3. **Arbiter Gate:** Auditor shows `6/7`, not `7/7` → automatic REVISE regardless of the panel's findings.
+4. **Output:** itemized REVISE — `REQ-003 unaddressed (no TASK references it)`, `TASK-004 missing rollback step` — surfaced to the user (hand-written origin) for re-submission.
+5. User adds `TASK-007` (satisfies REQ-003) and a rollback step to TASK-004, resubmits → re-enters Step 1, Auditor now reports `7/7`, panel findings resolved → `APPROVED`.
+
+```
+Status: DRAFT -> APPROVED
+plan/saved-searches.review.md written: Arbiter verdict + Auditor 7/7 transcript
+Handoff: multi-agent-development (TASK-004 depends on TASK-001; rest disjoint)
+```
+
 ## Strict Rules (NEVER)
 
 - **Self-Verify**: NEVER let `request-plan`'s Synthesizer's own advisory cross-check substitute for this skill's gate.

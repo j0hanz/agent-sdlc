@@ -97,6 +97,19 @@ Phase 0: Triage (serial vs. tournament)
 **action:** re-run the original hypothesis set against the post-fix Oracle to catch masked/latent causes
 **action:** promote scripts to test suite or delete
 
+## Worked Example
+
+Symptom: `POST /orders` 500s intermittently in staging, never locally.
+
+**Phase 0:** one plausible cause visible in the stack trace (null `cart.discount`) → serial, not tournament.
+**Phase 1:** Oracle = `curl` the endpoint with a cart fixture missing `discount`; deterministic, <1s.
+**Phase 2:** reproduces 10/10 runs with the fixture → repro rate well above the 50% gate.
+**Phase 3:** hypothesis — "If `discount` is read before the null-check, then setting `discount: undefined` in the fixture will trigger the same 500." Probed directly against the Oracle: confirmed.
+**Phase 3.5:** single survivor, no entanglement → `APPROVED`, proceed.
+**Phase 4:** `[DEBUG-4471]` log at the read site confirms `discount` is `undefined` at the point of failure, not later.
+**Phase 5:** regression test asserts 200 + default discount applied when the field is absent; confirmed RED before the fix, GREEN after; N-1 test (revert → RED → restore → GREEN) confirms the fix is load-bearing.
+**Phase 6:** `[DEBUG-4471]` removed, Oracle re-run clean, original hypothesis set re-run post-fix to rule out a masked second cause. Reported using the `## Output Format` schema below.
+
 ## Next Skills
 
 **test-driven-development:** implement new logic/tests

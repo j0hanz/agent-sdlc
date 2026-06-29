@@ -1,6 +1,7 @@
 ---
 name: gh-actions
 description: 'Generates, audits, and hardens GitHub Actions workflows and headless gh CLI scripts from user requirements. Use when the user requests "setup CI/CD", "add GitHub Actions", "pin workflows to SHA", "configure OIDC authentication", "harden a workflow", or "write a gh batch/API script". Action: reads current YAML configs and outputs secure, SHA-pinned, least-privilege workflows. Not for committing/branching/opening a PR for an ordinary code change — that is `pr-workflow`.'
+disable-model-invocation: false
 ---
 
 # gh-actions
