@@ -15,20 +15,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
-@dataclass
-class CompressConfig:
-    max_files: int = 5
-    max_log_lines: int = 3
-    max_constraints: int = 5
-    max_interface_shapes: int = 10
-    max_unknowns: int = 4
-    max_design_docs: int = 3
-    max_analogous: int = 2
+_MAX_FILES = 5
+_MAX_LOG_LINES = 3
+_MAX_CONSTRAINTS = 5
+_MAX_INTERFACE_SHAPES = 10
+_MAX_UNKNOWNS = 4
+_MAX_DESIGN_DOCS = 3
+_MAX_ANALOGOUS = 2
 
 
 def _dedupe_stable(items: list[Any]) -> list[str]:
@@ -59,10 +55,10 @@ def _trim_str(value: str, max_chars: int = 200) -> str:
     return value[:max_chars] + "…" if len(value) > max_chars else value
 
 
-def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
+def compress(report: dict[str, Any]) -> dict[str, Any]:
     """Compress a Codebase Context Report to minimal token form.
 
-    Deduplicates and truncates each field according to cfg limits.
+    Deduplicates and truncates each field to module-level limits.
     Returns a new dict with a ``_compressed`` savings annotation.
     """
     if not isinstance(report, dict):
@@ -77,7 +73,7 @@ def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
     # Related files — cap count, truncate git log, preserve test coverage signals
     raw_files: list[Any] = report.get("related_files", [])
     out["related_files"] = []
-    for f in raw_files[: cfg.max_files]:
+    for f in raw_files[:_MAX_FILES]:
         if not isinstance(f, dict):
             raise TypeError(
                 f"expected related_files entries to be objects, got {type(f).__name__}"
@@ -86,7 +82,7 @@ def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
             {
                 "path": f.get("path", ""),
                 "last_commit": _truncate_git_log(
-                    f.get("last_commit", ""), cfg.max_log_lines
+                    f.get("last_commit", ""), _MAX_LOG_LINES
                 ),
                 "has_tests": f.get("has_tests", False),
                 "test_file": f.get("test_file", ""),
@@ -95,19 +91,19 @@ def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
 
     # Deduplicate and cap list fields
     out["interface_shapes"] = _dedupe_stable(report.get("interface_shapes", []))[
-        : cfg.max_interface_shapes
+        :_MAX_INTERFACE_SHAPES
     ]
     out["constraints"] = _dedupe_stable(report.get("constraints", []))[
-        : cfg.max_constraints
+        :_MAX_CONSTRAINTS
     ]
     out["design_docs"] = _dedupe_stable(report.get("design_docs", []))[
-        : cfg.max_design_docs
+        :_MAX_DESIGN_DOCS
     ]
-    out["unknowns"] = _dedupe_stable(report.get("unknowns", []))[: cfg.max_unknowns]
+    out["unknowns"] = _dedupe_stable(report.get("unknowns", []))[:_MAX_UNKNOWNS]
 
     # Analogous features — key for Creative Checkpoint and design-proposer Step 0
     out["analogous_features"] = _dedupe_stable(report.get("analogous_features", []))[
-        : cfg.max_analogous
+        :_MAX_ANALOGOUS
     ]
 
     _annotate_savings(report, out)
@@ -156,7 +152,7 @@ def main() -> None:
         sys.exit(f"error: failed to read input — {exc}")
 
     try:
-        compressed = compress(raw, CompressConfig())
+        compressed = compress(raw)
     except TypeError as exc:
         sys.exit(f"error: {exc}")
     print(json.dumps(compressed, indent=2))

@@ -17,7 +17,6 @@ DEFAULT_EXCLUDE = [
     "dist",
     "build",
     "coverage",
-    ".coverage",
     ".next",
     ".nuxt",
     ".cache",
@@ -27,12 +26,10 @@ DEFAULT_EXCLUDE = [
     "target",
     ".gradle",
     ".m2",
-    ".pytest",
     ".mypy_cache",
     ".ruff_cache",
     ".vscode",
     ".idea",
-    ".DS_Store",
 ]
 
 

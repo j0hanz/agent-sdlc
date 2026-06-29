@@ -44,21 +44,6 @@ def run_command(args: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[s
     )
 
 
-def run_command_raw(args: Sequence[str], cwd: Path) -> tuple[int, bytes, str]:
-    process = subprocess.run(
-        args,
-        cwd=cwd,
-        capture_output=True,
-        check=False,
-    )
-    stderr = (
-        process.stderr.decode(errors="replace")
-        if isinstance(process.stderr, bytes)
-        else process.stderr
-    )
-    return process.returncode, process.stdout, stderr
-
-
 def find_git_root(start: Path) -> Path | None:
     result = run_command(["git", "rev-parse", "--show-toplevel"], cwd=start)
     if result.returncode != 0:
@@ -282,10 +267,12 @@ def fetch_job_log(job_id: str, repo_root: Path) -> tuple[str, str]:
     if not repo_slug:
         return "", "Error: unable to resolve repository name for job logs."
     endpoint = f"/repos/{repo_slug}/actions/jobs/{job_id}/logs"
-    returncode, stdout_bytes, stderr = run_command_raw(
-        ["gh", "api", endpoint], cwd=repo_root
+    _proc = subprocess.run(
+        ["gh", "api", endpoint], cwd=repo_root, capture_output=True, check=False
     )
-    if returncode != 0:
+    stdout_bytes = _proc.stdout
+    stderr = _proc.stderr.decode(errors="replace")
+    if _proc.returncode != 0:
         message = (stderr or stdout_bytes.decode(errors="replace")).strip()
         return "", message or "gh api job logs failed"
     if is_zip_payload(stdout_bytes):

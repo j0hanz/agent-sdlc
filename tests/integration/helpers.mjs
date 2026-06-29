@@ -41,21 +41,10 @@ export function createTmpProject(files = {}) {
 
 export function cleanupProject(dir) {
   if (dir && existsSync(dir)) {
-    const maxRetries = 10;
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        rmSync(dir, { recursive: true, force: true });
-        return;
-      } catch (err) {
-        if (i === maxRetries - 1) {
-          console.warn(`[cleanup] Failed to remove directory ${dir}: ${err.message}`);
-          return;
-        }
-        // Sleep 200ms before retrying
-        try {
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200);
-        } catch {}
-      }
+    try {
+      rmSync(dir, { recursive: true, force: true });
+    } catch (err) {
+      console.warn(`[cleanup] Failed to remove directory ${dir}: ${err.message}`);
     }
   }
 }
