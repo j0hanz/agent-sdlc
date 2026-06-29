@@ -395,12 +395,7 @@ def render_agents_md(
     if "stack" in winners:
         lines.append(f"stack: {winners['stack'].value}")
 
-    if pkg_normalized:
-        lines += [
-            "",
-            f"<!-- project-init:package-scoped {pkg_normalized} -->",
-        ]
-    else:
+    if not pkg_normalized:
         # "skip" omits the line entirely rather than rendering placeholder text —
         # ci is exempt since it's file-detected, never a user choice to skip.
         hard_rule_lines = [
@@ -413,15 +408,7 @@ def render_agents_md(
             if value != "skip"
         ]
         hard_rule_lines.append(f"ci: {HARD_RULES_TEXT['ci'][ci]}")
-        sections_csv = ",".join(sorted(skip_sections)) if skip_sections else "none"
-        lines += [
-            "",
-            "## Hard Rules",
-            "",
-            *hard_rule_lines,
-            "",
-            f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} sections={sections_csv} -->",
-        ]
+        lines += ["", "## Hard Rules", "", *hard_rule_lines]
 
     def section(title: str, keys: list[str]) -> None:
         rows = [(k, winners[k].value) for k in keys if k in winners]
@@ -444,6 +431,17 @@ def render_agents_md(
         )
         for k in file_keys:
             lines.append(f"| {k.split('.', 1)[1]} | `{winners[k].value}` |")
+
+    # Machine marker is a footer, not mid-document furniture — keeps the
+    # human-readable content above flowing uninterrupted.
+    if pkg_normalized:
+        lines += ["", f"<!-- project-init:package-scoped {pkg_normalized} -->"]
+    else:
+        sections_csv = ",".join(sorted(skip_sections)) if skip_sections else "none"
+        lines += [
+            "",
+            f"<!-- project-init:hard-rules {MARKER_VERSION} commit={commit} maturity={maturity} testing={testing} ci={ci} sections={sections_csv} -->",
+        ]
 
     return "\n".join(lines)
 
