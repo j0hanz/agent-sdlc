@@ -29,7 +29,7 @@ Gate 1: Fully Defined?
   -- spec+plan exist, verified -------> Gate 2
 
 Gate 2: Systemic Issue?
-  -- boundary/God class/2+ files ----------------------> architecting
+  -- boundary/God class/2+ files ----------------------> project-audit
   -- messy function, single file, no boundary crossed -> Gate 3 (fix inline)
   -- crash/bug --------------------------------------> diagnose
   -- new feature -------------------------------------> Gate 3

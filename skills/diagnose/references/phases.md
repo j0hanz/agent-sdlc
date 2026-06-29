@@ -78,5 +78,5 @@
 - **Review_Question:** "What would have prevented this bug?"
 - **Delegation_Paths:**
   - "Better test coverage" -> Activate `test-driven-development` skill.
-  - "Tangled logic spanning multiple files/modules" -> Activate `architecting` skill.
+  - "Tangled logic spanning multiple files/modules" -> Activate `project-audit` skill.
   - "API contract vague" -> Update docs.

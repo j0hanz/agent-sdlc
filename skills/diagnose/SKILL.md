@@ -114,7 +114,7 @@ Symptom: `POST /orders` 500s intermittently in staging, never locally.
 ## Next Skills
 
 **test-driven-development:** new logic/tests (not for writing new feature tests — use it directly)
-**architecting:** clean up multiple files/modules
+**project-audit:** clean up multiple files/modules
 **request-plan:** major specification gaps
 **context-optimizer:** mid-skill context bloat
 
