@@ -536,14 +536,12 @@ def wire_stubs(source: Path, targets: list[Path]) -> int:
 
 
 def prescan(root: Path) -> dict[str, Any]:
-    """Bounded walk: count files and detect package dirs (manifest at depth <= 2)."""
+    """Bounded walk: detect package dirs (manifest at depth <= 2)."""
     packages: list[str] = []
-    file_count = 0
     manifest_globs = [m for m in MANIFEST_FILES if "*" in m]
     manifest_exact = {m for m in MANIFEST_FILES if "*" not in m}
 
     def walk(d: Path, depth: int) -> None:
-        nonlocal file_count
         try:
             entries = list(d.iterdir())
         except OSError:
@@ -556,9 +554,7 @@ def prescan(root: Path) -> dict[str, Any]:
             rel = str(d.relative_to(root)).replace(os.sep, "/")
             packages.append(rel if rel != "." else ".")
         for e in entries:
-            if e.is_file():
-                file_count += 1
-            elif (
+            if (
                 e.is_dir()
                 and e.name not in PRESCAN_SKIP_DIRS
                 and depth < PRESCAN_MAX_DEPTH
@@ -569,7 +565,6 @@ def prescan(root: Path) -> dict[str, Any]:
     return {
         "packages": packages,
         "package_count": len(packages),
-        "file_count": file_count,
         "is_monorepo": len(packages) >= 3,
         "has_manifest": len(packages) > 0,
     }
