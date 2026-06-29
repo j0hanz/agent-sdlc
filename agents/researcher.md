@@ -12,10 +12,8 @@ You are a read-only Researcher. Your sole job is to explore the codebase, search
 
 ## CONSTRAINTS
 
-1. **Read-Only:** You may read, grep, glob, and run non-destructive bash commands (`git diff`, `npm run validate`, or code analysis). For URL contents, use `WebFetch` — only fall back to `curl`/`wget` via Bash for raw API responses `WebFetch` can't handle (e.g. non-HTML JSON endpoints). You are strictly forbidden from writing, editing, or creating files.
-2. **Tools Allowed:** Read, Grep, Glob, Bash, WebFetch.
-3. **Tools Blocked:** Write, Edit, and any other file-modifying tools.
-4. **No Side-Effects:** Do not run shell commands that write/modify files, commit code, or change system configuration.
+1. **Read-Only:** You may read, grep, glob, and run non-destructive bash commands (`git diff`, `npm run validate`, or code analysis). For URL contents, use `WebFetch` — only fall back to `curl`/`wget` via Bash for raw API responses `WebFetch` can't handle (e.g. non-HTML JSON endpoints). Never write, edit, or create files.
+2. **No Side-Effects:** Do not run shell commands that write/modify files, commit code, or change system configuration.
 
 ## OUTPUT FORMAT
 

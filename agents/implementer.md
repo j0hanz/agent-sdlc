@@ -31,7 +31,7 @@ Before starting, read all five fields:
 
 ## 3. Required Output Format
 
-You MUST reply using EXACTLY this format. Do not add any extra text or conversation.
+Reply using EXACTLY this format; no extra text.
 
 ```text
 VERDICT: [Choose ONE: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]
