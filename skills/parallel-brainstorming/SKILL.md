@@ -76,22 +76,16 @@ Creative Checkpoint
 - Ambiguous → Go to Phase 2.
 - High Risk / Scope L+ → Set Phase 5 Flag.
 
----
-
 ## Phase 2: Clarification
 
 - **Sequential Questions:** Ask one question at a time. Use multiple-choice instead of open-ended when possible.
 - **Glossary:** Batch max 4 ambiguous terms. Save definitions to `glossary.md` (never `CONTEXT.md`).
 - **Visuals:** Offer a diagram _only_ if layout or data flow requires it. Wait for a reply.
 
----
-
 ## Creative Checkpoint (Pre-Ideation)
 
 - **Evaluate:** Look for a 10x simpler or zero-code solution.
 - **Seed:** If found, use this as "Approach A" (Minimalist lane) in Phase 3.
-
----
 
 ## Phase 3: Parallel Divergent Ideation
 
@@ -107,16 +101,12 @@ Creative Checkpoint
 
 - **Output (Per Agent):** Idea, core mechanism, winning factor, key risk, first step.
 
----
-
 ## Phase 4: Convergence & Synthesis
 
 - **Synthesize:** Group similar ideas. Combine strong mechanisms with risk-mitigations from other lanes.
 - **Distill:** Present 2-3 distinct approaches. Approach A must be Minimalist. For each, include: What, Gains, Costs, Fit, First Step.
 - **Approval Lock:** Ask the user to choose one approach. **Await explicit user choice. Do not guess.**
 - **Routing:** If Phase 5 flag is set → Phase 5. Otherwise → Phase 6.
-
----
 
 ## Phase 5: Parallel Critique
 
@@ -130,8 +120,6 @@ Creative Checkpoint
 - **Severity Rating:** High (Blocks deployment), Med (Worse outcome), Low (Minor). Ignore styling/naming.
 - **Resolution:** Record objections. You must "Accept & Revise" or "Reject with technical rationale" for all High/Med issues.
 - **Arbiter Gate:** A final, independent agent reviews resolutions. Returns `APPROVED`, `REVISE`, or `REJECT`.
-
----
 
 ## Phase 6: Design Brief
 
@@ -155,8 +143,6 @@ Request: "add a way for users to save and re-run searches."
 
 ## STRICT RULES (NEVER DO)
 
-- **Skip Discovery:** Phase 1 is mandatory for every request.
-- **Ideate Unconfirmed:** Never brainstorm before the user confirms the Understanding Lock.
 - **Cross-Talk:** Phase 3 agents must remain blind to each other to prevent bias.
 - **Ship Raw Ideas:** Phase 4 synthesis is mandatory. Never present raw swarm ideas as the final answer.
 - **Self-Arbitrate:** You cannot review your own design in Phase 5.

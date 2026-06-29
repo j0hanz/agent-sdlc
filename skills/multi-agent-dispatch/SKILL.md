@@ -133,14 +133,6 @@ Skipped/blocked lanes: [list, or "none"]
 - A skipped lane or check got mentioned nowhere instead of surfaced as `BLOCKED`/`CRITICAL`.
 - A background agent kept running with nobody checking on it after the batch moved on.
 
-## Integration Rules
-
-- **Read:** Agents can read the same files.
-- **Write:** Agents CANNOT edit the same files.
-- **Validate:** Run tests on all agent work. Never just trust the report.
-- **Auto-Resolve:** Use `conflict-resolver` for merge conflicts before user escalation.
-- **Compact:** Trigger `context-optimizer` to prune logs and keep context lightweight.
-
 ## Success Criteria
 
 All results are combined, tests are GREEN, every skipped/blocked lane is named in the report, and tasks are passed to `verification-before-completion`.

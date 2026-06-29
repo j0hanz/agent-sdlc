@@ -64,9 +64,6 @@ Trigger: Workflow/CLI Request
 
 - [ ] `permissions` are explicitly set.
 - [ ] Third-party actions are SHA-pinned.
-- [ ] User inputs use `env:`, never `run:`.
-- [ ] Uses OIDC instead of permanent cloud keys.
-- [ ] `pull_request_target` is safe.
 
 ## NEXT STEPS & ERRORS
 

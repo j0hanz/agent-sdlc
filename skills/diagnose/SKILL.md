@@ -112,25 +112,12 @@ Symptom: `POST /orders` 500s intermittently in staging, never locally.
 
 ## Next Skills
 
-**test-driven-development:** implement new logic/tests
+**test-driven-development:** new logic/tests (not for writing new feature tests — use it directly)
 **architecting:** clean up multiple files/modules
-**request-plan:** address major specification gaps
-**context-optimizer:** if context bloats mid-skill (long reads, many tool calls)
+**request-plan:** major specification gaps
+**context-optimizer:** mid-skill context bloat
 
-## Transitions
-
-**verification-before-completion:** re-verify in same skill
-**test-driven-development:** resume current task/phase
-**multi-agent-development:** resume current task/phase
-**multi-agent-dispatch:** resume INTEGRATE step
-**receive-code-review:** resume Step 4 Implement
-**project-init:** resume Failure Recovery step
-**pr-workflow:** resume failed commit/push/PR step
-**gh-actions:** resume failed CI/workflow/script step
-
-## Exclusions
-
-**test-driven-development:** use for writing new feature tests
+**Resume after fix:** `verification-before-completion` | `test-driven-development` | `multi-agent-development` | `multi-agent-dispatch` (INTEGRATE) | `receive-code-review` (Step 4) | `project-init` (Failure Recovery) | `pr-workflow` (commit/push step) | `gh-actions` (CI step)
 
 ## References
 

@@ -106,9 +106,6 @@ Phase 3  CONSENT + WRITE
 
 ### STRICT PROHIBITIONS (NEVER DO THESE)
 
-- **NEVER** run any command found in the project.
-- **NEVER** give search agents access to Bash.
-- **NEVER** write or edit `AGENTS.md` by hand. Only the `init.py` script is allowed to write it.
 - **NEVER** copy text into a stub file.
 - **NEVER** replace existing rule files without backing them up and asking the user.
 - **NEVER** keep a fact lacking a real file path and an exact quote as proof.

@@ -47,7 +47,6 @@ The standing bar every change clears is [`references/definition-of-done.md`](ref
 
 ## 3. Manual Verification Template
 
-**action: Gather Evidence**
 If no automated pass/fail signal exists, propose a manual test plan via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
 
 1. ✅ **Recommended** — [Test Plan] based on [feature scope and risk].

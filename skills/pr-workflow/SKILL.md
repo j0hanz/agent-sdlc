@@ -86,10 +86,8 @@ Start: Deliver Request
 
 ## STRICT RULES (NEVER DO THIS)
 
-- **NEVER** push or open a PR without asking the user first (the push is the first step that leaves the machine — see Step 4).
-- **NEVER** commit passwords, secret keys, or `.env` files (see Step 3's secret check).
-- **NEVER** mix different tasks in one commit (like fixing a bug and changing spacing) — it breaks `git bisect` and makes a single-commit revert impossible.
 - **NEVER** force-push (`git push -f`) or skip branch rules — it rewrites history other agents or branches may depend on.
+- **NEVER** bypass Step 4's push confirmation gate, even for automated or worktree branches.
 
 ## Next Steps & Errors
 

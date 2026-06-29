@@ -35,16 +35,6 @@ Cluster done when every task in it is done/blocked -> Next Cluster?
   -- no  --> Final Validation (test & verify)
 ```
 
-## NEVER Do This
-
-- **Skip Gates**: NEVER. It causes errors.
-- **Trust Summaries**: NEVER. Verify the code yourself.
-- **Reuse Agents**: NEVER. Old memory causes mistakes.
-- **Blind Reviewers**: NEVER. Read prompt files before sending reviewers.
-- **File Overlaps**: NEVER. Tasks must use different files unless ordered.
-- **Merge Early**: NEVER. Wait until the task fully passes.
-- **Trust Clean Merges**: NEVER. Run tests after every merge.
-
 ## Step 0: Setup
 
 Default to running all tasks straight through — that was already the recommended option, so don't spend a round-trip asking for it. Raise `AskUserQuestion` ("run all" vs. "run one task first to validate the loop") only when the plan is large or unfamiliar enough that a single test task is a genuinely safer first step.
@@ -143,30 +133,7 @@ Blocked/escalated tasks: none
 
 Contrast with `multi-agent-dispatch`: there the lanes were file-disjoint and launched together; here Task 2 literally cannot start until Task 1's model exists, so the Matrix's `Depends on` column forces order.
 
-## Worked Example: Clustered Phase 1
-
-Same feature, but Tasks 1 and 2 turn out to be independent (separate modules, no shared types) while Task 3 still depends on both:
-
-| Task | Files touched                 | Depends on | Risk | Verification   |
-| :--- | :---------------------------- | :--------- | :--- | :------------- |
-| 1    | `migrations/saved_search.sql` | none       | med  | `npm test db`  |
-| 2    | `api/rate-limiter.ts`         | none       | low  | `npm test api` |
-| 3    | `ui/SavedSearches.tsx`        | 1, 2       | low  | `npm test ui`  |
-
-Tasks 1 and 2 share `Depends on: none` and disjoint files → one cluster. Dispatch both implementers in the SAME message, each `isolation: "worktree"`, `run_in_background: true` — do not wait for Task 1 before launching Task 2. When Task 2's implementer notifies first (it's the smaller change), immediately run its Phase 2/3 gates without waiting on Task 1; a slow lane in the cluster never blocks review of a fast one. Task 3 cannot launch until both 1 and 2 have reached `QUALITY_PASS`, since it depends on both.
-
-```
-| Task | VERDICT | Spec | Quality | Action |
-| :--- | :------ | :--- | :------ | :----- |
-| 2    | DONE    | PASS | PASS    | merged (reviewed first, finished first) |
-| 1    | DONE    | PASS | PASS    | merged |
-| 3    | DONE    | PASS | PASS    | merged, started only after 1 and 2 both passed |
-
-Tests: PASS — `npm test` (full suite)
-Blocked/escalated tasks: none
-```
-
-Outcome: two independent tasks ran wall-clock in parallel inside an otherwise sequential plan, with zero added risk — because the Matrix proved them file-disjoint and dependency-free before clustering them.
+**Clustered Phase 1:** When tasks share `Depends on: none` and disjoint files, dispatch all their implementers in the same message (`isolation: worktree`, `run_in_background: true`) — review each as it reports back independently. Tasks that depend on the cluster wait for every member to reach `QUALITY_PASS` before launching.
 
 ## Operational Rules
 
