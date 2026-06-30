@@ -3,7 +3,7 @@ name: pr-workflow
 description: 'Use when ready to ship a change — commit, push, and open a PR. Prefer using this for ordinary code changes, and over request-code-review when the work is already reviewed and just needs to land.'
 disable-model-invocation: false
 argument-hint: '[what to ship: "current diff", a branch, or "agent branches"]'
-allowed-tools: Bash(git *), Bash(gh *), Read, AskUserQuestion
+allowed-tools: Bash(git *), Bash(gh *), Read, AskUserQuestion, Skill(write-commit)
 ---
 
 # pr-workflow

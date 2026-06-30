@@ -6,6 +6,8 @@ description: >
   and diagnose (Resume after fix) — any skill that stages and commits defers here instead of inventing its own format.
   Focuses on writing terse, exact conventional commits that prioritize "why" over "what",
   while ensuring safe staging practices.
+disable-model-invocation: false
+allowed-tools: Bash(git *), Read
 ---
 
 # Git Commit Agent

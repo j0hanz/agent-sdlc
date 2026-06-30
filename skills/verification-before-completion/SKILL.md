@@ -2,7 +2,7 @@
 name: verification-before-completion
 description: 'Use before claiming any work is complete — runs tests, checks for regressions, and gathers execution evidence. Always before request-code-review; never substitute code-reading for actual execution.'
 disable-model-invocation: false
-allowed-tools: AskUserQuestion
+allowed-tools: AskUserQuestion, Bash, Read, Grep
 ---
 
 # verification-before-completion

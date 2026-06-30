@@ -2,7 +2,7 @@
 name: project-audit
 description: 'Use when the codebase has structural problems — circular dependencies, infra code bleeding into domain logic, hidden coupling, God files, unclear module responsibilities, or modules whose stated purpose contradicts how other modules actually use them. Parallel per-directory agent judgment, not static-analysis scripts.'
 disable-model-invocation: false
-allowed-tools: Bash(python *), Bash(python3 *), Agent(researcher), Skill(interview)
+allowed-tools: Bash(python *), Bash(python3 *), Agent(researcher), Skill(interview), Glob
 ---
 
 # project-audit

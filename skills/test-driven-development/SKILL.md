@@ -2,7 +2,7 @@
 name: test-driven-development
 description: 'Use when implementing a feature or fixing a bug. The default implementation path — writes a failing test first, then the minimal code to pass it.'
 disable-model-invocation: false
-allowed-tools: AskUserQuestion
+allowed-tools: AskUserQuestion, Bash, Read, Grep, Glob
 ---
 
 # test-driven-development

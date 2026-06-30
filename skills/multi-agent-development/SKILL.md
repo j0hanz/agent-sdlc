@@ -3,7 +3,7 @@ name: multi-agent-development
 description: 'Use when implementing a multi-task plan where tasks depend on each other, share files, or must run in order. Prefer over multi-agent-dispatch when tasks have shared state or file dependencies that prevent parallel execution.'
 disable-model-invocation: false
 argument-hint: '[path to plan file]'
-allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion, Bash(git log*)
+allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion, Bash(git log*), Bash(git diff*), Skill(write-commit), Skill(verification-before-completion)
 ---
 
 # multi-agent-development

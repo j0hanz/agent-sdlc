@@ -4,7 +4,7 @@ description: 'Use when requested to draft a plan for a new feature or change. Pr
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[--depth sketch|contract|blueprint] <feature description>'
-allowed-tools: Write, Agent(researcher), Skill(receive-plan)
+allowed-tools: Write, Agent(researcher), Skill(receive-plan), Read, Grep, Glob
 ---
 
 # request-plan
