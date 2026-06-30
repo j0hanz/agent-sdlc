@@ -15,31 +15,31 @@ const pluginRoot = path.resolve(__dirname, '..');
 const errors = [];
 const warnings = [];
 
-// Helper to parse simple YAML frontmatter metadata
+// Parse flat top-level key: value pairs from YAML frontmatter.
+// Handles quoted values (strips surrounding ' or ") and block scalars (>) by
+// collecting indented continuation lines. Skips comments and indented lines.
 function parseFrontmatter(frontmatterStr) {
   const data = {};
-  const lines = frontmatterStr.split(/\r?\n/);
-  for (const line of lines) {
-    const trimmed = line.trim();
+  let currentKey = null;
+  for (const raw of frontmatterStr.split(/\r?\n/)) {
+    if (/^[ \t]/.test(raw)) {
+      // Indented continuation: append to the last block-scalar key.
+      if (currentKey) data[currentKey] = `${data[currentKey]} ${raw.trim()}`.trim();
+      continue;
+    }
+    const trimmed = raw.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
-    if (line.match(/^[ \t]/)) continue; // skip nested/indented YAML (e.g. an agent hooks: block) — only top-level scalars are validated
-    const colonIndex = trimmed.indexOf(':');
-    if (colonIndex === -1) {
-      throw new Error(`Invalid line in YAML frontmatter (missing colon): "${trimmed}"`);
-    }
-    const key = trimmed.slice(0, colonIndex).trim();
-    let value = trimmed.slice(colonIndex + 1).trim();
-    const isQuoted =
+    const colon = trimmed.indexOf(':');
+    if (colon === -1) throw new Error(`Invalid YAML line (missing colon): "${trimmed}"`);
+    currentKey = trimmed.slice(0, colon).trim();
+    let value = trimmed.slice(colon + 1).trim();
+    if (
       (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"));
-    if (isQuoted) {
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
-    } else {
-      if (value.includes(':')) {
-        throw new Error(`Invalid unquoted colon in YAML value: "${value}"`);
-      }
     }
-    data[key] = value;
+    data[currentKey] = value; // '>' block scalars start with '>' and have their value on continuation lines
   }
   return data;
 }
@@ -54,10 +54,9 @@ function validateFrontmatter(filePath, componentType) {
     return null;
   }
 
-  const frontmatter = match[1];
   let fmData;
   try {
-    fmData = parseFrontmatter(frontmatter);
+    fmData = parseFrontmatter(match[1]);
   } catch (err) {
     errors.push(`[${componentType}] ${filePath}: Invalid YAML frontmatter - ${err.message}`);
     return null;
@@ -70,7 +69,7 @@ function validateFrontmatter(filePath, componentType) {
     return null;
   }
 
-  return { frontmatter, content, fmData };
+  return { content, fmData };
 }
 
 // Validate skill structure

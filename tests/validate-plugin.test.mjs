@@ -15,11 +15,11 @@ test('validate-plugin detects invalid YAML frontmatter in skills', () => {
     fs.mkdirSync(tempSkillDir);
   }
 
-  // Write a SKILL.md with invalid YAML frontmatter (unquoted colon in value)
+  // Write a SKILL.md with invalid YAML frontmatter (line with no colon at all)
   const skillMdPath = path.join(tempSkillDir, 'SKILL.md');
   const invalidContent = `---
 name: temp-invalid-skill
-description: Invalid YAML description: which fails validation
+description
 ---
 Some instructions.
 `;

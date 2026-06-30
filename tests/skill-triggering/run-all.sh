@@ -48,10 +48,10 @@ for prompt_file in "${prompt_files[@]}"; do
     skill_name="$(basename "$prompt_file" .txt)"
     echo "Testing: $skill_name"
 
-    # Fixture variants (e.g. *-pressure.txt) test an existing skill under
-    # adversarial framing; they expect the base skill name to trigger.
+    # Files named <skill>-pressure.txt test the base skill under adversarial framing.
+    # Strip a trailing -pressure suffix so the detection pattern matches the base skill.
     expected_skill="${skill_name%-pressure}"
-    
+
     OUTPUT_DIR="/tmp/agent-sdlc-tests/${TIMESTAMP}/skill-triggering/${skill_name}"
     mkdir -p "$OUTPUT_DIR"
     
@@ -72,7 +72,7 @@ for prompt_file in "${prompt_files[@]}"; do
     echo ""
     echo "=== Results ==="
     
-    ESCAPED_NAME=$(printf '%s' "$expected_skill" | sed 's/[.[\*^$()+?{}|\\]/\\&/g')
+    ESCAPED_NAME=$(printf '%s' "$expected_skill" | sed 's/[.[\\*^$()+?{}|\\]/\\&/g')
     SKILL_PATTERN='"skill":"([^"]*:)?'"${ESCAPED_NAME}"'"'
     if grep -q '"name":"Skill"' "$LOG_FILE" && grep -qE "$SKILL_PATTERN" "$LOG_FILE"; then
         echo "✅ PASS: Skill '$expected_skill' was triggered"

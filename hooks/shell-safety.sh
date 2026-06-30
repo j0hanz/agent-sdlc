@@ -99,10 +99,7 @@ extract_substitution_contents() {
 }
 
 substitution_contents="$(extract_substitution_contents "$command")"
-scan_target="$command"
-if [ -n "$substitution_contents" ]; then
-  scan_target="$command"$'\n'"$substitution_contents"
-fi
+scan_target="$command"$'\n'"$substitution_contents"
 
 # Splits command into segments by ;, &&, ||, |, &, and newlines.
 IFS=$'\n' read -r -d '' -a segments < <(printf '%s' "$scan_target" | awk '

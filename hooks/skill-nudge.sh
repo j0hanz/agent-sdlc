@@ -23,15 +23,17 @@ if [[ -z "${AGENT_SDLC_SKILL_NUDGE:-}" ]]; then
 fi
 
 agent_sdlc_json_escape() {
-  # Escapes string for JSON embedding.
-  node -e 'process.stdout.write(JSON.stringify(process.argv[1]).slice(1, -1))' "$1" 2>/dev/null
+  # Escapes \ and " — the only two characters that need escaping in these
+  # messages (no newlines, no control chars, no angle brackets to escape).
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  printf '%s' "$s"
 }
 
 agent_sdlc_enum_skills() {
   # Lists available skill directory names.
   local root="${CLAUDE_PLUGIN_ROOT:-.}"
-  local skill_files
-  # Avoid errors if no skills exist.
   local found=0
   while IFS= read -r -d '' file; do
     found=1
@@ -43,18 +45,15 @@ agent_sdlc_enum_skills() {
   fi
 }
 
-# Determine bootstrap mode.
+# Exit early if nudge is disabled.
 if [ "${AGENT_SDLC_SKILL_NUDGE:-1}" = "0" ]; then
-  BOOTSTRAP_MODE="off"
-else
-  # Default to 'full'.
-  BOOTSTRAP_MODE="${AGENT_SDLC_BOOTSTRAP_MODE:-full}"
-fi
-
-# Mode: off.
-if [ "$BOOTSTRAP_MODE" = "off" ]; then
   exit 0
 fi
+BOOTSTRAP_MODE="${AGENT_SDLC_BOOTSTRAP_MODE:-full}"
+
+# Fetch skill list once — shared by both cooldown and full modes.
+available=$(agent_sdlc_enum_skills)
+[ -z "$available" ] && exit 0
 
 STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude"
 STATE_FILE="$STATE_DIR/skill-nudge-state"
@@ -74,8 +73,6 @@ if [ "$BOOTSTRAP_MODE" = "cooldown" ]; then
   mkdir -p "$STATE_DIR" 2>/dev/null || true
   printf '%s' "$now" >"$STATE_FILE" 2>/dev/null || true
 
-  available=$(agent_sdlc_enum_skills)
-  [ -z "$available" ] && exit 0
   list=$(printf '%s\n' "$available" | paste -sd ',' - | sed 's/,/, /g')
   message="[agent-sdlc:skill-nudge] This plugin includes skills for structured workflows: ${list}. They auto-trigger on matching tasks, or invoke directly with /skill-name."
   escaped=$(agent_sdlc_json_escape "$message")
@@ -83,20 +80,10 @@ if [ "$BOOTSTRAP_MODE" = "cooldown" ]; then
   exit 0
 fi
 
-# Mode: full.
-if [ "$BOOTSTRAP_MODE" = "full" ]; then
-  available=$(agent_sdlc_enum_skills)
-  [ -z "$available" ] && exit 0
-  list=$(printf '%s\n' "$available" | paste -sd ',' -)
-
-  # Gate names.
-  gates="Gate 0 Repository Onboarding, Gate 1 Task Definition, Gate 2 Scope & System, Gate 3 Execution Strategy, Gate 4 Quality & Delivery"
-
-  message="<EXTREMELY_IMPORTANT>[agent-sdlc:skill-nudge] Before responding, check using-agent-sdlc-skills for routing: ${gates}. Bundled skills available this session: ${list}.</EXTREMELY_IMPORTANT>"
-  escaped=$(agent_sdlc_json_escape "$message")
-  printf '%s\n' "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"${escaped}\"}}"
-  exit 0
-fi
-
-# Fallback for unknown modes.
+# Mode: full (default).
+list=$(printf '%s\n' "$available" | paste -sd ',' -)
+gates="Gate 0 Repository Onboarding, Gate 1 Task Definition, Gate 2 Scope & System, Gate 3 Execution Strategy, Gate 4 Quality & Delivery"
+message="<EXTREMELY_IMPORTANT>[agent-sdlc:skill-nudge] Before responding, check using-agent-sdlc-skills for routing: ${gates}. Bundled skills available this session: ${list}.</EXTREMELY_IMPORTANT>"
+escaped=$(agent_sdlc_json_escape "$message")
+printf '%s\n' "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"${escaped}\"}}"
 exit 0
